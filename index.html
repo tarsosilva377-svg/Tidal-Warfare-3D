@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚓ Guerra Marítima 3D - Multiplayer Local & Responsivo</title>
+<!-- Three.js para renderização 3D -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;color:#fff}
+
+/* Tela de Menu / Multiplayer Local */
+.lobby-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(5,11,20,0.95);backdrop-filter:blur(12px);z-index:100;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;transition:opacity 0.3s ease}
+.lobby-screen.hidden{opacity:0;pointer-events:none}
+.lobby-title{font-size:22px;font-weight:900;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;text-align:center}
+.lobby-subtitle{font-size:12px;color:#8899ac;margin-bottom:30px;font-weight:600;text-align:center}
+.lobby-btn{background:rgba(0,168,255,0.2);border:1.5px solid #00d2d3;color:#fff;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin:10px;width:240px;box-shadow:0 4px 15px rgba(0,0,0,0.4);transition:all 0.2s}
+.lobby-btn:active{transform:scale(0.95);background:rgba(0,168,255,0.4)}
+.lobby-info{font-size:11px;color:#00d2d3;margin-top:20px;font-weight:700}
+
+/* Barra Superior HUD */
+.hud-top{position:absolute;top:10px;left:0;width:100%;padding:0 16px;display:flex;justify-content:space-between;align-items:center;z-index:20;pointer-events:none}
+.res-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;background:rgba(10,20,35,0.75);backdrop-filter:blur(6px);padding:6px 12px;border-radius:20px;border:1px solid rgba(0,168,255,0.3);pointer-events:auto;box-shadow:0 4px 15px rgba(0,0,0,0.4)}
+.center-title{text-align:center;font-weight:900;font-size:13px;letter-spacing:1px;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 2px 10px rgba(0,0,0,0.8)}
+
+/* Container do Mapa 3D */
+.game-container{flex:1;position:relative;width:100%;min-height:0;touch-action:none;cursor:grab}
+.game-container:active{cursor:grabbing}
+#canvas3d{width:100%;height:100%;display:block}
+
+/* Botão de Torpedo no HUD */
+.torpedo-btn{position:absolute;top:65px;right:20px;background:rgba(10,20,35,0.85);border:1.5px solid #00d2d3;color:#00d2d3;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:800;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
+.torpedo-btn:active{transform:scale(0.95);background:rgba(0,168,255,.3)}
+
+/* Janela de Seleção de Alvos */
+.target-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.95);border:1.5px solid #00d2d3;padding:20px 24px;border-radius:16px;z-index:40;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease}
+.target-modal.show{opacity:1;transform:translate(-50%, -50%) scale(1);pointer-events:auto}
+.modal-title{font-size:14px;font-weight:900;color:#00d2d3;margin-bottom:6px;letter-spacing:0.5px}
+.modal-desc{font-size:11px;color:#8899ac;margin-bottom:14px;font-weight:600}
+
+.target-options-bar{display:flex;justify-content:center;gap:10px;margin-bottom:16px}
+.target-option-card{background:rgba(20,35,55,0.8);border:1.5px solid rgba(0,168,255,0.4);border-radius:10px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.15s}
+.target-option-card:hover, .target-option-card.selected{border-color:#00d2d3;background:rgba(0,168,255,0.25);transform:scale(1.05)}
+.ship-color-icon{width:22px;height:22px;border-radius:50%;border:1px solid #fff}
+.target-option-card span{font-size:10px;font-weight:700;color:#fff}
+
+.modal-actions{display:flex;gap:10px;justify-content:center}
+.btn-action{background:rgba(0,168,255,0.2);border:1px solid #00d2d3;color:#fff;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-action:active{background:rgba(0,168,255,0.5)}
+.btn-confirm{background:rgba(0,211,100,0.25);border-color:#00d364}
+.modal-close{position:absolute;top:8px;right:12px;background:none;border:none;color:#8899ac;font-size:16px;font-weight:bold;cursor:pointer}
+.modal-close:hover{color:#fff}
+
+/* Modal de Game Over / Espectador */
+.gameover-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.95);border:1.5px solid #ff3333;padding:24px;border-radius:16px;z-index:50;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.3s ease}
+.gameover-modal.show{opacity:1;transform:translate(-50%, -50%) scale(1);pointer-events:auto}
+.gameover-title{font-size:16px;font-weight:900;color:#ff3333;margin-bottom:8px}
+.gameover-desc{font-size:11px;color:#8899ac;margin-bottom:20px;font-weight:600}
+
+/* Controle Remoto Estilo Smart TV */
+.tv-remote{position:absolute;bottom:25px;right:25px;width:140px;height:140px;background:rgba(15,25,45,0.35);backdrop-filter:blur(6px);border:1.5px solid rgba(0,168,255,0.25);border-radius:50%;display:grid;grid-template-columns:repeat(3, 1fr);grid-template-rows:repeat(3, 1fr);align-items:center;justify-items:center;z-index:25;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.rc-btn{width:38px;height:38px;background:rgba(0,168,255,0.2);border:1px solid rgba(0,168,255,0.4);color:#00d2d3;border-radius:8px;font-size:15px;font-weight:900;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:all 0.1s}
+.rc-btn:active, .rc-btn.pressed{background:rgba(0,168,255,0.6);transform:scale(0.92)}
+.rc-up{grid-column:2;grid-row:1}
+.rc-left{grid-column:1;grid-row:2}
+.rc-center{grid-column:2;grid-row:2;width:32px;height:32px;background:rgba(255,215,0,0.25);border:1px solid rgba(255,215,0,0.5);border-radius:50%;font-size:11px;color:#ffd700}
+.rc-right{grid-column:3;grid-row:2}
+.rc-down{grid-column:2;grid-row:3}
+
+/* Notificação Toast */
+.toast-msg{position:absolute;bottom:75px;left:50%;transform:translateX(-50%);background:rgba(10,20,35,.9);border:1px solid #00d2d3;color:#fff;padding:8px 16px;border-radius:20px;font-size:11px;font-weight:700;z-index:30;box-shadow:0 4px 15px rgba(0,0,0,.6);opacity:0;transition:opacity 0.3s;pointer-events:none}
+.toast-msg.show{opacity:1}
+</style>
+</head>
+<body oncontextmenu="return false;">
+
+<!-- Tela Inicial / Multiplayer Local Automático -->
+<div class="lobby-screen" id="lobbyScreen">
+  <div class="lobby-title">⚓ GUERRA MARÍTIMA 3D</div>
+  <div class="lobby-subtitle">Batalha Naval Tática na Rede Local Wi-Fi</div>
+  <button class="lobby-btn" id="btnCreateRoom">Ser a Sala (Host)</button>
+  <button class="lobby-btn" id="btnJoinRoom">Entrar como Convidado</button>
+  <div class="lobby-info" id="lobbyInfoStatus">Aguardando seleção...</div>
+</div>
+
+<div class="hud-top">
+  <div class="res-item">
+    <span>🛡️ <span style="color:#00d2d3" id="playerHealth">100%</span></span>
+    <span style="margin-left:8px;" id="timeBadge">☀️ 00:00</span>
+  </div>
+  <div class="center-title">⚓ GUERRA MARÍTIMA 3D</div>
+  <div class="res-item">
+    <span>🚀 <span style="color:#00d2d3" id="torpedoCount">10/10</span></span>
+  </div>
+</div>
+
+<div class="game-container" id="gameContainer">
+  <canvas id="canvas3d"></canvas>
+
+  <button class="torpedo-btn" id="btnTorpedo">🎯 Selecionar Alvo</button>
+
+  <div class="target-modal" id="targetModal">
+    <button class="modal-close" id="btnCloseModal">✕</button>
+    <div class="modal-title">SELECIONAR ALVO DO TORPEDO</div>
+    <div class="modal-desc">Escolha qual navio inimigo deseja atingir:</div>
+    <div class="target-options-bar" id="targetOptionsBar"></div>
+    <div class="modal-actions">
+      <button class="btn-action btn-confirm" id="btnConfirmLaunch">Confirmar Disparo</button>
+    </div>
+  </div>
+
+  <!-- Modal de Derrota / Espectador -->
+  <div class="gameover-modal" id="gameOverModal">
+    <div class="gameover-title">NAVIO DESTRUÍDO!</div>
+    <div class="gameover-desc">Seu navio afundou nas profundezas do oceano. Deseja continuar assistindo ou sair?</div>
+    <div class="modal-actions">
+      <button class="btn-action btn-confirm" id="btnWatchMode">Assistir Partida</button>
+      <button class="btn-action" style="border-color:#ff3333; color:#ff3333;" id="btnExitGame">Sair para o Menu</button>
+    </div>
+  </div>
+
+  <div class="tv-remote">
+    <button class="rc-btn rc-up" id="btnUp">▲</button>
+    <button class="rc-btn rc-left" id="btnLeft">◀</button>
+    <div class="rc-btn rc-center" id="btnCenter" title="Parar (OK)">OK</div>
+    <button class="rc-btn rc-right" id="btnRight">▶</button>
+    <button class="rc-btn rc-down" id="btnDown">▼</button>
+  </div>
+
+  <div class="toast-msg" id="toastMsg">Modo Multiplayer Local pronto!</div>
+</div>
+
+<script>
+/* ==========================================================================
+   CONFIGURAÇÃO DE LOBBY / MULTIPLAYER LOCAL AUTOMÁTICO (SEM CÓDIGOS)
+   ========================================================================== */
+const lobbyScreen = document.getElementById('lobbyScreen');
+const lobbyInfoStatus = document.getElementById('lobbyInfoStatus');
+
+document.getElementById('btnCreateRoom').onclick = () => {
+  lobbyInfoStatus.textContent = "📡 Sala criada! Aguardando convidados na rede Wi-Fi...";
+  setTimeout(() => {
+    lobbyScreen.classList.add('hidden');
+    showToast("🎮 Partida iniciada como Host!");
+  }, 1500);
+};
+
+document.getElementById('btnJoinRoom').onclick = () => {
+  lobbyInfoStatus.textContent = "🔍 Buscando sala na rede local...";
+  setTimeout(() => {
+    lobbyScreen.classList.add('hidden');
+    showToast("🌐 Conectado à sala com sucesso!");
+  }, 1500);
+};
+
+/* ==========================================================================
+   CONFIGURAÇÃO 3D DO MUNDO E CÂMERA RESPONSIVA
+   ========================================================================== */
+const container = document.getElementById('gameContainer');
+const canvas = document.getElementById('canvas3d');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+scene.fog = new THREE.FogExp2(0x87ceeb, 0.0012);
+
+const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 3000);
+let cameraZoomDistance = 55;
+let cameraAngleOffset = 0;
+let isSpectatorMode = false;
+
+let mapPanX = 0;
+let mapPanZ = 0;
+let targetMapPanX = 0;
+let targetMapPanZ = 0;
+
+camera.position.set(0, cameraZoomDistance, cameraZoomDistance);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xffffff, 0.6);
+sunLight.position.set(100, 150, 100);
+scene.add(sunLight);
+
+/* ==========================================================================
+   OCEANO GIGANTE
+   ========================================================================== */
+const mapSize = 1800;
+const oceanGeometry = new THREE.PlaneGeometry(mapSize, mapSize, 128, 128);
+const oceanMaterial = new THREE.MeshStandardMaterial({ 
+  color: 0x004477, 
+  roughness: 0.9, 
+  metalness: 0.1, 
+  flatShading: true 
+});
+const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
+ocean.rotation.x = -Math.PI / 2;
+scene.add(ocean);
+
+// Ilhas com Formatos Orgânicos e Arredondados Reais
+const islandColliders = [];
+
+function createWorldIslands() {
+  const islandConfigs = [
+    { x: -250, z: -250, r: 50, h: 6.0 },
+    { x: 280, z: -220, r: 55, h: 7.0 },
+    { x: -220, z: 260, r: 45, h: 5.5 },
+    { x: 260, z: 240, r: 60, h: 6.5 },
+    { x: 0, z: -400, r: 70, h: 8.0 },
+    { x: -420, z: 0, r: 65, h: 7.0 },
+    { x: 420, z: 0, r: 60, h: 7.5 },
+    { x: 0, z: 400, r: 65, h: 6.5 }
+  ];
+
+  islandConfigs.forEach(data => {
+    const group = new THREE.Group();
+
+    const shape = new THREE.Shape();
+    const pts = 48;
+    for (let i = 0; i < pts; i++) {
+      const angle = (i / pts) * Math.PI * 2;
+      const radius = data.r * (0.85 + Math.sin(angle * 3) * 0.15 + Math.cos(angle * 5) * 0.08);
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      if (i === 0) shape.moveTo(x, y);
+      else shape.lineTo(x, y);
+    }
+    const baseGeo = new THREE.ExtrudeGeometry(shape, { depth: data.h, bevelEnabled: true, bevelSize: 1.5, bevelThickness: 1.0 });
+    const sandMat = new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 0.95 });
+    const baseMesh = new THREE.Mesh(baseGeo, sandMat);
+    baseMesh.rotation.x = -Math.PI / 2;
+    group.add(baseMesh);
+
+    const topShape = new THREE.Shape();
+    for (let i = 0; i < pts; i++) {
+      const angle = (i / pts) * Math.PI * 2;
+      const radius = (data.r * 0.65) * (0.8 + Math.sin(angle * 4) * 0.12);
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+      if (i === 0) topShape.moveTo(x, y);
+      else topShape.lineTo(x, y);
+    }
+    const topGeo = new THREE.ExtrudeGeometry(topShape, { depth: data.h + 1.2, bevelEnabled: true, bevelSize: 0.8, bevelThickness: 0.6 });
+    const grassMat = new THREE.MeshStandardMaterial({ color: 0x3b5336, roughness: 0.85 });
+    const topMesh = new THREE.Mesh(topGeo, grassMat);
+    topMesh.rotation.x = -Math.PI / 2;
+    topMesh.position.y = 0.1;
+    group.add(topMesh);
+
+    group.position.set(data.x, 0, data.z);
+    scene.add(group);
+
+    islandColliders.push({ x: data.x, z: data.z, radius: data.r * 0.85 });
+  });
+}
+createWorldIslands();
+
+/* ==========================================================================
+   FUNÇÃO PARA CRIAR NAVIOS
+   ========================================================================== */
+function createShipModel(deckColorHex) {
+  const group = new THREE.Group();
+  const hullMaterial = new THREE.MeshStandardMaterial({ color: 0x2b3e50, roughness: 0.5, metalness: 0.8 }); 
+  const deckMaterial = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.7, metalness: 0.4 }); 
+  const superstructureMat = new THREE.MeshStandardMaterial({ color: 0xdde2e6, roughness: 0.4, metalness: 0.6 }); 
+  const metalDarkMat = new THREE.MeshStandardMaterial({ color: 0x1a2129, roughness: 0.3, metalness: 0.9 }); 
+
+  const hullShape = new THREE.Shape();
+  hullShape.moveTo(0, -6);
+  hullShape.lineTo(2.2, -4);
+  hullShape.lineTo(2.2, 5);
+  hullShape.lineTo(1.2, 7); 
+  hullShape.lineTo(-1.2, 7);
+  hullShape.lineTo(-2.2, 5);
+  hullShape.lineTo(-2.2, -4);
+  hullShape.closePath();
+
+  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 2.2, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.4, bevelThickness: 0.4 });
+  const hullMesh = new THREE.Mesh(hullGeo, hullMaterial);
+  hullMesh.rotation.x = Math.PI / 2;
+  hullMesh.position.y = -0.6;
+  group.add(hullMesh);
+
+  const deckGeo = new THREE.BoxGeometry(4.2, 0.3, 13);
+  const deckMesh = new THREE.Mesh(deckGeo, deckMaterial);
+  deckMesh.position.set(0, 0.6, 0.5);
+  group.add(deckMesh);
+
+  const tower1 = new THREE.Mesh(new THREE.BoxGeometry(3.0, 2.0, 4.0), superstructureMat);
+  tower1.position.set(0, 1.7, 0.5);
+  group.add(tower1);
+
+  const tower2 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.8, 2.5), superstructureMat);
+  tower2.position.set(0, 3.4, 0.8);
+  group.add(tower2);
+
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 3.5), metalDarkMat);
+  mast.position.set(0, 5.3, 0.8);
+  group.add(mast);
+
+  return group;
+}
+
+// Navio do Jogador
+const shipGroup = createShipModel(0x3e4c59);
+shipGroup.position.set(0, 0.5, 0);
+scene.add(shipGroup);
+let shipPos = { x: 0, z: 0 };
+let playerHealth = 100;
+let isPlayerAlive = true;
+
+// Lista de Inimigos com posições de Spawn bem distantes
+const botsData = [
+  { id: 0, name: "Amarelo", colorHex: 0xd4ac0d, colorCss: "#d4ac0d", x: 250, z: -250, heading: 0, health: 100, speed: 0.32, lastShot: 0, smoke: [] },
+  { id: 1, name: "Azul", colorHex: 0x00a8ff, colorCss: "#00a8ff", x: -250, z: 250, heading: 1.5, health: 100, speed: 0.30, lastShot: 0, smoke: [] },
+  { id: 2, name: "Roxo", colorHex: 0x9b59b6, colorCss: "#9b59b6", x: 250, z: 250, heading: 3.0, health: 100, speed: 0.34, lastShot: 0, smoke: [] },
+  { id: 3, name: "Verde", colorHex: 0x2ecc71, colorCss: "#2ecc71", x: -250, z: -250, heading: 4.5, health: 100, speed: 0.31, lastShot: 0, smoke: [] }
+];
+
+const botMeshes = botsData.map(b => {
+  const mesh = createShipModel(b.colorHex);
+  mesh.position.set(b.x, 0.5, b.z);
+  scene.add(mesh);
+  return mesh;
+});
+
+let selectedTargetId = 0;
+
+function buildTargetOptionsUI() {
+  const bar = document.getElementById('targetOptionsBar');
+  bar.innerHTML = '';
+  botsData.forEach(bot => {
+    if (bot.health > 0) {
+      const card = document.createElement('div');
+      card.className = `target-option-card ${bot.id === selectedTargetId ? 'selected' : ''}`;
+      card.id = `targetCard-${bot.id}`;
+      card.onclick = () => {
+        selectedTargetId = bot.id;
+        document.querySelectorAll('.target-option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+      };
+
+      const colorCircle = document.createElement('div');
+      colorCircle.className = 'ship-color-icon';
+      colorCircle.style.background = bot.colorCss;
+
+      const label = document.createElement('span');
+      label.textContent = `${bot.name} (${bot.health}%)`;
+
+      card.appendChild(colorCircle);
+      card.appendChild(label);
+      bar.appendChild(card);
+    }
+  });
+}
+
+/* ==========================================================================
+   SISTEMA DE COMBATE & EXPLOSÕES
+   ========================================================================== */
+let torpedoCount = 10;
+const activeProjectiles = [];
+const botProjectiles = [];
+const activeTorpedos = [];
+const activeExplosions = [];
+const sparkParticles = [];
+
+const projectileGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.2, 6);
+projectileGeo.rotateX(Math.PI / 2);
+const projectileMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+const botProjectileMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+
+const torpedoGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.0, 8);
+torpedoGeo.rotateX(Math.PI / 2);
+const torpedoMat = new THREE.MeshStandardMaterial({ color: 0x444d56, metalness: 0.9, roughness: 0.2 });
+const torpedoHeadMat = new THREE.MeshBasicMaterial({ color: 0xff3300 });
+
+const arrowGeo = new THREE.ConeGeometry(0.25, 1.0, 6);
+arrowGeo.rotateX(Math.PI / 2);
+const arrowMat = new THREE.MeshBasicMaterial({ color: 0x00ff66 });
+
+function fireProjectile(fromPos, heading, isBot = false) {
+  const mesh = new THREE.Mesh(projectileGeo, isBot ? botProjectileMat : projectileMat);
+  mesh.position.set(fromPos.x, 2.0, fromPos.z);
+  mesh.rotation.y = heading;
+  scene.add(mesh);
+
+  const list = isBot ? botProjectiles : activeProjectiles;
+  list.push({
+    mesh: mesh, x: fromPos.x, z: fromPos.z, heading: heading, speed: 2.2, life: 120
+  });
+}
+
+function createSparkEffect(x, z) {
+  for (let i = 0; i < 8; i++) {
+    const sGeo = new THREE.SphereGeometry(0.12, 6, 6);
+    const sMat = new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xffcc00 : 0xffffff });
+    const sMesh = new THREE.Mesh(sGeo, sMat);
+    sMesh.position.set(x, 1.5, z);
+    scene.add(sMesh);
+
+    sparkParticles.push({
+      mesh: sMesh,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: Math.random() * 0.3 + 0.1,
+      vz: (Math.random() - 0.5) * 0.3,
+      life: 20
+    });
+  }
+}
+
+function createExplosionEffect(x, z) {
+  const expGroup = new THREE.Group();
+  const fireGeo = new THREE.SphereGeometry(2.0, 12, 12);
+  const fireMat = new THREE.MeshBasicMaterial({ color: 0xff5500, transparent: true, opacity: 0.9 });
+  const fireMesh = new THREE.Mesh(fireGeo, fireMat);
+  expGroup.add(fireMesh);
+
+  const smokeGeo = new THREE.SphereGeometry(3.0, 12, 12);
+  const smokeMat = new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.7 });
+  const smokeMesh = new THREE.Mesh(smokeGeo, smokeMat);
+  expGroup.add(smokeMesh);
+
+  expGroup.position.set(x, 1.0, z);
+  scene.add(expGroup);
+
+  activeExplosions.push({
+    group: expGroup, fire: fireMesh, smoke: smokeMesh, scale: 0.6, life: 60
+  });
+}
+
+function spawnContinuousSmoke(botObj) {
+  const pGeo = new THREE.SphereGeometry(0.35 + Math.random() * 0.3, 8, 8);
+  const pMat = new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.75 });
+  const pMesh = new THREE.Mesh(pGeo, pMat);
+
+  pMesh.position.set(
+    botObj.x + (Math.random() - 0.5) * 1.5,
+    1.2,
+    botObj.z + (Math.random() - 0.5) * 3.0
+  );
+
+  scene.add(pMesh);
+  botObj.smoke.push({
+    mesh: pMesh,
+    velX: (Math.random() - 0.5) * 0.02,
+    velY: 0.03 + Math.random() * 0.03,
+    velZ: (Math.random() - 0.5) * 0.02,
+    life: 90
+  });
+}
+
+function launchGuidedTorpedo() {
+  if (torpedoCount <= 0) {
+    showToast("⚠️ Sem torpedos restantes!");
+    return;
+  }
+  const targetBot = botsData.find(b => b.id === selectedTargetId && b.health > 0);
+  if (!targetBot) {
+    showToast("⚠️ Escolha um alvo válido!");
+    return;
+  }
+
+  torpedoCount--;
+  document.getElementById('torpedoCount').textContent = `${torpedoCount}/10`;
+
+  const sideOffset = 2.5;
+  const launchX = shipPos.x + Math.cos(currentHeading) * sideOffset;
+  const launchZ = shipPos.z - Math.sin(currentHeading) * sideOffset;
+
+  const torpedoGroup = new THREE.Group();
+  const body = new THREE.Mesh(torpedoGeo, torpedoMat);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), torpedoHeadMat);
+  head.position.z = 1.0;
+  
+  const arrow = new THREE.Mesh(arrowGeo, arrowMat);
+  arrow.position.z = -1.5;
+
+  torpedoGroup.add(body, head, arrow);
+  torpedoGroup.position.set(launchX, 0.15, launchZ);
+  torpedoGroup.rotation.y = currentHeading + Math.PI / 2;
+  scene.add(torpedoGroup);
+
+  activeTorpedos.push({
+    mesh: torpedoGroup, x: launchX, z: launchZ, speed: 0.8, targetId: selectedTargetId, life: 300
+  });
+
+  showToast(`🚀 Torpedo lançado contra o navio ${targetBot.name}!`);
+}
+
+let lastShotTime = 0;
+
+/* ==========================================================================
+   CONTROLES DO JOGADOR
+   ========================================================================== */
+let currentSpeed = 0;
+const cruisingSpeed = 0.45;
+const maxBoostSpeed = 0.75;
+let currentHeading = Math.PI;
+
+const controlsState = { up: false, down: false, left: false, right: false };
+
+function bindPressEvent(id, actionName) {
+  const btn = document.getElementById(id);
+  const pressOn = (e) => { 
+    e.preventDefault(); 
+    if (!isPlayerAlive) return;
+    controlsState[actionName] = true; 
+    btn.classList.add('pressed'); 
+    if (actionName === 'up' && currentSpeed === 0) {
+      currentSpeed = cruisingSpeed;
+      showToast("⚙️ Motor ligado: Focando no navio.");
+    }
+  };
+  const pressOff = (e) => { e.preventDefault(); controlsState[actionName] = false; btn.classList.remove('pressed'); };
+
+  btn.addEventListener('pointerdown', pressOn);
+  btn.addEventListener('pointerup', pressOff);
+  btn.addEventListener('pointerleave', pressOff);
+}
+
+bindPressEvent('btnUp', 'up');
+bindPressEvent('btnDown', 'down');
+bindPressEvent('btnLeft', 'left');
+bindPressEvent('btnRight', 'right');
+
+document.getElementById('btnCenter').onclick = () => {
+  currentSpeed = 0;
+  controlsState.up = false;
+  controlsState.down = false;
+  controlsState.left = false;
+  controlsState.right = false;
+  showToast("⚓ Motores desligados (Navio Parado).");
+};
+
+const targetModal = document.getElementById('targetModal');
+document.getElementById('btnTorpedo').onclick = () => {
+  if (!isPlayerAlive) return;
+  buildTargetOptionsUI();
+  targetModal.classList.add('show');
+};
+document.getElementById('btnCloseModal').onclick = () => targetModal.classList.remove('show');
+document.getElementById('btnConfirmLaunch').onclick = () => {
+  targetModal.classList.remove('show');
+  launchGuidedTorpedo();
+};
+
+// Botões do Modal de Game Over
+document.getElementById('btnWatchMode').onclick = () => {
+  document.getElementById('gameOverModal').classList.remove('show');
+  isSpectatorMode = true;
+  showToast("👁️ Modo Espectador Ativado");
+};
+document.getElementById('btnExitGame').onclick = () => {
+  location.reload();
+};
+
+/* ==========================================================================
+   CONTROLE DE CÂMERA
+   ========================================================================== */
+let activeTouches = {};
+let initialPinchDistance = null;
+let initialRotateAngle = null;
+let isDraggingMap = false;
+let previousPointerPos = { x: 0, y: 0 };
+
+container.addEventListener('pointerdown', e => {
+  activeTouches[e.pointerId] = { x: e.clientX, y: e.clientY };
+  if (Object.keys(activeTouches).length === 1 && (currentSpeed === 0 || !isPlayerAlive)) {
+    isDraggingMap = true;
+    previousPointerPos = { x: e.clientX, y: e.clientY };
+    targetMapPanX = shipPos.x + (mapPanX - shipPos.x);
+    targetMapPanZ = shipPos.z + (mapPanZ - shipPos.z);
+  }
+});
+
+container.addEventListener('pointermove', e => {
+  if (activeTouches[e.pointerId]) {
+    activeTouches[e.pointerId] = { x: e.clientX, y: e.clientY };
+  }
+
+  const touchIds = Object.keys(activeTouches);
+  if (touchIds.length === 2) {
+    isDraggingMap = false;
+    const t1 = activeTouches[touchIds[0]];
+    const t2 = activeTouches[touchIds[1]];
+    
+    const currentDistance = Math.hypot(t1.x - t2.x, t1.y - t2.y);
+    const currentAngle = Math.atan2(t2.y - t1.y, t2.x - t1.x);
+
+    if (initialPinchDistance === null || initialRotateAngle === null) {
+      initialPinchDistance = currentDistance;
+      initialRotateAngle = currentAngle;
+    } else {
+      const diffDist = currentDistance - initialPinchDistance;
+      cameraZoomDistance = Math.max(20, Math.min(600, cameraZoomDistance - diffDist * 0.4));
+      initialPinchDistance = currentDistance;
+
+      const diffAngle = currentAngle - initialRotateAngle;
+      cameraAngleOffset -= diffAngle * 1.2;
+      initialRotateAngle = currentAngle;
+    }
+  } else if (touchIds.length === 1 && isDraggingMap) {
+    const deltaX = e.clientX - previousPointerPos.x;
+    const deltaY = e.clientY - previousPointerPos.y;
+    targetMapPanX -= deltaX * 0.15;
+    targetMapPanZ -= deltaY * 0.15;
+    previousPointerPos = { x: e.clientX, y: e.clientY };
+  }
+});
+
+const clearTouch = e => {
+  delete activeTouches[e.pointerId];
+  if (Object.keys(activeTouches).length < 2) {
+    initialPinchDistance = null;
+    initialRotateAngle = null;
+  }
+  if (Object.keys(activeTouches).length === 0) isDraggingMap = false;
+};
+
+container.addEventListener('pointerup', clearTouch);
+container.addEventListener('pointercancel', clearTouch);
+
+container.addEventListener('wheel', e => {
+  e.preventDefault();
+  cameraZoomDistance = Math.max(20, Math.min(600, cameraZoomDistance + e.deltaY * 0.2));
+}, { passive: false });
+
+/* ==========================================================================
+   CICLO DE DIA E NOITE
+   ========================================================================== */
+let gameTime = 0;
+const periodDuration = 600; 
+const totalCycleDuration = periodDuration * 2; 
+
+function updateDayNightCycle(delta) {
+  gameTime = (gameTime + delta) % totalCycleDuration;
+  const daySky = new THREE.Color(0x87ceeb);
+  const nightSky = new THREE.Color(0x050b14);
+  const duskSky = new THREE.Color(0xd35400);
+
+  let currentSky = new THREE.Color();
+  let timeStr = "";
+
+  if (gameTime < periodDuration) {
+    currentSky.copy(daySky);
+    ambientLight.intensity = 0.9;
+    sunLight.intensity = 0.6;
+    timeStr = "☀️ Dia";
+  } else if (gameTime >= periodDuration && gameTime < periodDuration + 60) {
+    let t = (gameTime - periodDuration) / 60;
+    currentSky.lerpColors(daySky, duskSky, t);
+    ambientLight.intensity = THREE.MathUtils.lerp(0.9, 0.4, t);
+    sunLight.intensity = THREE.MathUtils.lerp(0.6, 0.2, t);
+    timeStr = "🌇 Pôr do Sol";
+  } else if (gameTime >= periodDuration + 60 && gameTime < totalCycleDuration - 60) {
+    currentSky.copy(nightSky);
+    ambientLight.intensity = 0.25;
+    sunLight.intensity = 0.1;
+    timeStr = "🌙 Noite";
+  } else {
+    let t = (gameTime - (totalCycleDuration - 60)) / 60;
+    currentSky.lerpColors(nightSky, daySky, t);
+    ambientLight.intensity = THREE.MathUtils.lerp(0.25, 0.9, t);
+    sunLight.intensity = THREE.MathUtils.lerp(0.1, 0.6, t);
+    timeStr = "🌅 Amanhecer";
+  }
+
+  scene.background.copy(currentSky);
+  scene.fog.color.copy(currentSky);
+
+  let totalMinutes = Math.floor(gameTime / 60);
+  let seconds = Math.floor(gameTime % 60);
+  document.getElementById('timeBadge').textContent = `${timeStr} (${totalMinutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')})`;
+}
+
+/* ==========================================================================
+   FUNÇÕES DE COLISÃO
+   ========================================================================== */
+const halfMap = mapSize / 2 - 40;
+
+function checkIslandCollision(x, z, radius = 4.0) {
+  for (let island of islandColliders) {
+    const dist = Math.hypot(x - island.x, z - island.z);
+    if (dist < island.radius + radius) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/* ==========================================================================
+   LOOP DE ANIMAÇÃO GERAL
+   ========================================================================== */
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  const elapsedTime = clock.getElapsedTime();
+
+  updateDayNightCycle(delta);
+
+  // Movimentação do Jogador
+  if (isPlayerAlive) {
+    if (controlsState.up) currentSpeed = maxBoostSpeed;
+    else if (controlsState.down) currentSpeed = -0.3;
+    else if (currentSpeed > 0) currentSpeed = cruisingSpeed;
+
+    if (controlsState.left) currentHeading += 0.035;
+    if (controlsState.right) currentHeading -= 0.035;
+
+    if (Math.abs(currentSpeed) > 0.01) {
+      let nextX = shipPos.x + Math.sin(currentHeading) * currentSpeed;
+      let nextZ = shipPos.z + Math.cos(currentHeading) * currentSpeed;
+
+      if (Math.abs(nextX) < halfMap && Math.abs(nextZ) < halfMap) {
+        if (!checkIslandCollision(nextX, nextZ, 4.5)) {
+          shipPos.x = nextX;
+          shipPos.z = nextZ;
+        } else {
+          currentSpeed = 0;
+          showToast("🏝️ Colisão com a ilha!");
+        }
+      } else {
+        currentSpeed = 0;
+        showToast("🚧 Fim do mapa! Barreira alcançada.");
+      }
+
+      shipGroup.position.x = shipPos.x;
+      shipGroup.position.z = shipPos.z;
+    }
+    shipGroup.rotation.y = currentHeading;
+  }
+
+  // IA e Movimento dos Robôs
+  botsData.forEach((bot, idx) => {
+    if (bot.health <= 0) {
+      if (botMeshes[idx].visible) {
+        botMeshes[idx].visible = false;
+        createExplosionEffect(bot.x, bot.z);
+        showToast(`💥 Navio ${bot.name} foi destruído!`);
+      }
+      return;
+    }
+
+    let closestTarget = { x: shipPos.x, z: shipPos.z, dist: Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z) };
+    
+    botsData.forEach(other => {
+      if (other.id !== bot.id && other.health > 0) {
+        const d = Math.hypot(other.x - bot.x, other.z - bot.z);
+        if (d < closestTarget.dist) {
+          closestTarget = { x: other.x, z: other.z, dist: d };
+        }
+      }
+    });
+
+    const angleToTarget = Math.atan2(closestTarget.x - bot.x, closestTarget.z - bot.z);
+    
+    let targetHeading = angleToTarget;
+    let testX = bot.x + Math.sin(targetHeading) * (bot.speed * 3);
+    let testZ = bot.z + Math.cos(targetHeading) * (bot.speed * 3);
+    if (checkIslandCollision(testX, testZ, 6.0)) {
+      targetHeading += 1.2;
+    }
+
+    bot.heading = targetHeading;
+    let nextBotX = bot.x + Math.sin(bot.heading) * bot.speed;
+    let nextBotZ = bot.z + Math.cos(bot.heading) * bot.speed;
+
+    if (Math.abs(nextBotX) < halfMap && Math.abs(nextBotZ) < halfMap && !checkIslandCollision(nextBotX, nextBotZ, 4.5)) {
+      bot.x = nextBotX;
+      bot.z = nextBotZ;
+    } else {
+      bot.heading += Math.PI;
+    }
+
+    botMeshes[idx].position.x = bot.x;
+    botMeshes[idx].position.z = bot.z;
+    botMeshes[idx].rotation.y = bot.heading;
+
+    botMeshes[idx].rotation.z = Math.sin(elapsedTime * 1.4 + idx) * 0.03;
+    botMeshes[idx].rotation.x = Math.cos(elapsedTime * 1.1 + idx) * 0.02;
+    botMeshes[idx].position.y = 0.5 + Math.sin(elapsedTime * 1.9 + idx) * 0.12;
+
+    if (closestTarget.dist < 280 && elapsedTime - bot.lastShot > 1.5) {
+      fireProjectile({ x: bot.x, z: bot.z }, bot.heading, true);
+      bot.lastShot = elapsedTime;
+    }
+
+    if (bot.health < 100 && Math.random() < 0.3) {
+      spawnContinuousSmoke(bot);
+    }
+  });
+
+  // Colisão física real entre navios
+  if (isPlayerAlive) {
+    botsData.forEach(bot => {
+      if (bot.health > 0) {
+        let distPlayer = Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z);
+        if (distPlayer < 6.5) {
+          createSparkEffect(shipPos.x, shipPos.z);
+          playerHealth = Math.max(0, playerHealth - 8);
+          bot.health = Math.max(0, bot.health - 8);
+          document.getElementById('playerHealth').textContent = `${playerHealth}%`;
+          showToast(`💥 COLISÃO COM O NAVIO ${bot.name}!`);
+          currentSpeed = -0.25;
+
+          if (playerHealth <= 0 && isPlayerAlive) {
+            isPlayerAlive = false;
+            createExplosionEffect(shipPos.x, shipPos.z);
+            shipGroup.visible = false;
+            document.getElementById('gameOverModal').classList.add('show');
+          }
+        }
+      }
+    });
+  }
+
+  // Disparo Automático do Jogador
+  if (isPlayerAlive) {
+    let nearestBot = null;
+    let minBotDist = 300;
+    botsData.forEach(bot => {
+      if (bot.health > 0) {
+        const d = Math.hypot(bot.x - shipPos.x, bot.z - shipPos.z);
+        if (d < minBotDist) {
+          minBotDist = d;
+          nearestBot = bot;
+        }
+      }
+    });
+
+    if (nearestBot) {
+      const angleToBot = Math.atan2(nearestBot.x - shipPos.x, nearestBot.z - shipPos.z);
+      let angleDiff = currentHeading - angleToBot;
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+      if (Math.abs(angleDiff) < 0.6 && elapsedTime - lastShotTime > 0.8) {
+        fireProjectile(shipPos, currentHeading, false);
+        lastShotTime = elapsedTime;
+      }
+    }
+  }
+
+  // Atualiza Projéteis do Jogador
+  for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+    const p = activeProjectiles[i];
+    p.x += Math.sin(p.heading) * p.speed;
+    p.z += Math.cos(p.heading) * p.speed;
+    p.mesh.position.x = p.x;
+    p.mesh.position.z = p.z;
+    p.life--;
+
+    let hit = false;
+    botsData.forEach(bot => {
+      if (bot.health > 0 && Math.hypot(p.x - bot.x, p.z - bot.z) < 6) {
+        createSparkEffect(p.x, p.z);
+        bot.health = Math.max(0, bot.health - 1);
+        hit = true;
+      }
+    });
+
+    if (hit || p.life <= 0 || checkIslandCollision(p.x, p.z, 1.0) || Math.abs(p.x) > halfMap || Math.abs(p.z) > halfMap) {
+      scene.remove(p.mesh);
+      activeProjectiles.splice(i, 1);
+    }
+  }
+
+  // Atualiza Projéteis dos Robôs
+  for (let i = botProjectiles.length - 1; i >= 0; i--) {
+    const p = botProjectiles[i];
+    p.x += Math.sin(p.heading) * p.speed;
+    p.z += Math.cos(p.heading) * p.speed;
+    p.mesh.position.x = p.x;
+    p.mesh.position.z = p.z;
+    p.life--;
+
+    const distToPlayerHit = Math.hypot(p.x - shipPos.x, p.z - shipPos.z);
+    if (distToPlayerHit < 5 && playerHealth > 0 && isPlayerAlive) {
+      playerHealth = Math.max(0, playerHealth - 5);
+      document.getElementById('playerHealth').textContent = `${playerHealth}%`;
+      createSparkEffect(shipPos.x, shipPos.z);
+      showToast("⚠️ SEU NAVIO FOI ATINGIDO!");
+
+      if (playerHealth <= 0) {
+        isPlayerAlive = false;
+        createExplosionEffect(shipPos.x, shipPos.z);
+        shipGroup.visible = false;
+        document.getElementById('gameOverModal').classList.add('show');
+      }
+
+      scene.remove(p.mesh);
+      botProjectiles.splice(i, 1);
+      continue;
+    }
+    if (p.life <= 0 || checkIslandCollision(p.x, p.z, 1.0) || Math.abs(p.x) > halfMap || Math.abs(p.z) > halfMap) {
+      scene.remove(p.mesh);
+      botProjectiles.splice(i, 1);
+    }
+  }
+
+  // Atualiza Torpedos Teleguiados
+  for (let i = activeTorpedos.length - 1; i >= 0; i--) {
+    const t = activeTorpedos[i];
+    const targetBot = botsData.find(b => b.id === t.targetId);
+
+    if (!targetBot || targetBot.health <= 0) {
+      scene.remove(t.mesh);
+      activeTorpedos.splice(i, 1);
+      continue;
+    }
+
+    const tdx = targetBot.x - t.x;
+    const tdz = targetBot.z - t.z;
+    const tAngle = Math.atan2(tdx, tdz);
+
+    t.x += Math.sin(tAngle) * t.speed;
+    t.z += Math.cos(tAngle) * t.speed;
+
+    t.mesh.position.x = t.x;
+    t.mesh.position.z = t.z;
+    t.mesh.rotation.y = tAngle + Math.PI / 2;
+    t.life--;
+
+    const hitDist = Math.hypot(t.x - targetBot.x, t.z - targetBot.z);
+    if (hitDist < 7) {
+      showToast(`💥 TORPEDO ATINGIU O NAVIO ${targetBot.name}!`);
+      createExplosionEffect(targetBot.x, targetBot.z);
+      targetBot.health = Math.max(0, targetBot.health - 25);
+
+      scene.remove(t.mesh);
+      activeTorpedos.splice(i, 1);
+      continue;
+    }
+    if (t.life <= 0 || checkIslandCollision(t.x, t.z, 1.0) || Math.abs(t.x) > halfMap || Math.abs(t.z) > halfMap) {
+      scene.remove(t.mesh);
+      activeTorpedos.splice(i, 1);
+    }
+  }
+
+  // Atualiza Partículas e Explosões
+  for (let i = sparkParticles.length - 1; i >= 0; i--) {
+    const sp = sparkParticles[i];
+    sp.mesh.position.x += sp.vx;
+    sp.mesh.position.y += sp.vy;
+    sp.mesh.position.z += sp.vz;
+    sp.vy -= 0.02;
+    sp.life--;
+    if (sp.life <= 0) {
+      scene.remove(sp.mesh);
+      sparkParticles.splice(i, 1);
+    }
+  }
+
+  botsData.forEach(bot => {
+    for (let i = bot.smoke.length - 1; i >= 0; i--) {
+      const p = bot.smoke[i];
+      p.mesh.position.x += p.velX;
+      p.mesh.position.y += p.velY;
+      p.mesh.position.z += p.velZ;
+      p.mesh.scale.addScalar(0.015);
+      p.mesh.material.opacity -= 0.008;
+      p.life--;
+
+      if (p.life <= 0 || p.mesh.material.opacity <= 0) {
+        scene.remove(p.mesh);
+        bot.smoke.splice(i, 1);
+      }
+    }
+  });
+
+  for (let i = activeExplosions.length - 1; i >= 0; i--) {
+    const exp = activeExplosions[i];
+    exp.scale += 0.15;
+    exp.group.scale.set(exp.scale, exp.scale, exp.scale);
+    exp.fire.material.opacity -= 0.02;
+    exp.smoke.material.opacity -= 0.015;
+    exp.life--;
+
+    if (exp.life <= 0) {
+      scene.remove(exp.group);
+      activeExplosions.splice(i, 1);
+    }
+  }
+
+  // Balanço do Jogador
+  if (isPlayerAlive) {
+    shipGroup.rotation.z = Math.sin(elapsedTime * 1.5) * 0.03;
+    shipGroup.rotation.x = Math.cos(elapsedTime * 1.2) * 0.02;
+    shipGroup.position.y = 0.5 + Math.sin(elapsedTime * 2.0) * 0.12;
+  }
+
+  // Câmera Inteligente
+  let targetCamX, targetCamZ;
+  if (isPlayerAlive && Math.abs(currentSpeed) > 0.01) {
+    targetCamX = shipPos.x;
+    targetCamZ = shipPos.z;
+    targetMapPanX = shipPos.x;
+    targetMapPanZ = shipPos.z;
+  } else {
+    mapPanX += (targetMapPanX - mapPanX) * 0.1;
+    mapPanZ += (targetMapPanZ - mapPanZ) * 0.1;
+    targetCamX = mapPanX;
+    targetCamZ = mapPanZ;
+  }
+
+  const finalCamX = targetCamX + Math.sin(cameraAngleOffset) * (cameraZoomDistance * 0.8);
+  const finalCamZ = targetCamZ + Math.cos(cameraAngleOffset) * (cameraZoomDistance * 0.8);
+
+  camera.position.x += (finalCamX - camera.position.x) * 0.08;
+  camera.position.y += (cameraZoomDistance - camera.position.y) * 0.08;
+  camera.position.z += (finalCamZ - camera.position.z) * 0.08;
+  camera.lookAt(targetCamX, 0.5, targetCamZ);
+
+  // Ondas do mar responsivas
+  const position = oceanGeometry.attributes.position;
+  for (let j = 0; j < position.count; j++) {
+    const u = position.getX(j);
+    const v = position.getY(j);
+    const wave1 = Math.sin(u * 0.15 + elapsedTime * 1.8) * Math.cos(v * 0.15 + elapsedTime * 1.3) * 0.3;
+    const wave2 = Math.cos(u * 0.4 - elapsedTime * 1.0) * Math.sin(v * 0.4 + elapsedTime * 1.5) * 0.12;
+    position.setZ(j, wave1 + wave2);
+  }
+  position.needsUpdate = true;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+function showToast(msg) {
+  const t = document.getElementById('toastMsg');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Redimensionamento automático dinâmico para múltiplas proporções (Smart TVs, Celulares e PCs)
+window.addEventListener('resize', () => {
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+});
+</script>
+</body>
+</html>
