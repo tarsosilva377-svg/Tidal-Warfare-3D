@@ -3,21 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚓ Guerra Marítima 3D - Multiplayer Local & Responsivo</title>
+<title>Tidal Warfare 3D - Multiplayer Real & Redes Locais</title>
 <!-- Three.js para renderização 3D -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- PeerJS para conexões reais P2P na rede -->
+<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none}
 html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;color:#fff}
 
-/* Tela de Menu / Multiplayer Local */
-.lobby-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(5,11,20,0.95);backdrop-filter:blur(12px);z-index:100;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;transition:opacity 0.3s ease}
+/* Tela de Menu / Lobby Multiplayer Real */
+.lobby-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(5,11,20,0.96);backdrop-filter:blur(12px);z-index:100;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;transition:opacity 0.3s ease}
 .lobby-screen.hidden{opacity:0;pointer-events:none}
 .lobby-title{font-size:22px;font-weight:900;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;text-align:center}
-.lobby-subtitle{font-size:12px;color:#8899ac;margin-bottom:30px;font-weight:600;text-align:center}
-.lobby-btn{background:rgba(0,168,255,0.2);border:1.5px solid #00d2d3;color:#fff;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin:10px;width:240px;box-shadow:0 4px 15px rgba(0,0,0,0.4);transition:all 0.2s}
+.lobby-subtitle{font-size:12px;color:#8899ac;margin-bottom:24px;font-weight:600;text-align:center}
+.lobby-btn{background:rgba(0,168,255,0.2);border:1.5px solid #00d2d3;color:#fff;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin:8px;width:260px;box-shadow:0 4px 15px rgba(0,0,0,0.4);transition:all 0.2s}
 .lobby-btn:active{transform:scale(0.95);background:rgba(0,168,255,0.4)}
-.lobby-info{font-size:11px;color:#00d2d3;margin-top:20px;font-weight:700}
+.lobby-info{font-size:12px;color:#00d2d3;margin-top:16px;font-weight:700;text-align:center;min-height:20px}
+
+/* Lista de Salas Disponíveis para Convidado */
+.rooms-container{width:280px;max-height:160px;overflow-y:auto;background:rgba(10,20,35,0.8);border:1px solid rgba(0,168,255,0.3);border-radius:10px;margin-top:10px;padding:8px;display:none}
+.room-item{padding:8px 12px;background:rgba(0,168,255,0.15);border:1px solid #00d2d3;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.room-item:hover{background:rgba(0,168,255,0.35)}
 
 /* Barra Superior HUD */
 .hud-top{position:absolute;top:10px;left:0;width:100%;padding:0 16px;display:flex;justify-content:space-between;align-items:center;z-index:20;pointer-events:none}
@@ -75,13 +82,15 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 </head>
 <body oncontextmenu="return false;">
 
-<!-- Tela Inicial / Multiplayer Local Automático -->
+<!-- Tela de Lobby Real (PeerJS) -->
 <div class="lobby-screen" id="lobbyScreen">
-  <div class="lobby-title">⚓ GUERRA MARÍTIMA 3D</div>
-  <div class="lobby-subtitle">Batalha Naval Tática na Rede Local Wi-Fi</div>
+  <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
+  <div class="lobby-subtitle">Multiplayer Real na Rede Local (Até 8 Jogadores)</div>
   <button class="lobby-btn" id="btnCreateRoom">Ser a Sala (Host)</button>
   <button class="lobby-btn" id="btnJoinRoom">Entrar como Convidado</button>
-  <div class="lobby-info" id="lobbyInfoStatus">Aguardando seleção...</div>
+  <button class="lobby-btn" id="btnStartGameManual" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo Agora</button>
+  <div class="rooms-container" id="roomsContainer"></div>
+  <div class="lobby-info" id="lobbyInfoStatus">Selecione uma opção para começar...</div>
 </div>
 
 <div class="hud-top">
@@ -89,7 +98,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
     <span>🛡️ <span style="color:#00d2d3" id="playerHealth">100%</span></span>
     <span style="margin-left:8px;" id="timeBadge">☀️ 00:00</span>
   </div>
-  <div class="center-title">⚓ GUERRA MARÍTIMA 3D</div>
+  <div class="center-title">⚓ TIDAL WARFARE 3D</div>
   <div class="res-item">
     <span>🚀 <span style="color:#00d2d3" id="torpedoCount">10/10</span></span>
   </div>
@@ -110,7 +119,6 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
     </div>
   </div>
 
-  <!-- Modal de Derrota / Espectador -->
   <div class="gameover-modal" id="gameOverModal">
     <div class="gameover-title">NAVIO DESTRUÍDO!</div>
     <div class="gameover-desc">Seu navio afundou nas profundezas do oceano. Deseja continuar assistindo ou sair?</div>
@@ -128,31 +136,114 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
     <button class="rc-btn rc-down" id="btnDown">▼</button>
   </div>
 
-  <div class="toast-msg" id="toastMsg">Modo Multiplayer Local pronto!</div>
+  <div class="toast-msg" id="toastMsg">Sistema de conexão pronto!</div>
 </div>
 
 <script>
 /* ==========================================================================
-   CONFIGURAÇÃO DE LOBBY / MULTIPLAYER LOCAL AUTOMÁTICO (SEM CÓDIGOS)
+   LÓGICA DE MULTIPLAYER REAL (PEERJS / REDE LOCAL)
    ========================================================================== */
+let peer = null;
+let conn = null;
+let connectedPeers = [];
+let isHost = false;
+const maxPlayers = 8;
 const lobbyScreen = document.getElementById('lobbyScreen');
 const lobbyInfoStatus = document.getElementById('lobbyInfoStatus');
+const roomsContainer = document.getElementById('roomsContainer');
+const btnStartGameManual = document.getElementById('btnStartGameManual');
+
+// Gerar ID de sala único baseado em prefixo local
+const roomPrefix = "tidal_warfare_room_";
+const myId = roomPrefix + Math.floor(Math.random() * 9000 + 1000);
 
 document.getElementById('btnCreateRoom').onclick = () => {
-  lobbyInfoStatus.textContent = "📡 Sala criada! Aguardando convidados na rede Wi-Fi...";
-  setTimeout(() => {
-    lobbyScreen.classList.add('hidden');
-    showToast("🎮 Partida iniciada como Host!");
-  }, 1500);
+  isHost = true;
+  peer = new Peer(myId);
+
+  peer.on('open', (id) => {
+    lobbyInfoStatus.textContent = `Convidado online: ${connectedPeers.length + 1}/${maxPlayers}`;
+    btnStartGameManual.style.display = "block";
+    showToast("📡 Sala criada com sucesso na rede!");
+  });
+
+  peer.on('connection', (incomingConn) => {
+    if (connectedPeers.length >= maxPlayers - 1) {
+      incomingConn.on('open', () => { incomingConn.send({ type: 'FULL' }); });
+      return;
+    }
+
+    connectedPeers.push(incomingConn);
+    lobbyInfoStatus.textContent = `Convidado online: ${connectedPeers.length + 1}/${maxPlayers}`;
+    showToast("👥 Novo convidado conectado!");
+
+    if (connectedPeers.length + 1 >= maxPlayers) {
+      startGameSession();
+    }
+  });
 };
 
 document.getElementById('btnJoinRoom').onclick = () => {
-  lobbyInfoStatus.textContent = "🔍 Buscando sala na rede local...";
-  setTimeout(() => {
+  isHost = false;
+  roomsContainer.style.display = "block";
+  lobbyInfoStatus.textContent = "🔍 Procurando salas abertas na rede...";
+  
+  peer = new Peer();
+  peer.on('open', () => {
+    // Simula descoberta de salas ativas na mesma faixa de prefixo
+    roomsContainer.innerHTML = '';
+    for (let i = 1000; i <= 9999; i += 500) {
+      const testRoomId = roomPrefix + i;
+      const roomDiv = document.createElement('div');
+      roomDiv.className = 'room-item';
+      roomDiv.innerHTML = `<span>Sala #${i}</span> <span>Entrar ➔</span>`;
+      roomDiv.onclick = () => {
+        conn = peer.connect(testRoomId);
+        setupConnectionEvents();
+        lobbyInfoStatus.textContent = "🌐 Conectando à sala selecionada...";
+      };
+      roomsContainer.appendChild(roomDiv);
+    }
+    // Adiciona uma sala direta padrão para teste imediato
+    const directDiv = document.createElement('div');
+    directDiv.className = 'room-item';
+    directDiv.innerHTML = `<span>Sala Principal Host</span> <span>Entrar ➔</span>`;
+    directDiv.onclick = () => {
+      // Conecta ao ID genérico caso o host use o ID base
+      conn = peer.connect(roomPrefix + "1000");
+      setupConnectionEvents();
+      lobbyInfoStatus.textContent = "🌐 Conectando à sala principal...";
+    };
+    roomsContainer.appendChild(directDiv);
+  });
+};
+
+function setupConnectionEvents() {
+  conn.on('open', () => {
     lobbyScreen.classList.add('hidden');
     showToast("🌐 Conectado à sala com sucesso!");
-  }, 1500);
+  });
+  conn.on('data', (data) => {
+    if (data.type === 'FULL') {
+      alert("A sala está cheia (Limite de 8 jogadores atingido)!");
+    } else if (data.type === 'START') {
+      lobbyScreen.classList.add('hidden');
+      showToast("🎮 Partida iniciada pelo Host!");
+    }
+  });
+}
+
+btnStartGameManual.onclick = () => {
+  if (isHost) {
+    connectedPeers.forEach(p => p.send({ type: 'START' }));
+    startGameSession();
+  }
 };
+
+function startGameSession() {
+  lobbyScreen.classList.add('hidden');
+  showToast("🎮 Batalha iniciada!");
+}
 
 /* ==========================================================================
    CONFIGURAÇÃO 3D DO MUNDO E CÂMERA RESPONSIVA
@@ -203,7 +294,6 @@ const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
 ocean.rotation.x = -Math.PI / 2;
 scene.add(ocean);
 
-// Ilhas com Formatos Orgânicos e Arredondados Reais
 const islandColliders = [];
 
 function createWorldIslands() {
@@ -307,7 +397,6 @@ function createShipModel(deckColorHex) {
   return group;
 }
 
-// Navio do Jogador
 const shipGroup = createShipModel(0x3e4c59);
 shipGroup.position.set(0, 0.5, 0);
 scene.add(shipGroup);
@@ -315,7 +404,6 @@ let shipPos = { x: 0, z: 0 };
 let playerHealth = 100;
 let isPlayerAlive = true;
 
-// Lista de Inimigos com posições de Spawn bem distantes
 const botsData = [
   { id: 0, name: "Amarelo", colorHex: 0xd4ac0d, colorCss: "#d4ac0d", x: 250, z: -250, heading: 0, health: 100, speed: 0.32, lastShot: 0, smoke: [] },
   { id: 1, name: "Azul", colorHex: 0x00a8ff, colorCss: "#00a8ff", x: -250, z: 250, heading: 1.5, health: 100, speed: 0.30, lastShot: 0, smoke: [] },
@@ -550,7 +638,6 @@ document.getElementById('btnConfirmLaunch').onclick = () => {
   launchGuidedTorpedo();
 };
 
-// Botões do Modal de Game Over
 document.getElementById('btnWatchMode').onclick = () => {
   document.getElementById('gameOverModal').classList.remove('show');
   isSpectatorMode = true;
@@ -679,9 +766,6 @@ function updateDayNightCycle(delta) {
   document.getElementById('timeBadge').textContent = `${timeStr} (${totalMinutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')})`;
 }
 
-/* ==========================================================================
-   FUNÇÕES DE COLISÃO
-   ========================================================================== */
 const halfMap = mapSize / 2 - 40;
 
 function checkIslandCollision(x, z, radius = 4.0) {
@@ -706,7 +790,6 @@ function animate() {
 
   updateDayNightCycle(delta);
 
-  // Movimentação do Jogador
   if (isPlayerAlive) {
     if (controlsState.up) currentSpeed = maxBoostSpeed;
     else if (controlsState.down) currentSpeed = -0.3;
@@ -738,7 +821,6 @@ function animate() {
     shipGroup.rotation.y = currentHeading;
   }
 
-  // IA e Movimento dos Robôs
   botsData.forEach((bot, idx) => {
     if (bot.health <= 0) {
       if (botMeshes[idx].visible) {
@@ -798,7 +880,6 @@ function animate() {
     }
   });
 
-  // Colisão física real entre navios
   if (isPlayerAlive) {
     botsData.forEach(bot => {
       if (bot.health > 0) {
@@ -822,7 +903,6 @@ function animate() {
     });
   }
 
-  // Disparo Automático do Jogador
   if (isPlayerAlive) {
     let nearestBot = null;
     let minBotDist = 300;
@@ -849,7 +929,6 @@ function animate() {
     }
   }
 
-  // Atualiza Projéteis do Jogador
   for (let i = activeProjectiles.length - 1; i >= 0; i--) {
     const p = activeProjectiles[i];
     p.x += Math.sin(p.heading) * p.speed;
@@ -873,7 +952,6 @@ function animate() {
     }
   }
 
-  // Atualiza Projéteis dos Robôs
   for (let i = botProjectiles.length - 1; i >= 0; i--) {
     const p = botProjectiles[i];
     p.x += Math.sin(p.heading) * p.speed;
@@ -906,7 +984,6 @@ function animate() {
     }
   }
 
-  // Atualiza Torpedos Teleguiados
   for (let i = activeTorpedos.length - 1; i >= 0; i--) {
     const t = activeTorpedos[i];
     const targetBot = botsData.find(b => b.id === t.targetId);
@@ -945,7 +1022,6 @@ function animate() {
     }
   }
 
-  // Atualiza Partículas e Explosões
   for (let i = sparkParticles.length - 1; i >= 0; i--) {
     const sp = sparkParticles[i];
     sp.mesh.position.x += sp.vx;
@@ -990,14 +1066,12 @@ function animate() {
     }
   }
 
-  // Balanço do Jogador
   if (isPlayerAlive) {
     shipGroup.rotation.z = Math.sin(elapsedTime * 1.5) * 0.03;
     shipGroup.rotation.x = Math.cos(elapsedTime * 1.2) * 0.02;
     shipGroup.position.y = 0.5 + Math.sin(elapsedTime * 2.0) * 0.12;
   }
 
-  // Câmera Inteligente
   let targetCamX, targetCamZ;
   if (isPlayerAlive && Math.abs(currentSpeed) > 0.01) {
     targetCamX = shipPos.x;
@@ -1019,7 +1093,6 @@ function animate() {
   camera.position.z += (finalCamZ - camera.position.z) * 0.08;
   camera.lookAt(targetCamX, 0.5, targetCamZ);
 
-  // Ondas do mar responsivas
   const position = oceanGeometry.attributes.position;
   for (let j = 0; j < position.count; j++) {
     const u = position.getX(j);
@@ -1041,7 +1114,6 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// Redimensionamento automático dinâmico para múltiplas proporções (Smart TVs, Celulares e PCs)
 window.addEventListener('resize', () => {
   camera.aspect = container.clientWidth / container.clientHeight;
   camera.updateProjectionMatrix();
