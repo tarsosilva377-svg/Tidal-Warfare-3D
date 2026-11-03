@@ -86,13 +86,13 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 <!-- Tela de Lobby Real com Nomes de Sala -->
 <div class="lobby-screen" id="lobbyScreen">
   <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
-  <div class="lobby-subtitle">Multiplayer Real com Nome de Sala (Até 8 Jogadores)</div>
-  <input type="text" id="roomNameInput" class="lobby-input" value="Batalha do Tarso" placeholder="Digite o nome da sala...">
-  <button class="lobby-btn" id="btnCreateRoom">Ser a Sala (Host)</button>
-  <button class="lobby-btn" id="btnJoinRoom">Entrar como Convidado</button>
-  <button class="lobby-btn" id="btnStartGameManual" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo Agora</button>
+  <div class="lobby-subtitle">Multiplayer Real na Rede Local (Até 8 Jogadores)</div>
+  <input type="text" id="roomNameInput" class="lobby-input" value="" placeholder="Digite o nome da sala ou seu nome...">
+  <button class="lobby-btn" id="btnCreateRoom">Criar Sala</button>
+  <button class="lobby-btn" id="btnJoinRoom">Salas Disponíveis</button>
+  <button class="lobby-btn" id="btnStartGameManual" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo (1 Jogador)</button>
   <div class="rooms-container" id="roomsContainer"></div>
-  <div class="lobby-info" id="lobbyInfoStatus">Digite um nome e escolha sua função...</div>
+  <div class="lobby-info" id="lobbyInfoStatus">Digite um nome para criar a sala ou buscar partidas...</div>
 </div>
 
 <div class="hud-top">
@@ -100,7 +100,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
     <span>🛡️ <span style="color:#00d2d3" id="playerHealth">100%</span></span>
     <span style="margin-left:8px;" id="timeBadge">☀️ 00:00</span>
   </div>
-  <div class="center-title">⚓ TIDAL WARFARE 3D</div>
+  <div class="center-title" id="hudPlayerName">⚓ TIDAL WARFARE 3D</div>
   <div class="res-item">
     <span>🚀 <span style="color:#00d2d3" id="torpedoCount">10/10</span></span>
   </div>
@@ -149,6 +149,7 @@ let peer = null;
 let conn = null;
 let connectedPeers = [];
 let isHost = false;
+let playerName = "Comandante";
 const maxPlayers = 8;
 const lobbyScreen = document.getElementById('lobbyScreen');
 const lobbyInfoStatus = document.getElementById('lobbyInfoStatus');
@@ -157,17 +158,37 @@ const btnStartGameManual = document.getElementById('btnStartGameManual');
 
 const roomPrefix = "tidal_room_";
 
+function updateHostButtonState() {
+  const totalConnected = connectedPeers.length + 1;
+  btnStartGameManual.textContent = `Iniciar Jogo (${totalConnected} Jogador${totalConnected > 1 ? 'es' : ''})`;
+  if (totalConnected > 1) {
+    btnStartGameManual.style.background = "rgba(0,211,100,0.5)";
+  } else {
+    btnStartGameManual.style.background = "rgba(0,211,100,0.2)";
+  }
+}
+
+// Botão: Criar Sala
 document.getElementById('btnCreateRoom').onclick = () => {
-  const customRoomName = document.getElementById('roomNameInput').value.trim() || "Sala Principal";
-  const roomId = roomPrefix + btoa(customRoomName).replace(/=/g, '');
+  const inputVal = document.getElementById('roomNameInput').value.trim();
+  if (!inputVal) {
+    showToast("⚠️ Digite um nome para criar a sala!");
+    document.getElementById('roomNameInput').focus();
+    return;
+  }
+  
+  playerName = inputVal;
+  document.getElementById('hudPlayerName').textContent = `⚓ ${playerName}`;
+  const roomId = roomPrefix + btoa(playerName).replace(/=/g, '');
   isHost = true;
   
   peer = new Peer(roomId);
 
   peer.on('open', (id) => {
-    lobbyInfoStatus.textContent = `Sala "${customRoomName}" criada! Convidados online: 1/${maxPlayers}`;
+    lobbyInfoStatus.textContent = `Sala "${playerName}" criada! Aguardando jogadores...`;
     btnStartGameManual.style.display = "block";
-    showToast("📡 Sala criada com sucesso!");
+    updateHostButtonState();
+    showToast("📡 Sala criada com sucesso na rede local!");
   });
 
   peer.on('connection', (incomingConn) => {
@@ -177,8 +198,9 @@ document.getElementById('btnCreateRoom').onclick = () => {
     }
 
     connectedPeers.push(incomingConn);
-    lobbyInfoStatus.textContent = `Sala "${customRoomName}" | Convidados online: ${connectedPeers.length + 1}/${maxPlayers}`;
-    showToast(`👥 Convidado conectado! (${connectedPeers.length + 1}/8)`);
+    lobbyInfoStatus.textContent = `Sala "${playerName}" | Jogadores conectados: ${connectedPeers.length + 1}/${maxPlayers}`;
+    updateHostButtonState();
+    showToast(`👥 Jogador conectado! (${connectedPeers.length + 1}/8)`);
 
     incomingConn.on('data', (data) => {
       if (data.type === 'ACTION') {
@@ -190,26 +212,66 @@ document.getElementById('btnCreateRoom').onclick = () => {
       startGameSession();
     }
   });
+
+  peer.on('error', (err) => {
+    showToast("⚠️ Erro na sala ou nome já existente!");
+  });
 };
 
+// Botão: Salas Disponíveis
 document.getElementById('btnJoinRoom').onclick = () => {
-  const customRoomName = document.getElementById('roomNameInput').value.trim() || "Sala Principal";
-  const roomId = roomPrefix + btoa(customRoomName).replace(/=/g, '');
-  isHost = false;
+  const inputVal = document.getElementById('roomNameInput').value.trim();
+  if (!inputVal) {
+    showToast("⚠️ Digite seu nome de jogador ou o nome da sala!");
+    document.getElementById('roomNameInput').focus();
+    return;
+  }
+
+  playerName = inputVal;
+  document.getElementById('hudPlayerName').textContent = `⚓ ${playerName}`;
   
-  peer = new Peer();
+  lobbyInfoStatus.textContent = `🔍 Verificando se a sala "${playerName}" está ativa...`;
+  roomsContainer.style.display = "block";
+  roomsContainer.innerHTML = '<div style="padding:10px;text-align:center;font-size:11px;color:#8899ac;">Buscando sala...</div>';
+
+  if (!peer) {
+    peer = new Peer();
+  }
+
   peer.on('open', () => {
-    lobbyInfoStatus.textContent = `🌐 Conectando à sala "${customRoomName}"...`;
-    conn = peer.connect(roomId);
-    setupConnectionEvents();
+    const targetRoomId = roomPrefix + btoa(playerName).replace(/=/g, '');
+    const testConn = peer.connect(targetRoomId);
+
+    let found = false;
+
+    testConn.on('open', () => {
+      found = true;
+      roomsContainer.innerHTML = '';
+      const item = document.createElement('div');
+      item.className = 'room-item';
+      item.innerHTML = `<span>⚓ Sala de ${playerName}</span> <span style="color:#00d2d3;">Entrar</span>`;
+      item.onclick = () => {
+        conn = testConn;
+        isHost = false;
+        setupConnectionEvents();
+      };
+      roomsContainer.appendChild(item);
+      lobbyInfoStatus.textContent = "✅ Sala encontrada! Clique para entrar.";
+    });
+
+    setTimeout(() => {
+      if (!found) {
+        roomsContainer.innerHTML = '<div style="padding:10px;text-align:center;font-size:11px;color:#ff3333;">Nenhuma sala online com esse nome. Crie uma!</div>';
+        lobbyInfoStatus.textContent = "Digite o nome de uma sala existente ou Crie a sua.";
+      }
+    }, 2000);
   });
 };
 
 function setupConnectionEvents() {
-  conn.on('open', () => {
-    lobbyScreen.classList.add('hidden');
-    showToast("🌐 Conectado com sucesso à sala do Host!");
-  });
+  lobbyScreen.classList.add('hidden');
+  showToast(`🌐 Conectado com sucesso como ${playerName}!`);
+
   conn.on('data', (data) => {
     if (data.type === 'FULL') {
       alert("A sala está cheia (Limite de 8 jogadores atingido)!");
@@ -218,6 +280,9 @@ function setupConnectionEvents() {
       lobbyScreen.classList.add('hidden');
       showToast("🎮 Partida iniciada pelo Host!");
     }
+  });
+  conn.on('error', () => {
+    showToast("⚠️ Falha ao conectar na sala selecionada.");
   });
 }
 
@@ -339,6 +404,32 @@ function createWorldIslands() {
 }
 createWorldIslands();
 
+function checkIslandCollision(x, z, radius = 4.0) {
+  for (let island of islandColliders) {
+    const dist = Math.hypot(x - island.x, z - island.z);
+    if (dist < island.radius + radius) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Função para encontrar um ponto de spawn totalmente livre de ilhas
+function getSafeSpawnPosition(preferredX, preferredZ) {
+  let x = preferredX;
+  let z = preferredZ;
+  let attempts = 0;
+  // Testa se o ponto bate em alguma ilha; se sim, escolhe posições abertas no oceano
+  while (checkIslandCollision(x, z, 15.0) && attempts < 50) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 300 + Math.random() * 250;
+    x = Math.cos(angle) * dist;
+    z = Math.sin(angle) * dist;
+    attempts++;
+  }
+  return { x, z };
+}
+
 /* ==========================================================================
    FUNÇÃO PARA CRIAR NAVIOS
    ========================================================================== */
@@ -385,19 +476,38 @@ function createShipModel(deckColorHex) {
   return group;
 }
 
+// Spawns seguros e verificados contra ilhas para Jogador e Bots
+const playerSpawn = getSafeSpawnPosition(0, -350);
 const shipGroup = createShipModel(0x3e4c59);
-shipGroup.position.set(0, 0.5, 0);
+shipGroup.position.set(playerSpawn.x, 0.5, playerSpawn.z);
 scene.add(shipGroup);
-let shipPos = { x: 0, z: 0 };
+let shipPos = { x: playerSpawn.x, z: playerSpawn.z };
 let playerHealth = 100;
 let isPlayerAlive = true;
 
-const botsData = [
-  { id: 0, name: "Amarelo", colorHex: 0xd4ac0d, colorCss: "#d4ac0d", x: 220, z: -220, heading: 0.5, health: 100, speed: 0.35, lastShot: 0, smoke: [] },
-  { id: 1, name: "Azul", colorHex: 0x00a8ff, colorCss: "#00a8ff", x: -220, z: 220, heading: 2.0, health: 100, speed: 0.33, lastShot: 0, smoke: [] },
-  { id: 2, name: "Roxo", colorHex: 0x9b59b6, colorCss: "#9b59b6", x: 220, z: 220, heading: 3.5, health: 100, speed: 0.36, lastShot: 0, smoke: [] },
-  { id: 3, name: "Verde", colorHex: 0x2ecc71, colorCss: "#2ecc71", x: -220, z: -220, heading: 5.0, health: 100, speed: 0.34, lastShot: 0, smoke: [] }
+const rawBotsData = [
+  { id: 0, name: "Amarelo", colorHex: 0xd4ac0d, colorCss: "#d4ac0d", prefX: 320, prefZ: -320, heading: 0.5 },
+  { id: 1, name: "Azul", colorHex: 0x00a8ff, colorCss: "#00a8ff", prefX: -320, prefZ: 320, heading: 2.0 },
+  { id: 2, name: "Roxo", colorHex: 0x9b59b6, colorCss: "#9b59b6", prefX: 320, prefZ: 320, heading: 3.5 },
+  { id: 3, name: "Verde", colorHex: 0x2ecc71, colorCss: "#2ecc71", prefX: -320, prefZ: -320, heading: 5.0 }
 ];
+
+const botsData = rawBotsData.map(b => {
+  const safePos = getSafeSpawnPosition(b.prefX, b.prefZ);
+  return {
+    id: b.id,
+    name: b.name,
+    colorHex: b.colorHex,
+    colorCss: b.colorCss,
+    x: safePos.x,
+    z: safePos.z,
+    heading: b.heading,
+    health: 100,
+    speed: 0.35,
+    lastShot: 0,
+    smoke: []
+  };
+});
 
 const botMeshes = botsData.map(b => {
   const mesh = createShipModel(b.colorHex);
@@ -756,17 +866,6 @@ function updateDayNightCycle(delta) {
 
 const halfMap = mapSize / 2 - 40;
 
-// Refinamento da Colisão Estrita com as Ilhas (Repulsão imediata sem travamento interno)
-function checkIslandCollision(x, z, radius = 4.0) {
-  for (let island of islandColliders) {
-    const dist = Math.hypot(x - island.x, z - island.z);
-    if (dist < island.radius + radius) {
-      return true;
-    }
-  }
-  return false;
-}
-
 /* ==========================================================================
    LOOP DE ANIMAÇÃO GERAL
    ========================================================================== */
@@ -796,7 +895,6 @@ function animate() {
           shipPos.x = nextX;
           shipPos.z = nextZ;
         } else {
-          // Recuo imediato para evitar entrar na ilha
           currentSpeed = -0.4;
           shipPos.x -= Math.sin(currentHeading) * 1.5;
           shipPos.z -= Math.cos(currentHeading) * 1.5;
@@ -813,7 +911,6 @@ function animate() {
     shipGroup.rotation.y = currentHeading;
   }
 
-  // Patrulha Ativa dos Robôs pelo Oceano Central
   botsData.forEach((bot, idx) => {
     if (bot.health <= 0) {
       if (botMeshes[idx].visible) {
