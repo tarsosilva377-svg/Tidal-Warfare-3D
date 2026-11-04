@@ -156,6 +156,8 @@ const lobbyInfoStatus = document.getElementById('lobbyInfoStatus');
 const roomsContainer = document.getElementById('roomsContainer');
 const btnStartGameManual = document.getElementById('btnStartGameManual');
 
+let gameStarted = false; // Controla se o jogo começou de fato
+
 const roomPrefix = "tidal_room_";
 
 function updateHostButtonState() {
@@ -277,8 +279,7 @@ function setupConnectionEvents() {
       alert("A sala está cheia (Limite de 8 jogadores atingido)!");
       location.reload();
     } else if (data.type === 'START') {
-      lobbyScreen.classList.add('hidden');
-      showToast("🎮 Partida iniciada pelo Host!");
+      startGameSession();
     }
   });
   conn.on('error', () => {
@@ -295,6 +296,7 @@ btnStartGameManual.onclick = () => {
 
 function startGameSession() {
   lobbyScreen.classList.add('hidden');
+  gameStarted = true; // Libera a simulação e o combate no loop principal
   showToast("🎮 Batalha iniciada!");
 }
 
@@ -333,7 +335,7 @@ sunLight.position.set(100, 150, 100);
 scene.add(sunLight);
 
 /* ==========================================================================
-   OCEANO GIGANTE & ILHAS (GERADO PELO HOST)
+   OCEANO GIGANTE & ILHAS
    ========================================================================== */
 const mapSize = 1800;
 const oceanGeometry = new THREE.PlaneGeometry(mapSize, mapSize, 128, 128);
@@ -414,15 +416,22 @@ function checkIslandCollision(x, z, radius = 4.0) {
   return false;
 }
 
-// Função para encontrar um ponto de spawn totalmente livre de ilhas
-function getSafeSpawnPosition(preferredX, preferredZ) {
+// Garante que o ponto inicial esteja livre de ilhas e de outros navios
+function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
   let x = preferredX;
   let z = preferredZ;
   let attempts = 0;
-  // Testa se o ponto bate em alguma ilha; se sim, escolhe posições abertas no oceano
-  while (checkIslandCollision(x, z, 15.0) && attempts < 50) {
+  
+  while (attempts < 100) {
+    let collidesWithIsland = checkIslandCollision(x, z, 20.0);
+    let collidesWithOther = existingPositions.some(p => Math.hypot(p.x - x, p.z - z) < 120);
+    
+    if (!collidesWithIsland && !collidesWithOther) {
+      break;
+    }
+    
     const angle = Math.random() * Math.PI * 2;
-    const dist = 300 + Math.random() * 250;
+    const dist = 250 + Math.random() * 350;
     x = Math.cos(angle) * dist;
     z = Math.sin(angle) * dist;
     attempts++;
@@ -476,8 +485,12 @@ function createShipModel(deckColorHex) {
   return group;
 }
 
-// Spawns seguros e verificados contra ilhas para Jogador e Bots
-const playerSpawn = getSafeSpawnPosition(0, -350);
+const occupiedPositions = [];
+
+// Posicionamento totalmente isolado e seguro
+const playerSpawn = getSafeSpawnPosition(0, -350, occupiedPositions);
+occupiedPositions.push(playerSpawn);
+
 const shipGroup = createShipModel(0x3e4c59);
 shipGroup.position.set(playerSpawn.x, 0.5, playerSpawn.z);
 scene.add(shipGroup);
@@ -486,14 +499,15 @@ let playerHealth = 100;
 let isPlayerAlive = true;
 
 const rawBotsData = [
-  { id: 0, name: "Amarelo", colorHex: 0xd4ac0d, colorCss: "#d4ac0d", prefX: 320, prefZ: -320, heading: 0.5 },
-  { id: 1, name: "Azul", colorHex: 0x00a8ff, colorCss: "#00a8ff", prefX: -320, prefZ: 320, heading: 2.0 },
-  { id: 2, name: "Roxo", colorHex: 0x9b59b6, colorCss: "#9b59b6", prefX: 320, prefZ: 320, heading: 3.5 },
-  { id: 3, name: "Verde", colorHex: 0x2ecc71, colorCss: "#2ecc71", prefX: -320, prefZ: -320, heading: 5.0 }
+  { id: 0, name: "Amarelo", colorHex: 0xd4ac0d, colorCss: "#d4ac0d", prefX: 350, prefZ: -350, heading: 0.5 },
+  { id: 1, name: "Azul", colorHex: 0x00a8ff, colorCss: "#00a8ff", prefX: -350, prefZ: 350, heading: 2.0 },
+  { id: 2, name: "Roxo", colorHex: 0x9b59b6, colorCss: "#9b59b6", prefX: 350, prefZ: 350, heading: 3.5 },
+  { id: 3, name: "Verde", colorHex: 0x2ecc71, colorCss: "#2ecc71", prefX: -350, prefZ: -350, heading: 5.0 }
 ];
 
 const botsData = rawBotsData.map(b => {
-  const safePos = getSafeSpawnPosition(b.prefX, b.prefZ);
+  const safePos = getSafeSpawnPosition(b.prefX, b.prefZ, occupiedPositions);
+  occupiedPositions.push(safePos);
   return {
     id: b.id,
     name: b.name,
@@ -878,237 +892,240 @@ function animate() {
 
   updateDayNightCycle(delta);
 
-  if (isPlayerAlive) {
-    if (controlsState.up) currentSpeed = maxBoostSpeed;
-    else if (controlsState.down) currentSpeed = -0.3;
-    else if (currentSpeed > 0) currentSpeed = cruisingSpeed;
+  // O jogo só processa física, combates e movimentação se a partida tiver sido iniciada
+  if (gameStarted) {
+    if (isPlayerAlive) {
+      if (controlsState.up) currentSpeed = maxBoostSpeed;
+      else if (controlsState.down) currentSpeed = -0.3;
+      else if (currentSpeed > 0) currentSpeed = cruisingSpeed;
 
-    if (controlsState.left) currentHeading += 0.035;
-    if (controlsState.right) currentHeading -= 0.035;
+      if (controlsState.left) currentHeading += 0.035;
+      if (controlsState.right) currentHeading -= 0.035;
 
-    if (Math.abs(currentSpeed) > 0.01) {
-      let nextX = shipPos.x + Math.sin(currentHeading) * currentSpeed;
-      let nextZ = shipPos.z + Math.cos(currentHeading) * currentSpeed;
+      if (Math.abs(currentSpeed) > 0.01) {
+        let nextX = shipPos.x + Math.sin(currentHeading) * currentSpeed;
+        let nextZ = shipPos.z + Math.cos(currentHeading) * currentSpeed;
 
-      if (Math.abs(nextX) < halfMap && Math.abs(nextZ) < halfMap) {
-        if (!checkIslandCollision(nextX, nextZ, 5.0)) {
-          shipPos.x = nextX;
-          shipPos.z = nextZ;
+        if (Math.abs(nextX) < halfMap && Math.abs(nextZ) < halfMap) {
+          if (!checkIslandCollision(nextX, nextZ, 5.0)) {
+            shipPos.x = nextX;
+            shipPos.z = nextZ;
+          } else {
+            currentSpeed = -0.4;
+            shipPos.x -= Math.sin(currentHeading) * 1.5;
+            shipPos.z -= Math.cos(currentHeading) * 1.5;
+            showToast("🏝️ Impacto na ilha! Manobra defensiva.");
+          }
         } else {
-          currentSpeed = -0.4;
-          shipPos.x -= Math.sin(currentHeading) * 1.5;
-          shipPos.z -= Math.cos(currentHeading) * 1.5;
-          showToast("🏝️ Impacto na ilha! Manobra defensiva.");
+          currentSpeed = 0;
+          showToast("🚧 Fim do mapa! Barreira alcançada.");
         }
-      } else {
-        currentSpeed = 0;
-        showToast("🚧 Fim do mapa! Barreira alcançada.");
-      }
 
-      shipGroup.position.x = shipPos.x;
-      shipGroup.position.z = shipPos.z;
-    }
-    shipGroup.rotation.y = currentHeading;
-  }
-
-  botsData.forEach((bot, idx) => {
-    if (bot.health <= 0) {
-      if (botMeshes[idx].visible) {
-        botMeshes[idx].visible = false;
-        createExplosionEffect(bot.x, bot.z);
-        showToast(`💥 Navio ${bot.name} foi destruído!`);
+        shipGroup.position.x = shipPos.x;
+        shipGroup.position.z = shipPos.z;
       }
-      return;
+      shipGroup.rotation.y = currentHeading;
     }
 
-    let closestTarget = { x: shipPos.x, z: shipPos.z, dist: Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z) };
-    
-    botsData.forEach(other => {
-      if (other.id !== bot.id && other.health > 0) {
-        const d = Math.hypot(other.x - bot.x, other.z - bot.z);
-        if (d < closestTarget.dist) {
-          closestTarget = { x: other.x, z: other.z, dist: d };
+    botsData.forEach((bot, idx) => {
+      if (bot.health <= 0) {
+        if (botMeshes[idx].visible) {
+          botMeshes[idx].visible = false;
+          createExplosionEffect(bot.x, bot.z);
+          showToast(`💥 Navio ${bot.name} foi destruído!`);
         }
+        return;
       }
-    });
 
-    const angleToTarget = Math.atan2(closestTarget.x - bot.x, closestTarget.z - bot.z);
-    
-    let targetHeading = angleToTarget;
-    let testX = bot.x + Math.sin(targetHeading) * (bot.speed * 4);
-    let testZ = bot.z + Math.cos(targetHeading) * (bot.speed * 4);
-    if (checkIslandCollision(testX, testZ, 7.0)) {
-      targetHeading += 1.5;
-    }
-
-    bot.heading = targetHeading;
-    let nextBotX = bot.x + Math.sin(bot.heading) * bot.speed;
-    let nextBotZ = bot.z + Math.cos(bot.heading) * bot.speed;
-
-    if (Math.abs(nextBotX) < halfMap && Math.abs(nextBotZ) < halfMap && !checkIslandCollision(nextBotX, nextBotZ, 5.0)) {
-      bot.x = nextBotX;
-      bot.z = nextBotZ;
-    } else {
-      bot.heading += Math.PI;
-    }
-
-    botMeshes[idx].position.x = bot.x;
-    botMeshes[idx].position.z = bot.z;
-    botMeshes[idx].rotation.y = bot.heading;
-
-    botMeshes[idx].rotation.z = Math.sin(elapsedTime * 1.4 + idx) * 0.03;
-    botMeshes[idx].rotation.x = Math.cos(elapsedTime * 1.1 + idx) * 0.02;
-    botMeshes[idx].position.y = 0.5 + Math.sin(elapsedTime * 1.9 + idx) * 0.12;
-
-    if (closestTarget.dist < 320 && elapsedTime - bot.lastShot > 1.2) {
-      fireProjectile({ x: bot.x, z: bot.z }, bot.heading, true);
-      bot.lastShot = elapsedTime;
-    }
-
-    if (bot.health < 100 && Math.random() < 0.3) {
-      spawnContinuousSmoke(bot);
-    }
-  });
-
-  if (isPlayerAlive) {
-    botsData.forEach(bot => {
-      if (bot.health > 0) {
-        let distPlayer = Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z);
-        if (distPlayer < 6.5) {
-          createSparkEffect(shipPos.x, shipPos.z);
-          playerHealth = Math.max(0, playerHealth - 8);
-          bot.health = Math.max(0, bot.health - 8);
-          document.getElementById('playerHealth').textContent = `${playerHealth}%`;
-          showToast(`💥 COLISÃO COM O NAVIO ${bot.name}!`);
-          currentSpeed = -0.25;
-
-          if (playerHealth <= 0 && isPlayerAlive) {
-            isPlayerAlive = false;
-            createExplosionEffect(shipPos.x, shipPos.z);
-            shipGroup.visible = false;
-            document.getElementById('gameOverModal').classList.add('show');
+      let closestTarget = { x: shipPos.x, z: shipPos.z, dist: Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z) };
+      
+      botsData.forEach(other => {
+        if (other.id !== bot.id && other.health > 0) {
+          const d = Math.hypot(other.x - bot.x, other.z - bot.z);
+          if (d < closestTarget.dist) {
+            closestTarget = { x: other.x, z: other.z, dist: d };
           }
         }
+      });
+
+      const angleToTarget = Math.atan2(closestTarget.x - bot.x, closestTarget.z - bot.z);
+      
+      let targetHeading = angleToTarget;
+      let testX = bot.x + Math.sin(targetHeading) * (bot.speed * 4);
+      let testZ = bot.z + Math.cos(targetHeading) * (bot.speed * 4);
+      if (checkIslandCollision(testX, testZ, 7.0)) {
+        targetHeading += 1.5;
+      }
+
+      bot.heading = targetHeading;
+      let nextBotX = bot.x + Math.sin(bot.heading) * bot.speed;
+      let nextBotZ = bot.z + Math.cos(bot.heading) * bot.speed;
+
+      if (Math.abs(nextBotX) < halfMap && Math.abs(nextBotZ) < halfMap && !checkIslandCollision(nextBotX, nextBotZ, 5.0)) {
+        bot.x = nextBotX;
+        bot.z = nextBotZ;
+      } else {
+        bot.heading += Math.PI;
+      }
+
+      botMeshes[idx].position.x = bot.x;
+      botMeshes[idx].position.z = bot.z;
+      botMeshes[idx].rotation.y = bot.heading;
+
+      botMeshes[idx].rotation.z = Math.sin(elapsedTime * 1.4 + idx) * 0.03;
+      botMeshes[idx].rotation.x = Math.cos(elapsedTime * 1.1 + idx) * 0.02;
+      botMeshes[idx].position.y = 0.5 + Math.sin(elapsedTime * 1.9 + idx) * 0.12;
+
+      if (closestTarget.dist < 320 && elapsedTime - bot.lastShot > 1.2) {
+        fireProjectile({ x: bot.x, z: bot.z }, bot.heading, true);
+        bot.lastShot = elapsedTime;
+      }
+
+      if (bot.health < 100 && Math.random() < 0.3) {
+        spawnContinuousSmoke(bot);
       }
     });
-  }
 
-  if (isPlayerAlive) {
-    let nearestBot = null;
-    let minBotDist = 300;
-    botsData.forEach(bot => {
-      if (bot.health > 0) {
-        const d = Math.hypot(bot.x - shipPos.x, bot.z - shipPos.z);
-        if (d < minBotDist) {
-          minBotDist = d;
-          nearestBot = bot;
+    if (isPlayerAlive) {
+      botsData.forEach(bot => {
+        if (bot.health > 0) {
+          let distPlayer = Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z);
+          if (distPlayer < 6.5) {
+            createSparkEffect(shipPos.x, shipPos.z);
+            playerHealth = Math.max(0, playerHealth - 8);
+            bot.health = Math.max(0, bot.health - 8);
+            document.getElementById('playerHealth').textContent = `${playerHealth}%`;
+            showToast(`💥 COLISÃO COM O NAVIO ${bot.name}!`);
+            currentSpeed = -0.25;
+
+            if (playerHealth <= 0 && isPlayerAlive) {
+              isPlayerAlive = false;
+              createExplosionEffect(shipPos.x, shipPos.z);
+              shipGroup.visible = false;
+              document.getElementById('gameOverModal').classList.add('show');
+            }
+          }
+        }
+      });
+    }
+
+    if (isPlayerAlive) {
+      let nearestBot = null;
+      let minBotDist = 300;
+      botsData.forEach(bot => {
+        if (bot.health > 0) {
+          const d = Math.hypot(bot.x - shipPos.x, bot.z - shipPos.z);
+          if (d < minBotDist) {
+            minBotDist = d;
+            nearestBot = bot;
+          }
+        }
+      });
+
+      if (nearestBot) {
+        const angleToBot = Math.atan2(nearestBot.x - shipPos.x, nearestBot.z - shipPos.z);
+        let angleDiff = currentHeading - angleToBot;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+        if (Math.abs(angleDiff) < 0.6 && elapsedTime - lastShotTime > 0.8) {
+          fireProjectile(shipPos, currentHeading, false);
+          lastShotTime = elapsedTime;
         }
       }
-    });
+    }
 
-    if (nearestBot) {
-      const angleToBot = Math.atan2(nearestBot.x - shipPos.x, nearestBot.z - shipPos.z);
-      let angleDiff = currentHeading - angleToBot;
-      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+      const p = activeProjectiles[i];
+      p.x += Math.sin(p.heading) * p.speed;
+      p.z += Math.cos(p.heading) * p.speed;
+      p.mesh.position.x = p.x;
+      p.mesh.position.z = p.z;
+      p.life--;
 
-      if (Math.abs(angleDiff) < 0.6 && elapsedTime - lastShotTime > 0.8) {
-        fireProjectile(shipPos, currentHeading, false);
-        lastShotTime = elapsedTime;
+      let hit = false;
+      botsData.forEach(bot => {
+        if (bot.health > 0 && Math.hypot(p.x - bot.x, p.z - bot.z) < 6) {
+          createSparkEffect(p.x, p.z);
+          bot.health = Math.max(0, bot.health - 1);
+          hit = true;
+        }
+      });
+
+      if (hit || p.life <= 0 || checkIslandCollision(p.x, p.z, 1.0) || Math.abs(p.x) > halfMap || Math.abs(p.z) > halfMap) {
+        scene.remove(p.mesh);
+        activeProjectiles.splice(i, 1);
       }
     }
-  }
 
-  for (let i = activeProjectiles.length - 1; i >= 0; i--) {
-    const p = activeProjectiles[i];
-    p.x += Math.sin(p.heading) * p.speed;
-    p.z += Math.cos(p.heading) * p.speed;
-    p.mesh.position.x = p.x;
-    p.mesh.position.z = p.z;
-    p.life--;
+    for (let i = botProjectiles.length - 1; i >= 0; i--) {
+      const p = botProjectiles[i];
+      p.x += Math.sin(p.heading) * p.speed;
+      p.z += Math.cos(p.heading) * p.speed;
+      p.mesh.position.x = p.x;
+      p.mesh.position.z = p.z;
+      p.life--;
 
-    let hit = false;
-    botsData.forEach(bot => {
-      if (bot.health > 0 && Math.hypot(p.x - bot.x, p.z - bot.z) < 6) {
-        createSparkEffect(p.x, p.z);
-        bot.health = Math.max(0, bot.health - 1);
-        hit = true;
+      const distToPlayerHit = Math.hypot(p.x - shipPos.x, p.z - shipPos.z);
+      if (distToPlayerHit < 5 && playerHealth > 0 && isPlayerAlive) {
+        playerHealth = Math.max(0, playerHealth - 5);
+        document.getElementById('playerHealth').textContent = `${playerHealth}%`;
+        createSparkEffect(shipPos.x, shipPos.z);
+        showToast("⚠️ SEU NAVIO FOI ATINGIDO!");
+
+        if (playerHealth <= 0) {
+          isPlayerAlive = false;
+          createExplosionEffect(shipPos.x, shipPos.z);
+          shipGroup.visible = false;
+          document.getElementById('gameOverModal').classList.add('show');
+        }
+
+        scene.remove(p.mesh);
+        botProjectiles.splice(i, 1);
+        continue;
       }
-    });
-
-    if (hit || p.life <= 0 || checkIslandCollision(p.x, p.z, 1.0) || Math.abs(p.x) > halfMap || Math.abs(p.z) > halfMap) {
-      scene.remove(p.mesh);
-      activeProjectiles.splice(i, 1);
+      if (p.life <= 0 || checkIslandCollision(p.x, p.z, 1.0) || Math.abs(p.x) > halfMap || Math.abs(p.z) > halfMap) {
+        scene.remove(p.mesh);
+        botProjectiles.splice(i, 1);
+      }
     }
-  }
 
-  for (let i = botProjectiles.length - 1; i >= 0; i--) {
-    const p = botProjectiles[i];
-    p.x += Math.sin(p.heading) * p.speed;
-    p.z += Math.cos(p.heading) * p.speed;
-    p.mesh.position.x = p.x;
-    p.mesh.position.z = p.z;
-    p.life--;
+    for (let i = activeTorpedos.length - 1; i >= 0; i--) {
+      const t = activeTorpedos[i];
+      const targetBot = botsData.find(b => b.id === t.targetId);
 
-    const distToPlayerHit = Math.hypot(p.x - shipPos.x, p.z - shipPos.z);
-    if (distToPlayerHit < 5 && playerHealth > 0 && isPlayerAlive) {
-      playerHealth = Math.max(0, playerHealth - 5);
-      document.getElementById('playerHealth').textContent = `${playerHealth}%`;
-      createSparkEffect(shipPos.x, shipPos.z);
-      showToast("⚠️ SEU NAVIO FOI ATINGIDO!");
-
-      if (playerHealth <= 0) {
-        isPlayerAlive = false;
-        createExplosionEffect(shipPos.x, shipPos.z);
-        shipGroup.visible = false;
-        document.getElementById('gameOverModal').classList.add('show');
+      if (!targetBot || targetBot.health <= 0) {
+        scene.remove(t.mesh);
+        activeTorpedos.splice(i, 1);
+        continue;
       }
 
-      scene.remove(p.mesh);
-      botProjectiles.splice(i, 1);
-      continue;
-    }
-    if (p.life <= 0 || checkIslandCollision(p.x, p.z, 1.0) || Math.abs(p.x) > halfMap || Math.abs(p.z) > halfMap) {
-      scene.remove(p.mesh);
-      botProjectiles.splice(i, 1);
-    }
-  }
+      const tdx = targetBot.x - t.x;
+      const tdz = targetBot.z - t.z;
+      const tAngle = Math.atan2(tdx, tdz);
 
-  for (let i = activeTorpedos.length - 1; i >= 0; i--) {
-    const t = activeTorpedos[i];
-    const targetBot = botsData.find(b => b.id === t.targetId);
+      t.x += Math.sin(tAngle) * t.speed;
+      t.z += Math.cos(tAngle) * t.speed;
 
-    if (!targetBot || targetBot.health <= 0) {
-      scene.remove(t.mesh);
-      activeTorpedos.splice(i, 1);
-      continue;
-    }
+      t.mesh.position.x = t.x;
+      t.mesh.position.z = t.z;
+      t.mesh.rotation.y = tAngle + Math.PI / 2;
+      t.life--;
 
-    const tdx = targetBot.x - t.x;
-    const tdz = targetBot.z - t.z;
-    const tAngle = Math.atan2(tdx, tdz);
+      const hitDist = Math.hypot(t.x - targetBot.x, t.z - targetBot.z);
+      if (hitDist < 7) {
+        showToast(`💥 TORPEDO ATINGIU O NAVIO ${targetBot.name}!`);
+        createExplosionEffect(targetBot.x, targetBot.z);
+        targetBot.health = Math.max(0, targetBot.health - 25);
 
-    t.x += Math.sin(tAngle) * t.speed;
-    t.z += Math.cos(tAngle) * t.speed;
-
-    t.mesh.position.x = t.x;
-    t.mesh.position.z = t.z;
-    t.mesh.rotation.y = tAngle + Math.PI / 2;
-    t.life--;
-
-    const hitDist = Math.hypot(t.x - targetBot.x, t.z - targetBot.z);
-    if (hitDist < 7) {
-      showToast(`💥 TORPEDO ATINGIU O NAVIO ${targetBot.name}!`);
-      createExplosionEffect(targetBot.x, targetBot.z);
-      targetBot.health = Math.max(0, targetBot.health - 25);
-
-      scene.remove(t.mesh);
-      activeTorpedos.splice(i, 1);
-      continue;
-    }
-    if (t.life <= 0 || checkIslandCollision(t.x, t.z, 1.0) || Math.abs(t.x) > halfMap || Math.abs(t.z) > halfMap) {
-      scene.remove(t.mesh);
-      activeTorpedos.splice(i, 1);
+        scene.remove(t.mesh);
+        activeTorpedos.splice(i, 1);
+        continue;
+      }
+      if (t.life <= 0 || checkIslandCollision(t.x, t.z, 1.0) || Math.abs(t.x) > halfMap || Math.abs(t.z) > halfMap) {
+        scene.remove(t.mesh);
+        activeTorpedos.splice(i, 1);
+      }
     }
   }
 
