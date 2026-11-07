@@ -98,10 +98,10 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 </head>
 <body oncontextmenu="return false;">
 
-<!-- Botão de Perfil no Canto Superior Esquerdo -->
+<!-- Botão de Perfil -->
 <button class="profile-btn" id="btnOpenProfile">👤 <span id="profileNameDisplay">Comandante</span></button>
 
-<!-- Janela Lateral de Salas Disponíveis -->
+<!-- Janela Lateral de Salas -->
 <div class="rooms-sidebar" id="roomsSidebar">
   <div class="sidebar-header">
     <div class="sidebar-title">🌐 SALAS DISPONÍVEIS NA REDE</div>
@@ -112,10 +112,10 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
   </div>
 </div>
 
-<!-- Modal de Configuração de Perfil -->
+<!-- Modal de Perfil -->
 <div class="profile-modal" id="profileModal">
   <div class="modal-title">DEFINIR NOME DE PERFIL</div>
-  <div class="modal-desc">Insira seu nome de comandante (salvo permanentemente):</div>
+  <div class="modal-desc">Insira seu nome de comandante:</div>
   <input type="text" id="profileNameInput" class="lobby-input" placeholder="Seu nome..." maxlength="15">
   <div class="modal-actions">
     <button class="btn-action" id="btnCancelProfile">Cancelar</button>
@@ -123,15 +123,15 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
   </div>
 </div>
 
-<!-- Tela de Lobby Real com Nomes de Sala -->
+<!-- Tela de Lobby -->
 <div class="lobby-screen" id="lobbyScreen">
   <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
-  <div class="lobby-subtitle">Multiplayer Real na Rede Local & Smart TV</div>
+  <div class="lobby-subtitle">Multiplayer Real & Efeitos Sonoros Imersivos</div>
   <input type="text" id="roomNameInput" class="lobby-input" value="" placeholder="Digite o nome da sala...">
   <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala</button>
   <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Salas Disponíveis</button>
-  <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo (1 Jogador)</button>
-  <div class="lobby-info" id="lobbyInfoStatus">Controle TV: Use 2/8/4/6 para pilotar, OK ou 5 para Ação/Parar, e Botões Coloridos para Alvos!</div>
+  <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo</button>
+  <div class="lobby-info" id="lobbyInfoStatus">Controle TV: Use 2/8/4/6 para pilotar, OK/5 para Ação e Botões Coloridos para Alvos!</div>
 </div>
 
 <div class="hud-top">
@@ -160,10 +160,9 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
     </div>
   </div>
 
-  <!-- Modal de Fim de Jogo / Vitória (Unificado e Dinâmico) -->
   <div class="gameover-modal" id="gameOverModal">
     <div class="gameover-title" id="gameOverTitle">NAVIO DESTRUÍDO!</div>
-    <div class="gameover-desc" id="gameOverDesc">Seu navio afundou nas profundezas do oceano. Deseja continuar assistindo ou sair?</div>
+    <div class="gameover-desc" id="gameOverDesc">A batalha chegou ao fim.</div>
     <div class="modal-actions" id="gameOverActions">
       <button class="btn-action btn-confirm" id="btnWatchMode">Assistir Partida</button>
       <button class="btn-action" style="border-color:#ff3333; color:#ff3333;" id="btnExitGame">Sair para o Menu</button>
@@ -183,6 +182,80 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 
 <script>
 /* ==========================================================================
+   SINTETIZADOR DE ÁUDIO & EFEITOS SONOROS (SFX)
+   ========================================================================== */
+let audioCtx = null;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function playSound(type) {
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+
+    if (type === 'shot') {
+      // Som de Canhão
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+      gain.gain.setValueAtTime(0.5, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'torpedo') {
+      // Som de Lançamento de Torpedo (Zumbido agudo)
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.5);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.5);
+    } else if (type === 'explosion') {
+      // Som de Explosão (Ruído Branco / Graves)
+      const bufferSize = audioCtx.sampleRate * 0.8;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = buffer;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(800, now);
+      filter.frequency.linearRampToValueAtTime(50, now + 0.8);
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.8, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.8);
+      whiteNoise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      whiteNoise.start(now);
+      whiteNoise.stop(now + 0.8);
+    }
+  } catch (e) {
+    console.log("Áudio bloqueado ou não suportado", e);
+  }
+}
+
+/* ==========================================================================
    PERFIL PERMANENTE (LOCALSTORAGE)
    ========================================================================== */
 let playerName = localStorage.getItem('tidal_player_name') || "Comandante";
@@ -191,6 +264,7 @@ document.getElementById('roomNameInput').value = playerName;
 
 const profileModal = document.getElementById('profileModal');
 document.getElementById('btnOpenProfile').onclick = () => {
+  initAudio();
   document.getElementById('profileNameInput').value = playerName;
   profileModal.classList.add('show');
 };
@@ -202,7 +276,7 @@ document.getElementById('btnSaveProfile').onclick = () => {
     localStorage.setItem('tidal_player_name', playerName);
     document.getElementById('profileNameDisplay').textContent = playerName;
     document.getElementById('roomNameInput').value = playerName;
-    showToast("💾 Perfil salvo permanentemente!");
+    showToast("💾 Perfil salvo com sucesso!");
   }
   profileModal.classList.remove('show');
 };
@@ -212,52 +286,51 @@ document.getElementById('btnSaveProfile').onclick = () => {
    ========================================================================== */
 const roomsSidebar = document.getElementById('roomsSidebar');
 document.getElementById('btnOpenRoomsSidebar').onclick = () => {
+  initAudio();
   roomsSidebar.classList.add('show');
   scanAvailableRooms();
 };
 document.getElementById('btnCloseSidebar').onclick = () => roomsSidebar.classList.remove('show');
 
 /* ==========================================================================
-   LÓGICA DE MULTIPLAYER REAL POR NOME DE SALA (PEERJS)
+   LÓGICA MULTIPLAYER REAL & PEERJS (CORRIGIDA E SINCRONIZADA)
    ========================================================================== */
 let peer = null;
 let conn = null;
 let connectedPeers = [];
 let isHost = false;
-const maxPlayers = 8;
+let remotePlayer = null; // Objeto para o navio do outro jogador remoto
+const maxPlayers = 4;
 const lobbyScreen = document.getElementById('lobbyScreen');
 const lobbyInfoStatus = document.getElementById('lobbyInfoStatus');
 const roomsContainer = document.getElementById('roomsContainer');
 const btnStartGameManual = document.getElementById('btnStartGameManual');
 
 let gameStarted = false; 
-const roomPrefix = "tidal_room_";
+const roomPrefix = "tidal_room_v2_";
 
 function updateHostButtonState() {
   const totalConnected = connectedPeers.length + 1;
   btnStartGameManual.textContent = `Iniciar Jogo (${totalConnected} Jogador${totalConnected > 1 ? 'es' : ''})`;
-  if (totalConnected > 1) {
-    btnStartGameManual.style.background = "rgba(0,211,100,0.5)";
-  } else {
-    btnStartGameManual.style.background = "rgba(0,211,100,0.2)";
-  }
+  btnStartGameManual.style.display = "block";
 }
 
 // Criar Sala
 document.getElementById('btnCreateRoom').onclick = () => {
+  initAudio();
   const roomName = document.getElementById('roomNameInput').value.trim() || playerName;
   playerName = roomName;
   document.getElementById('hudPlayerName').textContent = `⚓ ${playerName}`;
   const roomId = roomPrefix + btoa(playerName).replace(/=/g, '');
   isHost = true;
   
+  if (peer) peer.destroy();
   peer = new Peer(roomId);
 
   peer.on('open', (id) => {
-    lobbyInfoStatus.textContent = `Sala "${playerName}" criada! Aguardando jogadores...`;
-    btnStartGameManual.style.display = "block";
+    lobbyInfoStatus.textContent = `Sala "${playerName}" criada! Aguardando amigos...`;
     updateHostButtonState();
-    showToast("📡 Sala criada com sucesso!");
+    showToast("📡 Sala criada com sucesso na rede!");
   });
 
   peer.on('connection', (incomingConn) => {
@@ -269,32 +342,35 @@ document.getElementById('btnCreateRoom').onclick = () => {
     connectedPeers.push(incomingConn);
     lobbyInfoStatus.textContent = `Sala "${playerName}" | Jogadores: ${connectedPeers.length + 1}/${maxPlayers}`;
     updateHostButtonState();
-    showToast(`👥 Jogador conectado! (${connectedPeers.length + 1}/8)`);
+    showToast(`👥 Jogador conectado na sua sala!`);
 
-    if (connectedPeers.length + 1 >= maxPlayers) {
-      startGameSession();
-    }
+    incomingConn.on('data', (data) => {
+      handleNetworkData(data, incomingConn);
+    });
+
+    incomingConn.on('close', () => {
+      connectedPeers = connectedPeers.filter(c => c !== incomingConn);
+      showToast("⚠️ Um jogador desconectou.");
+    });
   });
 
   peer.on('error', (err) => {
-    showToast("⚠️ Erro na sala ou nome em uso. Iniciando modo offline...");
-    startGameSession();
+    showToast("⚠️ Erro na sala ou nome em uso. Tente outro nome.");
   });
 };
 
 // Escanear Salas Disponíveis
 function scanAvailableRooms() {
-  roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Buscando salas ativas na rede...</div>';
+  roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Buscando salas na rede...</div>';
 
-  if (!peer) {
+  if (!peer || peer.destroyed) {
     peer = new Peer();
   }
 
   peer.on('open', () => {
-    // Testa busca por nomes comuns ou teste dinâmico
-    const testNames = ["Comandante", "TV_Player", playerName, "Alpha", "Beta", "Partida1"];
+    const testNames = ["Comandante", "TV_Player", playerName, "Alpha", "Beta", "Partida1", "Irmao"];
     roomsContainer.innerHTML = '';
-    let foundAny = false;
+    let found = false;
 
     testNames.forEach(name => {
       const targetRoomId = roomPrefix + btoa(name).replace(/=/g, '');
@@ -302,7 +378,7 @@ function scanAvailableRooms() {
 
       const testConn = peer.connect(targetRoomId);
       testConn.on('open', () => {
-        foundAny = true;
+        found = true;
         const item = document.createElement('div');
         item.className = 'room-item';
         item.innerHTML = `<span>⚓ Sala de ${name}</span> <span style="color:#00d2d3;">Entrar ➔</span>`;
@@ -318,7 +394,7 @@ function scanAvailableRooms() {
 
     setTimeout(() => {
       if (!roomsContainer.hasChildNodes()) {
-        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff3333;">Nenhuma sala aberta encontrada. Crie a sua!</div>';
+        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff3333;">Nenhuma sala encontrada. Crie uma!</div>';
       }
     }, 1500);
   });
@@ -326,19 +402,45 @@ function scanAvailableRooms() {
 
 function setupConnectionEvents() {
   lobbyScreen.classList.add('hidden');
-  showToast(`🌐 Conectado à sala!`);
+  showToast(`🌐 Conectado à sala com sucesso!`);
 
   conn.on('data', (data) => {
-    if (data.type === 'FULL') {
-      alert("A sala está cheia!");
-      location.reload();
-    } else if (data.type === 'START') {
-      startGameSession();
-    }
+    handleNetworkData(data, conn);
+  });
+
+  conn.on('close', () => {
+    showToast("⚠️ Conexão perdida com o Host.");
   });
 }
 
+// Sincronização de Dados via Rede (Netcode)
+function handleNetworkData(data, connection) {
+  if (data.type === 'FULL') {
+    alert("A sala está cheia!");
+    location.reload();
+  } else if (data.type === 'START') {
+    startGameSession();
+  } else if (data.type === 'PLAYER_SYNC') {
+    // Atualiza posição do jogador remoto na tela
+    if (!remotePlayer && gameStarted) {
+      remotePlayer = {
+        name: data.name,
+        mesh: createShipModel(0x00a8ff, data.name),
+        x: data.x, z: data.z, heading: data.heading, health: data.health
+      };
+      scene.add(remotePlayer.mesh);
+    } else if (remotePlayer) {
+      remotePlayer.x = data.x;
+      remotePlayer.z = data.z;
+      remotePlayer.heading = data.heading;
+      remotePlayer.mesh.position.set(remotePlayer.x, 0.5, remotePlayer.z);
+      remotePlayer.mesh.rotation.y = remotePlayer.heading;
+    }
+  }
+}
+
 btnStartGameManual.onclick = () => {
+  initAudio();
   if (isHost) {
     connectedPeers.forEach(p => p.send({ type: 'START' }));
     startGameSession();
@@ -355,7 +457,7 @@ function startGameSession() {
 }
 
 /* ==========================================================================
-   CONFIGURAÇÃO 3D DO MUNDO E CÂMERA RESPONSIVA
+   CONFIGURAÇÃO 3D DO MUNDO E CÂMERA
    ========================================================================== */
 const container = document.getElementById('gameContainer');
 const canvas = document.getElementById('canvas3d');
@@ -389,16 +491,11 @@ sunLight.position.set(100, 150, 100);
 scene.add(sunLight);
 
 /* ==========================================================================
-   OCEANO GIGANTE & ILHAS
+   OCEANO E ILHAS
    ========================================================================== */
 const mapSize = 1800;
 const oceanGeometry = new THREE.PlaneGeometry(mapSize, mapSize, 128, 128);
-const oceanMaterial = new THREE.MeshStandardMaterial({ 
-  color: 0x004477, 
-  roughness: 0.9, 
-  metalness: 0.1, 
-  flatShading: true 
-});
+const oceanMaterial = new THREE.MeshStandardMaterial({ color: 0x004477, roughness: 0.9, metalness: 0.1, flatShading: true });
 const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
 ocean.rotation.x = -Math.PI / 2;
 scene.add(ocean);
@@ -423,18 +520,16 @@ function createWorldIslands() {
     const pts = 48;
     for (let i = 0; i < pts; i++) {
       const angle = (i / pts) * Math.PI * 2;
-      const radius = data.r * (0.85 + Math.sin(angle * 3) * 0.15 + Math.cos(angle * 5) * 0.08);
+      const radius = data.r * (0.85 + Math.sin(angle * 3) * 0.15);
       const x = Math.cos(angle) * radius;
       const y = Math.sin(angle) * radius;
-      if (i === 0) shape.moveTo(x, y);
-      else shape.lineTo(x, y);
+      if (i === 0) shape.moveTo(x, y); else shape.lineTo(x, y);
     }
     const baseGeo = new THREE.ExtrudeGeometry(shape, { depth: data.h, bevelEnabled: true, bevelSize: 1.5, bevelThickness: 1.0 });
     const sandMat = new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 0.95 });
     const baseMesh = new THREE.Mesh(baseGeo, sandMat);
     baseMesh.rotation.x = -Math.PI / 2;
     group.add(baseMesh);
-
     group.position.set(data.x, 0, data.z);
     scene.add(group);
     islandColliders.push({ x: data.x, z: data.z, radius: data.r * 0.90 });
@@ -465,7 +560,7 @@ function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
 }
 
 /* ==========================================================================
-   CRIAR NAVIOS COM TEXTO FLUTUANTE DE NOME
+   MODELO DE NAVIO COM PLACA DE NOME FLUTUANTE
    ========================================================================== */
 function createShipModel(deckColorHex, nameText) {
   const group = new THREE.Group();
@@ -507,13 +602,12 @@ function createShipModel(deckColorHex, nameText) {
   mast.position.set(0, 5.3, 0.8);
   group.add(mast);
 
-  // Placa de Nome Flutuante 3D (Canvas Texture)
   const canvasText = document.createElement('canvas');
   canvasText.width = 256;
   canvasText.height = 64;
   const ctx = canvasText.getContext('2d');
   ctx.fillStyle = 'rgba(10, 20, 35, 0.85)';
-  ctx.roundRect ? ctx.roundRect(10, 10, 236, 44, 12) : ctx.fillRect(10, 10, 236, 44);
+  ctx.fillRect(10, 10, 236, 44);
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 24px Segoe UI';
   ctx.textAlign = 'center';
@@ -531,8 +625,6 @@ function createShipModel(deckColorHex, nameText) {
 }
 
 const occupiedPositions = [];
-
-// Atribuição Automática de Cores Exclusivas para evitar conflitos nas teclas coloridas da TV
 const availableColors = [
   { name: "VERMELHO", hex: 0xe74c3c, css: "#e74c3c" },
   { name: "VERDE", hex: 0x2ecc71, css: "#2ecc71" },
@@ -540,7 +632,6 @@ const availableColors = [
   { name: "AZUL", hex: 0x00a8ff, css: "#00a8ff" }
 ];
 
-// O Jogador pega a primeira cor (Vermelho)
 const playerColor = availableColors[0];
 const playerSpawn = getSafeSpawnPosition(0, -350, occupiedPositions);
 occupiedPositions.push(playerSpawn);
@@ -552,7 +643,6 @@ let shipPos = { x: playerSpawn.x, z: playerSpawn.z };
 let playerHealth = 100;
 let isPlayerAlive = true;
 
-// Bots recebem as cores restantes automaticamente
 const botNamesList = ["Capitão Robô 1", "Marujo IA", "Corsário Bot"];
 const botsData = [];
 for (let i = 0; i < 3; i++) {
@@ -621,7 +711,7 @@ function buildTargetOptionsUI() {
 }
 
 /* ==========================================================================
-   SISTEMA DE COMBATE & EXPLOSÕES
+   COMBATE, EXPLOSÕES E TORPEDO (CORREÇÃO DE ORIENTAÇÃO 3D)
    ========================================================================== */
 let torpedoCount = 10;
 const activeProjectiles = [];
@@ -635,16 +725,18 @@ projectileGeo.rotateX(Math.PI / 2);
 const projectileMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
 const botProjectileMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
 
+// TORPEDO CORRIGIDO: Geometria alinhada perfeitamente com a ponta para a frente
 const torpedoGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.0, 8);
-torpedoGeo.rotateX(Math.PI / 2);
+torpedoGeo.rotateZ(Math.PI / 2); // Corrigido para alinhar o eixo do cilindro com o movimento
 const torpedoMat = new THREE.MeshStandardMaterial({ color: 0x444d56, metalness: 0.9, roughness: 0.2 });
 const torpedoHeadMat = new THREE.MeshBasicMaterial({ color: 0xff3300 });
 
 const arrowGeo = new THREE.ConeGeometry(0.25, 1.0, 6);
-arrowGeo.rotateX(Math.PI / 2);
+arrowGeo.rotateZ(Math.PI / 2);
 const arrowMat = new THREE.MeshBasicMaterial({ color: 0x00ff66 });
 
 function fireProjectile(fromPos, heading, isBot = false) {
+  playSound('shot');
   const mesh = new THREE.Mesh(projectileGeo, isBot ? botProjectileMat : projectileMat);
   mesh.position.set(fromPos.x, 2.0, fromPos.z);
   mesh.rotation.y = heading;
@@ -666,6 +758,7 @@ function createSparkEffect(x, z) {
 }
 
 function createExplosionEffect(x, z) {
+  playSound('explosion');
   const expGroup = new THREE.Group();
   const fireGeo = new THREE.SphereGeometry(2.0, 12, 12);
   const fireMat = new THREE.MeshBasicMaterial({ color: 0xff5500, transparent: true, opacity: 0.9 });
@@ -694,6 +787,7 @@ function spawnContinuousSmoke(botObj) {
 function botLaunchGuidedTorpedo(botObj, targetEntity, isTargetPlayer = false) {
   if (botObj.torpedos <= 0) return;
   botObj.torpedos--;
+  playSound('torpedo');
 
   const launchX = botObj.x + Math.sin(botObj.heading) * 3.0;
   const launchZ = botObj.z + Math.cos(botObj.heading) * 3.0;
@@ -701,15 +795,13 @@ function botLaunchGuidedTorpedo(botObj, targetEntity, isTargetPlayer = false) {
   const torpedoGroup = new THREE.Group();
   const body = new THREE.Mesh(torpedoGeo, torpedoMat);
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), torpedoHeadMat);
-  head.position.z = 1.0;
+  head.position.x = 1.0; // Alinhado com a ponta orientada pelo eixo
 
   torpedoGroup.add(body, head);
   torpedoGroup.position.set(launchX, 0.15, launchZ);
-  torpedoGroup.rotation.y = botObj.heading + Math.PI / 2;
   scene.add(torpedoGroup);
 
   activeTorpedos.push({ mesh: torpedoGroup, x: launchX, z: launchZ, speed: 0.75, isPlayerTarget: isTargetPlayer, targetId: isTargetPlayer ? -1 : targetEntity.id, life: 300 });
-  showToast(`⚠️ TORPEDO LANÇADO POR ${botObj.name}!`);
 }
 
 function launchGuidedTorpedo() {
@@ -725,6 +817,7 @@ function launchGuidedTorpedo() {
 
   torpedoCount--;
   document.getElementById('torpedoCount').textContent = `${torpedoCount}/10`;
+  playSound('torpedo');
 
   const sideOffset = 2.5;
   const launchX = shipPos.x + Math.cos(currentHeading) * sideOffset;
@@ -733,13 +826,12 @@ function launchGuidedTorpedo() {
   const torpedoGroup = new THREE.Group();
   const body = new THREE.Mesh(torpedoGeo, torpedoMat);
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), torpedoHeadMat);
-  head.position.z = 1.0;
+  head.position.x = 1.0;
   const arrow = new THREE.Mesh(arrowGeo, arrowMat);
-  arrow.position.z = -1.5;
+  arrow.position.x = -1.5;
 
   torpedoGroup.add(body, head, arrow);
   torpedoGroup.position.set(launchX, 0.15, launchZ);
-  torpedoGroup.rotation.y = currentHeading + Math.PI / 2;
   scene.add(torpedoGroup);
 
   activeTorpedos.push({ mesh: torpedoGroup, x: launchX, z: launchZ, speed: 0.8, isPlayerTarget: false, targetId: selectedTargetId, life: 300 });
@@ -749,7 +841,7 @@ function launchGuidedTorpedo() {
 let lastShotTime = 0;
 
 /* ==========================================================================
-   CONTROLES DO JOGADOR (SMART TV & MOBILE)
+   CONTROLES (SMART TV & MOBILE)
    ========================================================================== */
 let currentSpeed = 0;
 const cruisingSpeed = 0.45;
@@ -762,12 +854,12 @@ function bindPressEvent(id, actionName) {
   const btn = document.getElementById(id);
   const pressOn = (e) => { 
     if (e) e.preventDefault(); 
+    initAudio();
     if (!isPlayerAlive) return;
     controlsState[actionName] = true; 
     btn.classList.add('pressed'); 
     if (actionName === 'up' && currentSpeed === 0) {
       currentSpeed = cruisingSpeed;
-      showToast("⚙️ Motor ligado.");
     }
   };
   const pressOff = (e) => { if (e) e.preventDefault(); controlsState[actionName] = false; btn.classList.remove('pressed'); };
@@ -783,6 +875,7 @@ bindPressEvent('btnLeft', 'left');
 bindPressEvent('btnRight', 'right');
 
 function triggerActionOK() {
+  initAudio();
   if (targetModal.classList.contains('show')) {
     targetModal.classList.remove('show');
     launchGuidedTorpedo();
@@ -800,6 +893,7 @@ document.getElementById('btnCenter').onclick = triggerActionOK;
 
 window.addEventListener('keydown', (e) => {
   if (!gameStarted) return;
+  initAudio();
   const key = e.key;
   const code = e.keyCode;
 
@@ -826,7 +920,6 @@ window.addEventListener('keydown', (e) => {
     }
   }
 
-  // ATALHOS DE TECLAS COLORIDAS SMART TV
   if (targetModal.classList.contains('show') || key === '0') {
     let selectColor = null;
     if (code === 403 || key.toLowerCase() === 'r') selectColor = "VERMELHO";
@@ -840,8 +933,6 @@ window.addEventListener('keydown', (e) => {
         selectedTargetId = matchBot.id;
         buildTargetOptionsUI();
         showToast(`🎯 Alvo selecionado: ${matchBot.name}!`);
-      } else if (selectColor === "VERMELHO") {
-        showToast("⚠️ O navio Vermelho é o seu!");
       }
     }
   }
@@ -858,6 +949,7 @@ window.addEventListener('keyup', (e) => {
 
 const targetModal = document.getElementById('targetModal');
 document.getElementById('btnTorpedo').onclick = () => {
+  initAudio();
   if (!isPlayerAlive) return;
   buildTargetOptionsUI();
   targetModal.classList.add('show');
@@ -869,24 +961,20 @@ document.getElementById('btnConfirmLaunch').onclick = () => {
 };
 
 /* ==========================================================================
-   VERIFICAÇÃO DE FIM DE JOGO & TELA DE VITÓRIA
+   FIM DE JOGO E TELA DE VITÓRIA
    ========================================================================== */
 let gameEnded = false;
 
 function checkWinConditions() {
   if (gameEnded) return;
-
   const aliveBots = botsData.filter(b => b.health > 0);
 
-  // Cenário 1: Jogador Vence (Todos os bots foram destruídos e jogador está vivo)
   if (isPlayerAlive && aliveBots.length === 0) {
     gameEnded = true;
     showVictoryScreen(true, playerName);
-  } 
-  // Cenário 2: Um Bot Vence (Jogador morto/espectador e sobrou apenas 1 bot vivo, ou 0 se todos morreram)
-  else if (!isPlayerAlive && aliveBots.length <= 1) {
+  } else if (!isPlayerAlive && aliveBots.length <= 1) {
     gameEnded = true;
-    const winnerName = aliveBots.length === 1 ? aliveBots[0].name : "Ninguém (Empate)";
+    const winnerName = aliveBots.length === 1 ? aliveBots[0].name : "Empate";
     showVictoryScreen(false, winnerName);
   }
 }
@@ -899,10 +987,10 @@ function showVictoryScreen(isPlayerWinner, winnerName) {
 
   if (isPlayerWinner) {
     title.textContent = "🏆 VOCÊ VENCEU!";
-    desc.textContent = `Parabéns ${playerName}! Você dominou os mares e destruiu todos os oponentes.`;
+    desc.textContent = `Parabéns ${playerName}! Você dominou os mares.`;
   } else {
     title.textContent = `⚓ NAVIO ${winnerName.toUpperCase()} VENCEU!`;
-    desc.textContent = `A batalha terminou. O navio ${winnerName} foi o último a navegar no oceano.`;
+    desc.textContent = `A batalha terminou.`;
   }
 
   actions.innerHTML = `
@@ -920,44 +1008,7 @@ document.getElementById('btnWatchMode').onclick = () => {
 document.getElementById('btnExitGame').onclick = () => location.reload();
 
 /* ==========================================================================
-   CONTROLE DE CÂMERA RESPONSIVA
-   ========================================================================== */
-let activeTouches = {};
-let cameraZoomDistance = 55;
-let cameraAngleOffset = 0;
-let isDraggingMap = false;
-let previousPointerPos = { x: 0, y: 0 };
-
-container.addEventListener('pointerdown', e => {
-  activeTouches[e.pointerId] = { x: e.clientX, y: e.clientY };
-  if (Object.keys(activeTouches).length === 1 && (currentSpeed === 0 || !isPlayerAlive)) {
-    isDraggingMap = true;
-    previousPointerPos = { x: e.clientX, y: e.clientY };
-    targetMapPanX = shipPos.x + (mapPanX - shipPos.x);
-    targetMapPanZ = shipPos.z + (mapPanZ - shipPos.z);
-  }
-});
-
-container.addEventListener('pointermove', e => {
-  if (activeTouches[e.pointerId]) activeTouches[e.pointerId] = { x: e.clientX, y: e.clientY };
-  if (Object.keys(activeTouches).length === 1 && isDraggingMap) {
-    mapPanX -= (e.clientX - previousPointerPos.x) * 0.15;
-    mapPanZ -= (e.clientY - previousPointerPos.y) * 0.15;
-    previousPointerPos = { x: e.clientX, y: e.clientY };
-  }
-});
-
-const clearTouch = e => { delete activeTouches[e.pointerId]; isDraggingMap = false; };
-container.addEventListener('pointerup', clearTouch);
-container.addEventListener('pointercancel', clearTouch);
-
-container.addEventListener('wheel', e => {
-  e.preventDefault();
-  cameraZoomDistance = Math.max(20, Math.min(600, cameraZoomDistance + e.deltaY * 0.2));
-}, { passive: false });
-
-/* ==========================================================================
-   CICLO DE DIA E NOITE
+   CÂMERA E CICLO DIA/NOITE
    ========================================================================== */
 let gameTime = 0;
 const periodDuration = 600; 
@@ -1007,8 +1058,10 @@ const halfMap = mapSize / 2 - 40;
 const clock = new THREE.Clock();
 
 /* ==========================================================================
-   LOOP DE ANIMAÇÃO GERAL
+   LOOP DE ANIMAÇÃO PRINCIPAL
    ========================================================================== */
+let netSyncTimer = 0;
+
 function animate() {
   requestAnimationFrame(animate);
   const delta = clock.getDelta();
@@ -1019,7 +1072,6 @@ function animate() {
   if (gameStarted && !gameEnded) {
     checkWinConditions();
 
-    // Movimento do Jogador
     if (isPlayerAlive) {
       if (controlsState.up) currentSpeed = maxBoostSpeed;
       else if (controlsState.down) currentSpeed = -0.3;
@@ -1037,12 +1089,23 @@ function animate() {
           shipPos.z = nextZ;
         } else {
           currentSpeed = -0.4;
-          showToast("🏝️ Impacto ou barreira!");
+          showToast("🏝️ Obstáculo!");
         }
         shipGroup.position.x = shipPos.x;
         shipGroup.position.z = shipPos.z;
       }
       shipGroup.rotation.y = currentHeading;
+
+      // Envia dados de sincronização via PeerJS para outros jogadores conectados
+      netSyncTimer += delta;
+      if (netSyncTimer > 0.1) {
+        netSyncTimer = 0;
+        const syncData = { type: 'PLAYER_SYNC', name: playerName, x: shipPos.x, z: shipPos.z, heading: currentHeading, health: playerHealth };
+        if (conn && conn.open) conn.send(syncData);
+        if (isHost && connectedPeers.length > 0) {
+          connectedPeers.forEach(p => { if (p.open) p.send(syncData); });
+        }
+      }
     }
 
     // IA dos Bots
@@ -1070,8 +1133,6 @@ function animate() {
       if (closestTarget.dist < 45) angleToTarget += Math.PI / 2.5;
 
       let targetHeading = angleToTarget;
-      if (checkIslandCollision(bot.x + Math.sin(targetHeading) * 20, bot.z + Math.cos(targetHeading) * 20, 12.0)) targetHeading += 1.8;
-
       let diff = targetHeading - bot.heading;
       while (diff < -Math.PI) diff += Math.PI * 2;
       while (diff > Math.PI) diff -= Math.PI * 2;
@@ -1104,50 +1165,7 @@ function animate() {
       if (bot.health < 100 && Math.random() < 0.3) spawnContinuousSmoke(bot);
     });
 
-    // Colisões e Tiros
-    if (isPlayerAlive) {
-      botsData.forEach(bot => {
-        if (bot.health > 0 && Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z) < 6.5) {
-          createSparkEffect(shipPos.x, shipPos.z);
-          playerHealth = Math.max(0, playerHealth - 8);
-          bot.health = Math.max(0, bot.health - 8);
-          document.getElementById('playerHealth').textContent = `${playerHealth}%`;
-          showToast(`💥 COLISÃO COM ${bot.name}!`);
-
-          if (playerHealth <= 0) {
-            isPlayerAlive = false;
-            createExplosionEffect(shipPos.x, shipPos.z);
-            shipGroup.visible = false;
-            document.getElementById('gameOverModal').classList.add('show');
-          }
-        }
-      });
-    }
-
-    // Projetéis do Jogador
-    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
-      const p = activeProjectiles[i];
-      p.x += Math.sin(p.heading) * p.speed;
-      p.z += Math.cos(p.heading) * p.speed;
-      p.mesh.position.set(p.x, 2.0, p.z);
-      p.life--;
-
-      let hit = false;
-      botsData.forEach(bot => {
-        if (bot.health > 0 && Math.hypot(p.x - bot.x, p.z - bot.z) < 6) {
-          createSparkEffect(p.x, p.z);
-          bot.health = Math.max(0, bot.health - 2);
-          hit = true;
-        }
-      });
-
-      if (hit || p.life <= 0 || checkIslandCollision(p.x, p.z, 1.0) || Math.abs(p.x) > halfMap || Math.abs(p.z) > halfMap) {
-        scene.remove(p.mesh);
-        activeProjectiles.splice(i, 1);
-      }
-    }
-
-    // Torpedos
+    // Torpedos Guiados (Orientação de movimento corrigida com eixo X)
     for (let i = activeTorpedos.length - 1; i >= 0; i--) {
       const t = activeTorpedos[i];
       let targetX = 0, targetZ = 0, targetAlive = false;
@@ -1165,6 +1183,7 @@ function animate() {
       t.x += Math.sin(tAngle) * t.speed;
       t.z += Math.cos(tAngle) * t.speed;
       t.mesh.position.set(t.x, 0.15, t.z);
+      t.mesh.rotation.y = tAngle - Math.PI / 2; // Alinhamento correto da frente do torpedo
       t.life--;
 
       if (Math.hypot(t.x - targetX, t.z - targetZ) < 7) {
@@ -1183,7 +1202,6 @@ function animate() {
     }
   }
 
-  // Renderização e Câmera
   let targetCamX = isPlayerAlive ? shipPos.x : mapPanX;
   let targetCamZ = isPlayerAlive ? shipPos.z : mapPanZ;
 
