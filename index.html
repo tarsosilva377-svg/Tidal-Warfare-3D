@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Tidal Warfare 3D - Multiplayer Real & Redes Locais</title>
+<title>Tidal Warfare 3D - Smart TV & Mobile Edition</title>
 <!-- Three.js para renderização 3D -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <!-- PeerJS para conexões reais P2P na rede -->
@@ -15,14 +15,14 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 /* Tela de Menu / Lobby Multiplayer Real */
 .lobby-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(5,11,20,0.96);backdrop-filter:blur(12px);z-index:100;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;transition:opacity 0.3s ease}
 .lobby-screen.hidden{opacity:0;pointer-events:none}
-.lobby-title{font-size:22px;font-weight:900;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;text-align:center}
-.lobby-subtitle{font-size:12px;color:#8899ac;margin-bottom:24px;font-weight:600;text-align:center}
-.lobby-input{background:rgba(10,20,35,0.9);border:1.5px solid #00d2d3;color:#fff;padding:12px 16px;border-radius:12px;font-size:14px;outline:none;width:260px;margin-bottom:10px;text-align:center}
-.lobby-btn{background:rgba(0,168,255,0.2);border:1.5px solid #00d2d3;color:#fff;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin:8px;width:260px;box-shadow:0 4px 15px rgba(0,0,0,0.4);transition:all 0.2s}
-.lobby-btn:active{transform:scale(0.95);background:rgba(0,168,255,0.4)}
+.lobby-title{font-size:24px;font-weight:900;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;text-align:center}
+.lobby-subtitle{font-size:13px;color:#8899ac;margin-bottom:24px;font-weight:600;text-align:center}
+.lobby-input{background:rgba(10,20,35,0.9);border:1.5px solid #00d2d3;color:#fff;padding:12px 16px;border-radius:12px;font-size:14px;outline:none;width:280px;margin-bottom:10px;text-align:center}
+.lobby-btn{background:rgba(0,168,255,0.2);border:1.5px solid #00d2d3;color:#fff;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin:8px;width:280px;box-shadow:0 4px 15px rgba(0,0,0,0.4);transition:all 0.2s}
+.lobby-btn:active, .lobby-btn:focus{transform:scale(0.95);background:rgba(0,168,255,0.5);outline:2px solid #fff}
 .lobby-info{font-size:12px;color:#00d2d3;margin-top:16px;font-weight:700;text-align:center;min-height:25px}
 
-/* Lista de Salas Disponíveis para Convidado */
+/* Lista de Salas Disponíveis */
 .rooms-container{width:280px;max-height:160px;overflow-y:auto;background:rgba(10,20,35,0.8);border:1px solid rgba(0,168,255,0.3);border-radius:10px;margin-top:10px;padding:8px;display:none}
 .room-item{padding:8px 12px;background:rgba(0,168,255,0.15);border:1px solid #00d2d3;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
 .room-item:hover{background:rgba(0,168,255,0.35)}
@@ -47,11 +47,12 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .modal-title{font-size:14px;font-weight:900;color:#00d2d3;margin-bottom:6px;letter-spacing:0.5px}
 .modal-desc{font-size:11px;color:#8899ac;margin-bottom:14px;font-weight:600}
 
-.target-options-bar{display:flex;justify-content:center;gap:10px;margin-bottom:16px}
-.target-option-card{background:rgba(20,35,55,0.8);border:1.5px solid rgba(0,168,255,0.4);border-radius:10px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.15s}
+.target-options-bar{display:flex;justify-content:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.target-option-card{background:rgba(20,35,55,0.8);border:1.5px solid rgba(0,168,255,0.4);border-radius:10px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.15s;min-width:70px}
 .target-option-card:hover, .target-option-card.selected{border-color:#00d2d3;background:rgba(0,168,255,0.25);transform:scale(1.05)}
 .ship-color-icon{width:22px;height:22px;border-radius:50%;border:1px solid #fff}
 .target-option-card span{font-size:10px;font-weight:700;color:#fff}
+.color-badge-hint{font-size:9px;color:#ffd700;margin-top:2px;font-weight:bold}
 
 .modal-actions{display:flex;gap:10px;justify-content:center}
 .btn-action{background:rgba(0,168,255,0.2);border:1px solid #00d2d3;color:#fff;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
@@ -66,7 +67,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .gameover-title{font-size:16px;font-weight:900;color:#ff3333;margin-bottom:8px}
 .gameover-desc{font-size:11px;color:#8899ac;margin-bottom:20px;font-weight:600}
 
-/* Controle Remoto Estilo Smart TV */
+/* Controle Remoto Estilo Smart TV (Mobile UI Visual) */
 .tv-remote{position:absolute;bottom:25px;right:25px;width:140px;height:140px;background:rgba(15,25,45,0.35);backdrop-filter:blur(6px);border:1.5px solid rgba(0,168,255,0.25);border-radius:50%;display:grid;grid-template-columns:repeat(3, 1fr);grid-template-rows:repeat(3, 1fr);align-items:center;justify-items:center;z-index:25;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
 .rc-btn{width:38px;height:38px;background:rgba(0,168,255,0.2);border:1px solid rgba(0,168,255,0.4);color:#00d2d3;border-radius:8px;font-size:15px;font-weight:900;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:all 0.1s}
 .rc-btn:active, .rc-btn.pressed{background:rgba(0,168,255,0.6);transform:scale(0.92)}
@@ -77,7 +78,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .rc-down{grid-column:2;grid-row:3}
 
 /* Notificação Toast */
-.toast-msg{position:absolute;bottom:75px;left:50%;transform:translateX(-50%);background:rgba(10,20,35,.9);border:1px solid #00d2d3;color:#fff;padding:8px 16px;border-radius:20px;font-size:11px;font-weight:700;z-index:30;box-shadow:0 4px 15px rgba(0,0,0,.6);opacity:0;transition:opacity 0.3s;pointer-events:none}
+.toast-msg{position:absolute;bottom:75px;left:50%;transform:translateX(-50%);background:rgba(10,20,35,.9);border:1px solid #00d2d3;color:#fff;padding:8px 16px;border-radius:20px;font-size:11px;font-weight:700;z-index:30;box-shadow:0 4px 15px rgba(0,0,0,.6);opacity:0;transition:opacity 0.3s;pointer-events:none;text-align:center}
 .toast-msg.show{opacity:1}
 </style>
 </head>
@@ -86,13 +87,13 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 <!-- Tela de Lobby Real com Nomes de Sala -->
 <div class="lobby-screen" id="lobbyScreen">
   <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
-  <div class="lobby-subtitle">Multiplayer Real na Rede Local (Até 8 Jogadores)</div>
+  <div class="lobby-subtitle">Multiplayer Real na Rede Local & Smart TV</div>
   <input type="text" id="roomNameInput" class="lobby-input" value="" placeholder="Digite o nome da sala ou seu nome...">
-  <button class="lobby-btn" id="btnCreateRoom">Criar Sala</button>
-  <button class="lobby-btn" id="btnJoinRoom">Salas Disponíveis</button>
-  <button class="lobby-btn" id="btnStartGameManual" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo (1 Jogador)</button>
+  <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala (Botão OK)</button>
+  <button class="lobby-btn" id="btnJoinRoom" tabindex="2">Salas Disponíveis</button>
+  <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo (1 Jogador)</button>
   <div class="rooms-container" id="roomsContainer"></div>
-  <div class="lobby-info" id="lobbyInfoStatus">Digite um nome para criar a sala ou buscar partidas...</div>
+  <div class="lobby-info" id="lobbyInfoStatus">Controle TV: Use 2/8/4/6 para pilotar, OK ou 5 para Ação/Parar, e Botões Coloridos para Alvos!</div>
 </div>
 
 <div class="hud-top">
@@ -114,10 +115,10 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
   <div class="target-modal" id="targetModal">
     <button class="modal-close" id="btnCloseModal">✕</button>
     <div class="modal-title">SELECIONAR ALVO DO TORPEDO</div>
-    <div class="modal-desc">Escolha qual navio inimigo deseja atingir:</div>
+    <div class="modal-desc">Use as teclas coloridas da TV ou clique para escolher:</div>
     <div class="target-options-bar" id="targetOptionsBar"></div>
     <div class="modal-actions">
-      <button class="btn-action btn-confirm" id="btnConfirmLaunch">Confirmar Disparo</button>
+      <button class="btn-action btn-confirm" id="btnConfirmLaunch">Confirmar Disparo (OK / 5)</button>
     </div>
   </div>
 
@@ -131,11 +132,11 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
   </div>
 
   <div class="tv-remote">
-    <button class="rc-btn rc-up" id="btnUp">▲</button>
-    <button class="rc-btn rc-left" id="btnLeft">◀</button>
-    <div class="rc-btn rc-center" id="btnCenter" title="Parar (OK)">OK</div>
-    <button class="rc-btn rc-right" id="btnRight">▶</button>
-    <button class="rc-btn rc-down" id="btnDown">▼</button>
+    <button class="rc-btn rc-up" id="btnUp" title="Tecla 2">▲</button>
+    <button class="rc-btn rc-left" id="btnLeft" title="Tecla 4">◀</button>
+    <div class="rc-btn rc-center" id="btnCenter" title="Parar (OK / 5)">OK</div>
+    <button class="rc-btn rc-right" id="btnRight" title="Tecla 6">▶</button>
+    <button class="rc-btn rc-down" id="btnDown" title="Tecla 8">▼</button>
   </div>
 
   <div class="toast-msg" id="toastMsg">Sistema de conexão pronto!</div>
@@ -156,7 +157,7 @@ const lobbyInfoStatus = document.getElementById('lobbyInfoStatus');
 const roomsContainer = document.getElementById('roomsContainer');
 const btnStartGameManual = document.getElementById('btnStartGameManual');
 
-let gameStarted = false; // Controla se o jogo começou de fato
+let gameStarted = false; 
 
 const roomPrefix = "tidal_room_";
 
@@ -172,12 +173,7 @@ function updateHostButtonState() {
 
 // Botão: Criar Sala
 document.getElementById('btnCreateRoom').onclick = () => {
-  const inputVal = document.getElementById('roomNameInput').value.trim();
-  if (!inputVal) {
-    showToast("⚠️ Digite um nome para criar a sala!");
-    document.getElementById('roomNameInput').focus();
-    return;
-  }
+  const inputVal = document.getElementById('roomNameInput').value.trim() || "TV_Player";
   
   playerName = inputVal;
   document.getElementById('hudPlayerName').textContent = `⚓ ${playerName}`;
@@ -190,7 +186,7 @@ document.getElementById('btnCreateRoom').onclick = () => {
     lobbyInfoStatus.textContent = `Sala "${playerName}" criada! Aguardando jogadores...`;
     btnStartGameManual.style.display = "block";
     updateHostButtonState();
-    showToast("📡 Sala criada com sucesso na rede local!");
+    showToast("📡 Sala criada com sucesso!");
   });
 
   peer.on('connection', (incomingConn) => {
@@ -200,14 +196,12 @@ document.getElementById('btnCreateRoom').onclick = () => {
     }
 
     connectedPeers.push(incomingConn);
-    lobbyInfoStatus.textContent = `Sala "${playerName}" | Jogadores conectados: ${connectedPeers.length + 1}/${maxPlayers}`;
+    lobbyInfoStatus.textContent = `Sala "${playerName}" | Jogadores: ${connectedPeers.length + 1}/${maxPlayers}`;
     updateHostButtonState();
     showToast(`👥 Jogador conectado! (${connectedPeers.length + 1}/8)`);
 
     incomingConn.on('data', (data) => {
-      if (data.type === 'ACTION') {
-        // Transmite ações entre clientes se necessário
-      }
+      if (data.type === 'ACTION') {}
     });
 
     if (connectedPeers.length + 1 >= maxPlayers) {
@@ -216,23 +210,19 @@ document.getElementById('btnCreateRoom').onclick = () => {
   });
 
   peer.on('error', (err) => {
-    showToast("⚠️ Erro na sala ou nome já existente!");
+    showToast("⚠️ Erro na sala ou nome em uso. Iniciando modo offline...");
+    startGameSession();
   });
 };
 
 // Botão: Salas Disponíveis
 document.getElementById('btnJoinRoom').onclick = () => {
-  const inputVal = document.getElementById('roomNameInput').value.trim();
-  if (!inputVal) {
-    showToast("⚠️ Digite seu nome de jogador ou o nome da sala!");
-    document.getElementById('roomNameInput').focus();
-    return;
-  }
+  const inputVal = document.getElementById('roomNameInput').value.trim() || "TV_Player";
 
   playerName = inputVal;
   document.getElementById('hudPlayerName').textContent = `⚓ ${playerName}`;
   
-  lobbyInfoStatus.textContent = `🔍 Verificando se a sala "${playerName}" está ativa...`;
+  lobbyInfoStatus.textContent = `🔍 Buscando sala "${playerName}"...`;
   roomsContainer.style.display = "block";
   roomsContainer.innerHTML = '<div style="padding:10px;text-align:center;font-size:11px;color:#8899ac;">Buscando sala...</div>';
 
@@ -263,8 +253,8 @@ document.getElementById('btnJoinRoom').onclick = () => {
 
     setTimeout(() => {
       if (!found) {
-        roomsContainer.innerHTML = '<div style="padding:10px;text-align:center;font-size:11px;color:#ff3333;">Nenhuma sala online com esse nome. Crie uma!</div>';
-        lobbyInfoStatus.textContent = "Digite o nome de uma sala existente ou Crie a sua.";
+        roomsContainer.innerHTML = '<div style="padding:10px;text-align:center;font-size:11px;color:#ff3333;">Nenhuma sala encontrada. Crie uma!</div>';
+        lobbyInfoStatus.textContent = "Digite o nome da sala existente ou Crie a sua.";
       }
     }, 2000);
   });
@@ -272,18 +262,15 @@ document.getElementById('btnJoinRoom').onclick = () => {
 
 function setupConnectionEvents() {
   lobbyScreen.classList.add('hidden');
-  showToast(`🌐 Conectado com sucesso como ${playerName}!`);
+  showToast(`🌐 Conectado como ${playerName}!`);
 
   conn.on('data', (data) => {
     if (data.type === 'FULL') {
-      alert("A sala está cheia (Limite de 8 jogadores atingido)!");
+      alert("A sala está cheia!");
       location.reload();
     } else if (data.type === 'START') {
       startGameSession();
     }
-  });
-  conn.on('error', () => {
-    showToast("⚠️ Falha ao conectar na sala selecionada.");
   });
 }
 
@@ -291,13 +278,15 @@ btnStartGameManual.onclick = () => {
   if (isHost) {
     connectedPeers.forEach(p => p.send({ type: 'START' }));
     startGameSession();
+  } else {
+    startGameSession();
   }
 };
 
 function startGameSession() {
   lobbyScreen.classList.add('hidden');
-  gameStarted = true; // Libera a simulação e o combate no loop principal
-  showToast("🎮 Batalha iniciada!");
+  gameStarted = true;
+  showToast("🎮 Batalha iniciada! Use 2/8/4/6 para mover seu navio.");
 }
 
 /* ==========================================================================
@@ -416,7 +405,6 @@ function checkIslandCollision(x, z, radius = 4.0) {
   return false;
 }
 
-// Garante que o ponto inicial esteja livre de ilhas e de outros navios
 function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
   let x = preferredX;
   let z = preferredZ;
@@ -487,25 +475,26 @@ function createShipModel(deckColorHex) {
 
 const occupiedPositions = [];
 
-// Posicionamento totalmente isolado e seguro
+// Navio do Jogador (Vermelho para identificação por cor no controle Smart TV)
 const playerSpawn = getSafeSpawnPosition(0, -350, occupiedPositions);
 occupiedPositions.push(playerSpawn);
 
-const shipGroup = createShipModel(0x3e4c59);
+const shipGroup = createShipModel(0xe74c3c); // Jogador = Vermelho
 shipGroup.position.set(playerSpawn.x, 0.5, playerSpawn.z);
 scene.add(shipGroup);
 let shipPos = { x: playerSpawn.x, z: playerSpawn.z };
 let playerHealth = 100;
 let isPlayerAlive = true;
 
+// Subtituído o Bot Roxo pelo Bot Azul conforme solicitado
 const rawBotsData = [
-  { id: 0, name: "Amarelo", colorHex: 0xd4ac0d, colorCss: "#d4ac0d", prefX: 350, prefZ: -350, heading: 0.5 },
-  { id: 1, name: "Azul", colorHex: 0x00a8ff, colorCss: "#00a8ff", prefX: -350, prefZ: 350, heading: 2.0 },
-  { id: 2, name: "Roxo", colorHex: 0x9b59b6, colorCss: "#9b59b6", prefX: 350, prefZ: 350, heading: 3.5 },
-  { id: 3, name: "Verde", colorHex: 0x2ecc71, colorCss: "#2ecc71", prefX: -350, prefZ: -350, heading: 5.0 }
+  { id: 0, name: "Amarelo", colorHex: 0xd4ac0d, colorCss: "#d4ac0d", colorName: "AMARELO", prefX: 350, prefZ: -350, heading: 0.5 },
+  { id: 1, name: "Azul", colorHex: 0x00a8ff, colorCss: "#00a8ff", colorName: "AZUL", prefX: -350, prefZ: 350, heading: 2.0 },
+  { id: 2, name: "Verde", colorHex: 0x2ecc71, colorCss: "#2ecc71", colorName: "VERDE", prefX: 350, prefZ: 350, heading: 3.5 },
+  { id: 3, name: "Vermelho (Jogador)", colorHex: 0xe74c3c, colorCss: "#e74c3c", colorName: "VERMELHO", prefX: -350, prefZ: -350, heading: 5.0, isPlayerTarget: true }
 ];
 
-const botsData = rawBotsData.map(b => {
+const botsData = rawBotsData.filter(b => !b.isPlayerTarget).map(b => {
   const safePos = getSafeSpawnPosition(b.prefX, b.prefZ, occupiedPositions);
   occupiedPositions.push(safePos);
   return {
@@ -513,12 +502,15 @@ const botsData = rawBotsData.map(b => {
     name: b.name,
     colorHex: b.colorHex,
     colorCss: b.colorCss,
+    colorName: b.colorName,
     x: safePos.x,
     z: safePos.z,
     heading: b.heading,
     health: 100,
     speed: 0.35,
     lastShot: 0,
+    lastTorpedo: 0,
+    torpedos: 5,
     smoke: []
   };
 });
@@ -553,8 +545,13 @@ function buildTargetOptionsUI() {
       const label = document.createElement('span');
       label.textContent = `${bot.name} (${bot.health}%)`;
 
+      const hint = document.createElement('div');
+      hint.className = 'color-badge-hint';
+      hint.textContent = `[Botão ${bot.colorName}]`;
+
       card.appendChild(colorCircle);
       card.appendChild(label);
+      card.appendChild(hint);
       bar.appendChild(card);
     }
   });
@@ -655,6 +652,37 @@ function spawnContinuousSmoke(botObj) {
   });
 }
 
+// Disparo de Torpedo por Robôs (IA livre que escolhe qualquer alvo)
+function botLaunchGuidedTorpedo(botObj, targetEntity, isTargetPlayer = false) {
+  if (botObj.torpedos <= 0) return;
+  botObj.torpedos--;
+
+  const launchX = botObj.x + Math.sin(botObj.heading) * 3.0;
+  const launchZ = botObj.z + Math.cos(botObj.heading) * 3.0;
+
+  const torpedoGroup = new THREE.Group();
+  const body = new THREE.Mesh(torpedoGeo, torpedoMat);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), torpedoHeadMat);
+  head.position.z = 1.0;
+
+  torpedoGroup.add(body, head);
+  torpedoGroup.position.set(launchX, 0.15, launchZ);
+  torpedoGroup.rotation.y = botObj.heading + Math.PI / 2;
+  scene.add(torpedoGroup);
+
+  activeTorpedos.push({
+    mesh: torpedoGroup, 
+    x: launchX, 
+    z: launchZ, 
+    speed: 0.75, 
+    isPlayerTarget: isTargetPlayer,
+    targetId: isTargetPlayer ? -1 : targetEntity.id, 
+    life: 300
+  });
+
+  showToast(`⚠️ TORPEDO INIMIGO LANÇADO PELO NAVIO ${botObj.name}!`);
+}
+
 function launchGuidedTorpedo() {
   if (torpedoCount <= 0) {
     showToast("⚠️ Sem torpedos restantes!");
@@ -687,7 +715,7 @@ function launchGuidedTorpedo() {
   scene.add(torpedoGroup);
 
   activeTorpedos.push({
-    mesh: torpedoGroup, x: launchX, z: launchZ, speed: 0.8, targetId: selectedTargetId, life: 300
+    mesh: torpedoGroup, x: launchX, z: launchZ, speed: 0.8, isPlayerTarget: false, targetId: selectedTargetId, life: 300
   });
 
   showToast(`🚀 Torpedo lançado contra o navio ${targetBot.name}!`);
@@ -696,7 +724,7 @@ function launchGuidedTorpedo() {
 let lastShotTime = 0;
 
 /* ==========================================================================
-   CONTROLES DO JOGADOR
+   CONTROLES DO JOGADOR (MOBILE + SMART TV TECLAS NUMÉRICAS E CORES)
    ========================================================================== */
 let currentSpeed = 0;
 const cruisingSpeed = 0.45;
@@ -708,16 +736,16 @@ const controlsState = { up: false, down: false, left: false, right: false };
 function bindPressEvent(id, actionName) {
   const btn = document.getElementById(id);
   const pressOn = (e) => { 
-    e.preventDefault(); 
+    if (e) e.preventDefault(); 
     if (!isPlayerAlive) return;
     controlsState[actionName] = true; 
     btn.classList.add('pressed'); 
     if (actionName === 'up' && currentSpeed === 0) {
       currentSpeed = cruisingSpeed;
-      showToast("⚙️ Motor ligado: Focando no navio.");
+      showToast("⚙️ Motor ligado: Navegando...");
     }
   };
-  const pressOff = (e) => { e.preventDefault(); controlsState[actionName] = false; btn.classList.remove('pressed'); };
+  const pressOff = (e) => { if (e) e.preventDefault(); controlsState[actionName] = false; btn.classList.remove('pressed'); };
 
   btn.addEventListener('pointerdown', pressOn);
   btn.addEventListener('pointerup', pressOff);
@@ -729,14 +757,97 @@ bindPressEvent('btnDown', 'down');
 bindPressEvent('btnLeft', 'left');
 bindPressEvent('btnRight', 'right');
 
-document.getElementById('btnCenter').onclick = () => {
-  currentSpeed = 0;
-  controlsState.up = false;
-  controlsState.down = false;
-  controlsState.left = false;
-  controlsState.right = false;
-  showToast("⚓ Motores desligados (Navio Parado).");
-};
+function triggerActionOK() {
+  if (targetModal.classList.contains('show')) {
+    targetModal.classList.remove('show');
+    launchGuidedTorpedo();
+  } else {
+    currentSpeed = 0;
+    controlsState.up = false;
+    controlsState.down = false;
+    controlsState.left = false;
+    controlsState.right = false;
+    showToast("⚓ Motores desligados (Navio Parado).");
+  }
+}
+
+document.getElementById('btnCenter').onclick = triggerActionOK;
+
+// MAPEAMENTO DO CONTROLE REMOTO DE SMART TV (TECLAS NUMÉRICAS E COLORIDAS)
+window.addEventListener('keydown', (e) => {
+  if (!gameStarted) return;
+
+  const key = e.key;
+  const code = e.keyCode;
+
+  // Teclas Numéricas da TV: 2 (Cima), 8 (Baixo), 4 (Esquerda), 6 (Direita), 5 (OK/Ação)
+  if (key === '2' || code === 50 || code === 100 || key === 'ArrowUp') {
+    controlsState.up = true;
+    document.getElementById('btnUp').classList.add('pressed');
+    if (currentSpeed === 0) currentSpeed = cruisingSpeed;
+  } else if (key === '8' || code === 56 || code === 104 || key === 'ArrowDown') {
+    controlsState.down = true;
+    document.getElementById('btnDown').classList.add('pressed');
+  } else if (key === '4' || code === 52 || code === 100 || key === 'ArrowLeft') {
+    controlsState.left = true;
+    document.getElementById('btnLeft').classList.add('pressed');
+  } else if (key === '6' || code === 54 || code === 102 || key === 'ArrowRight') {
+    controlsState.right = true;
+    document.getElementById('btnRight').classList.add('pressed');
+  } else if (key === '5' || code === 53 || code === 101 || key === 'Enter' || code === 13) {
+    triggerActionOK();
+    document.getElementById('btnCenter').classList.add('pressed');
+  } 
+  // Botão para Abrir Menu de Torpedos (Ex: Tecla 0 ou 't')
+  else if (key === '0' || code === 48 || key.toLowerCase() === 't') {
+    if (isPlayerAlive) {
+      buildTargetOptionsUI();
+      targetModal.classList.add('show');
+    }
+  }
+
+  // BOTÕES COLORIDOS DO CONTROLE SMART TV (Red, Green, Yellow, Blue)
+  // Mapeados também com atalhos de teclado (r, g, y, b)
+  if (targetModal.classList.contains('show') || key === '0') {
+    let selectColor = null;
+    if (code === 403 || key.toLowerCase() === 'r') selectColor = "VERMELHO";
+    if (code === 404 || key.toLowerCase() === 'g') selectColor = "VERDE";
+    if (code === 405 || key.toLowerCase() === 'y') selectColor = "AMARELO";
+    if (code === 406 || key.toLowerCase() === 'b') selectColor = "AZUL";
+
+    if (selectColor) {
+      const matchBot = botsData.find(b => b.colorName === selectColor && b.health > 0);
+      if (matchBot) {
+        selectedTargetId = matchBot.id;
+        buildTargetOptionsUI();
+        showToast(`🎯 Alvo selecionado: Navio ${matchBot.name}!`);
+      } else if (selectColor === "VERMELHO") {
+        showToast("⚠️ O navio Vermelho é o seu próprio navio!");
+      }
+    }
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  const key = e.key;
+  const code = e.keyCode;
+
+  if (key === '2' || code === 50 || code === 100 || key === 'ArrowUp') {
+    controlsState.up = false;
+    document.getElementById('btnUp').classList.remove('pressed');
+  } else if (key === '8' || code === 56 || code === 104 || key === 'ArrowDown') {
+    controlsState.down = false;
+    document.getElementById('btnDown').classList.remove('pressed');
+  } else if (key === '4' || code === 52 || code === 100 || key === 'ArrowLeft') {
+    controlsState.left = false;
+    document.getElementById('btnLeft').classList.remove('pressed');
+  } else if (key === '6' || code === 54 || code === 102 || key === 'ArrowRight') {
+    controlsState.right = false;
+    document.getElementById('btnRight').classList.remove('pressed');
+  } else if (key === '5' || code === 53 || code === 101 || key === 'Enter' || code === 13) {
+    document.getElementById('btnCenter').classList.remove('pressed');
+  }
+});
 
 const targetModal = document.getElementById('targetModal');
 document.getElementById('btnTorpedo').onclick = () => {
@@ -760,7 +871,7 @@ document.getElementById('btnExitGame').onclick = () => {
 };
 
 /* ==========================================================================
-   CONTROLE DE CÂMERA
+   CONTROLE DE CÂMERA RESPONSIVA
    ========================================================================== */
 let activeTouches = {};
 let initialPinchDistance = null;
@@ -881,7 +992,7 @@ function updateDayNightCycle(delta) {
 const halfMap = mapSize / 2 - 40;
 
 /* ==========================================================================
-   LOOP DE ANIMAÇÃO GERAL
+   LOOP DE ANIMAÇÃO GERAL COM IA INTELIGENTE DOS ROBÔS
    ========================================================================== */
 const clock = new THREE.Clock();
 
@@ -892,8 +1003,8 @@ function animate() {
 
   updateDayNightCycle(delta);
 
-  // O jogo só processa física, combates e movimentação se a partida tiver sido iniciada
   if (gameStarted) {
+    // MOVIMENTO DO JOGADOR
     if (isPlayerAlive) {
       if (controlsState.up) currentSpeed = maxBoostSpeed;
       else if (controlsState.down) currentSpeed = -0.3;
@@ -914,11 +1025,11 @@ function animate() {
             currentSpeed = -0.4;
             shipPos.x -= Math.sin(currentHeading) * 1.5;
             shipPos.z -= Math.cos(currentHeading) * 1.5;
-            showToast("🏝️ Impacto na ilha! Manobra defensiva.");
+            showToast("🏝️ Impacto na ilha!");
           }
         } else {
           currentSpeed = 0;
-          showToast("🚧 Fim do mapa! Barreira alcançada.");
+          showToast("🚧 Barreira alcançada!");
         }
 
         shipGroup.position.x = shipPos.x;
@@ -927,6 +1038,7 @@ function animate() {
       shipGroup.rotation.y = currentHeading;
     }
 
+    // IA DOS ROBÔS (COMBATE TÁTICO, MANOBRA E DISPARO DE TORPEDOS)
     botsData.forEach((bot, idx) => {
       if (bot.health <= 0) {
         if (botMeshes[idx].visible) {
@@ -937,27 +1049,44 @@ function animate() {
         return;
       }
 
-      let closestTarget = { x: shipPos.x, z: shipPos.z, dist: Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z) };
-      
+      // Procura o alvo mais próximo (pode ser o Jogador ou outro Bot)
+      let allTargets = [];
+      if (isPlayerAlive) {
+        allTargets.push({ id: -1, name: "Jogador", x: shipPos.x, z: shipPos.z, isPlayer: true, dist: Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z) });
+      }
+
       botsData.forEach(other => {
         if (other.id !== bot.id && other.health > 0) {
-          const d = Math.hypot(other.x - bot.x, other.z - bot.z);
-          if (d < closestTarget.dist) {
-            closestTarget = { x: other.x, z: other.z, dist: d };
-          }
+          allTargets.push({ id: other.id, name: other.name, x: other.x, z: other.z, isPlayer: false, dist: Math.hypot(other.x - bot.x, other.z - bot.z) });
         }
       });
 
-      const angleToTarget = Math.atan2(closestTarget.x - bot.x, closestTarget.z - bot.z);
-      
-      let targetHeading = angleToTarget;
-      let testX = bot.x + Math.sin(targetHeading) * (bot.speed * 4);
-      let testZ = bot.z + Math.cos(targetHeading) * (bot.speed * 4);
-      if (checkIslandCollision(testX, testZ, 7.0)) {
-        targetHeading += 1.5;
+      if (allTargets.length === 0) return;
+
+      // Ordena por distância para focar no alvo mais próximo
+      allTargets.sort((a, b) => a.dist - b.dist);
+      let closestTarget = allTargets[0];
+
+      // MANOBRA INTELIGENTE: Se estiver muito perto (menos de 45 unidades), o robô curva de lado para não bater direto!
+      let angleToTarget = Math.atan2(closestTarget.x - bot.x, closestTarget.z - bot.z);
+      if (closestTarget.dist < 45) {
+        angleToTarget += Math.PI / 2.5; // Manobra de flanqueamento defensivo
       }
 
-      bot.heading = targetHeading;
+      // Evita colisão com Ilhas
+      let targetHeading = angleToTarget;
+      let testX = bot.x + Math.sin(targetHeading) * (bot.speed * 6);
+      let testZ = bot.z + Math.cos(targetHeading) * (bot.speed * 6);
+      if (checkIslandCollision(testX, testZ, 12.0)) {
+        targetHeading += 1.8;
+      }
+
+      // Suaviza a rotação do robô
+      let diff = targetHeading - bot.heading;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      bot.heading += diff * 0.05;
+
       let nextBotX = bot.x + Math.sin(bot.heading) * bot.speed;
       let nextBotZ = bot.z + Math.cos(bot.heading) * bot.speed;
 
@@ -965,7 +1094,7 @@ function animate() {
         bot.x = nextBotX;
         bot.z = nextBotZ;
       } else {
-        bot.heading += Math.PI;
+        bot.heading += Math.PI * 0.5;
       }
 
       botMeshes[idx].position.x = bot.x;
@@ -976,9 +1105,16 @@ function animate() {
       botMeshes[idx].rotation.x = Math.cos(elapsedTime * 1.1 + idx) * 0.02;
       botMeshes[idx].position.y = 0.5 + Math.sin(elapsedTime * 1.9 + idx) * 0.12;
 
-      if (closestTarget.dist < 320 && elapsedTime - bot.lastShot > 1.2) {
+      // ATAQUE DO ROBÔ 1: Disparo de Canhão
+      if (closestTarget.dist < 300 && elapsedTime - bot.lastShot > 1.4) {
         fireProjectile({ x: bot.x, z: bot.z }, bot.heading, true);
         bot.lastShot = elapsedTime;
+      }
+
+      // ATAQUE DO ROBÔ 2: Disparo de Torpedos Guiados (Liberdade para atacar qualquer alvo)
+      if (closestTarget.dist > 60 && closestTarget.dist < 400 && elapsedTime - bot.lastTorpedo > 8.0 && bot.torpedos > 0) {
+        botLaunchGuidedTorpedo(bot, closestTarget, closestTarget.isPlayer);
+        bot.lastTorpedo = elapsedTime;
       }
 
       if (bot.health < 100 && Math.random() < 0.3) {
@@ -986,6 +1122,7 @@ function animate() {
       }
     });
 
+    // COLISÃO ENTRE NAVIO DO JOGADOR E ROBÔS
     if (isPlayerAlive) {
       botsData.forEach(bot => {
         if (bot.health > 0) {
@@ -1009,6 +1146,7 @@ function animate() {
       });
     }
 
+    // DISPARO AUTOMÁTICO DE CANHÃO DO JOGADOR
     if (isPlayerAlive) {
       let nearestBot = null;
       let minBotDist = 300;
@@ -1035,6 +1173,7 @@ function animate() {
       }
     }
 
+    // PROJÉTEIS DO JOGADOR
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       const p = activeProjectiles[i];
       p.x += Math.sin(p.heading) * p.speed;
@@ -1047,7 +1186,7 @@ function animate() {
       botsData.forEach(bot => {
         if (bot.health > 0 && Math.hypot(p.x - bot.x, p.z - bot.z) < 6) {
           createSparkEffect(p.x, p.z);
-          bot.health = Math.max(0, bot.health - 1);
+          bot.health = Math.max(0, bot.health - 2);
           hit = true;
         }
       });
@@ -1058,6 +1197,7 @@ function animate() {
       }
     }
 
+    // PROJÉTEIS DOS ROBÔS
     for (let i = botProjectiles.length - 1; i >= 0; i--) {
       const p = botProjectiles[i];
       p.x += Math.sin(p.heading) * p.speed;
@@ -1068,7 +1208,7 @@ function animate() {
 
       const distToPlayerHit = Math.hypot(p.x - shipPos.x, p.z - shipPos.z);
       if (distToPlayerHit < 5 && playerHealth > 0 && isPlayerAlive) {
-        playerHealth = Math.max(0, playerHealth - 5);
+        playerHealth = Math.max(0, playerHealth - 4);
         document.getElementById('playerHealth').textContent = `${playerHealth}%`;
         createSparkEffect(shipPos.x, shipPos.z);
         showToast("⚠️ SEU NAVIO FOI ATINGIDO!");
@@ -1084,24 +1224,47 @@ function animate() {
         botProjectiles.splice(i, 1);
         continue;
       }
+
+      // Robôs também podem atingir outros robôs!
+      botsData.forEach(b => {
+        if (b.health > 0 && Math.hypot(p.x - b.x, p.z - b.z) < 5) {
+          b.health = Math.max(0, b.health - 4);
+          createSparkEffect(b.x, b.z);
+        }
+      });
+
       if (p.life <= 0 || checkIslandCollision(p.x, p.z, 1.0) || Math.abs(p.x) > halfMap || Math.abs(p.z) > halfMap) {
         scene.remove(p.mesh);
         botProjectiles.splice(i, 1);
       }
     }
 
+    // TORPEDOS GUIADOS (JOGADOR E ROBÔS)
     for (let i = activeTorpedos.length - 1; i >= 0; i--) {
       const t = activeTorpedos[i];
-      const targetBot = botsData.find(b => b.id === t.targetId);
+      let targetX = 0, targetZ = 0, targetAlive = false;
 
-      if (!targetBot || targetBot.health <= 0) {
+      if (t.isPlayerTarget) {
+        targetX = shipPos.x;
+        targetZ = shipPos.z;
+        targetAlive = isPlayerAlive;
+      } else {
+        const targetBot = botsData.find(b => b.id === t.targetId);
+        if (targetBot && targetBot.health > 0) {
+          targetX = targetBot.x;
+          targetZ = targetBot.z;
+          targetAlive = true;
+        }
+      }
+
+      if (!targetAlive) {
         scene.remove(t.mesh);
         activeTorpedos.splice(i, 1);
         continue;
       }
 
-      const tdx = targetBot.x - t.x;
-      const tdz = targetBot.z - t.z;
+      const tdx = targetX - t.x;
+      const tdz = targetZ - t.z;
       const tAngle = Math.atan2(tdx, tdz);
 
       t.x += Math.sin(tAngle) * t.speed;
@@ -1112,11 +1275,25 @@ function animate() {
       t.mesh.rotation.y = tAngle + Math.PI / 2;
       t.life--;
 
-      const hitDist = Math.hypot(t.x - targetBot.x, t.z - targetBot.z);
+      const hitDist = Math.hypot(t.x - targetX, t.z - targetZ);
       if (hitDist < 7) {
-        showToast(`💥 TORPEDO ATINGIU O NAVIO ${targetBot.name}!`);
-        createExplosionEffect(targetBot.x, targetBot.z);
-        targetBot.health = Math.max(0, targetBot.health - 25);
+        createExplosionEffect(targetX, targetZ);
+        if (t.isPlayerTarget && isPlayerAlive) {
+          playerHealth = Math.max(0, playerHealth - 25);
+          document.getElementById('playerHealth').textContent = `${playerHealth}%`;
+          showToast("💥 SEU NAVIO FOI ATINGIDO POR UM TORPEDO!");
+          if (playerHealth <= 0) {
+            isPlayerAlive = false;
+            shipGroup.visible = false;
+            document.getElementById('gameOverModal').classList.add('show');
+          }
+        } else {
+          const hitBot = botsData.find(b => b.id === t.targetId);
+          if (hitBot) {
+            hitBot.health = Math.max(0, hitBot.health - 25);
+            showToast(`💥 TORPEDO ATINGIU O NAVIO ${hitBot.name}!`);
+          }
+        }
 
         scene.remove(t.mesh);
         activeTorpedos.splice(i, 1);
@@ -1129,6 +1306,7 @@ function animate() {
     }
   }
 
+  // PARTÍCULAS E EFEITOS
   for (let i = sparkParticles.length - 1; i >= 0; i--) {
     const sp = sparkParticles[i];
     sp.mesh.position.x += sp.vx;
@@ -1218,7 +1396,7 @@ function showToast(msg) {
   const t = document.getElementById('toastMsg');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  setTimeout(() => t.classList.remove('show'), 2800);
 }
 
 window.addEventListener('resize', () => {
