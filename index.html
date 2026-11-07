@@ -130,11 +130,11 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 <!-- Tela de Lobby -->
 <div class="lobby-screen" id="lobbyScreen">
   <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
-  <div class="lobby-subtitle">Multiplayer Real & Busca Automática de Salas</div>
+  <div class="lobby-subtitle">Multiplayer Real & Navegação Fluida estilo Minecraft</div>
   <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala</button>
   <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Salas Disponíveis</button>
   <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo</button>
-  <div class="lobby-info" id="lobbyInfoStatus">Dica: Clique em "Salas Disponíveis" para varrer a rede automaticamente!</div>
+  <div class="lobby-info" id="lobbyInfoStatus">Dica: Use CH (▲/▼) para Zoom e Direções para Voo Suave!</div>
 </div>
 
 <div class="hud-top">
@@ -277,17 +277,6 @@ document.getElementById('btnSaveProfile').onclick = () => {
 /* ==========================================================================
    JANELA LATERAL DE SALAS & BUSCA AUTOMÁTICA
    ========================================================================== */
-const roomsSidebar = document.getElementById('roomsSidebar');
-document.getElementById('btnOpenRoomsSidebar').onclick = () => {
-  initAudio();
-  roomsSidebar.classList.add('show');
-  scanAvailableRoomsAutomatically();
-};
-document.getElementById('btnCloseSidebar').onclick = () => roomsSidebar.classList.remove('show');
-
-/* ==========================================================================
-   MULTIPLAYER PEERJS COM BUSCA AUTOMÁTICA
-   ========================================================================== */
 let peer = null;
 let conn = null;
 let connectedPeers = [];
@@ -298,6 +287,14 @@ const lobbyScreen = document.getElementById('lobbyScreen');
 const lobbyInfoStatus = document.getElementById('lobbyInfoStatus');
 const roomsContainer = document.getElementById('roomsContainer');
 const btnStartGameManual = document.getElementById('btnStartGameManual');
+const roomsSidebar = document.getElementById('roomsSidebar');
+
+document.getElementById('btnOpenRoomsSidebar').onclick = () => {
+  initAudio();
+  roomsSidebar.classList.add('show');
+  scanAvailableRoomsAutomatically();
+};
+document.getElementById('btnCloseSidebar').onclick = () => roomsSidebar.classList.remove('show');
 
 let gameStarted = false; 
 const roomPrefix = "tidal_room_v4_";
@@ -338,16 +335,13 @@ document.getElementById('btnCreateRoom').onclick = () => {
   });
 };
 
-// BUSCA AUTOMÁTICA DE SALAS NA REDE SEM DIGITAÇÃO
 function scanAvailableRoomsAutomatically() {
   roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo rede em busca de salas ativas...</div>';
   if (!peer || peer.destroyed) peer = new Peer();
 
   peer.on('open', () => {
-    // Lista de nomes de teste prováveis para varredura automática na rede local
     const commonNames = ["Comandante", "TV_Player", "Alpha", "Beta", "Partida1", "Irmao", "Convidado", playerName];
     roomsContainer.innerHTML = '';
-    let foundCount = 0;
 
     commonNames.forEach(name => {
       if (name === playerName && isHost) return;
@@ -355,7 +349,6 @@ function scanAvailableRoomsAutomatically() {
 
       const testConn = peer.connect(targetRoomId);
       testConn.on('open', () => {
-        foundCount++;
         const item = document.createElement('div');
         item.className = 'room-item';
         item.innerHTML = `<span>⚓ Sala de ${name}</span> <span style="color:#00d2d3;">Entrar ➔</span>`;
@@ -436,9 +429,11 @@ scene.fog = new THREE.FogExp2(0x87ceeb, 0.0012);
 
 const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 3000);
 let cameraZoomDistance = 80;
-let cameraAngleOffset = 0;
 let isFreeCamera = false;
+
+// Posições para inércia e movimento fluido estilo Minecraft na câmera livre
 let freeCamPos = { x: 0, z: 0 };
+let freeCamVel = { x: 0, z: 0 };
 
 camera.position.set(0, cameraZoomDistance, cameraZoomDistance);
 camera.lookAt(0, 0, 0);
@@ -627,7 +622,7 @@ for (let i = 0; i < 3; i++) {
     speed: 0.35,
     lastShot: 0,
     lastTorpedo: 0,
-    torpedos: 10, // LIMITE DE 10 TORPEDOS PARA CADA BOT
+    torpedos: 10,
     smoke: []
   });
 }
@@ -708,17 +703,6 @@ function fireProjectile(fromPos, heading, isBot = false) {
   list.push({ mesh: mesh, x: fromPos.x, z: fromPos.z, heading: heading, speed: 2.2, life: 120 });
 }
 
-function createSparkEffect(x, z) {
-  for (let i = 0; i < 8; i++) {
-    const sGeo = new THREE.SphereGeometry(0.12, 6, 6);
-    const sMat = new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xffcc00 : 0xffffff });
-    const sMesh = new THREE.Mesh(sGeo, sMat);
-    sMesh.position.set(x, 1.5, z);
-    scene.add(sMesh);
-    sparkParticles.push({ mesh: sMesh, vx: (Math.random() - 0.5) * 0.3, vy: Math.random() * 0.3 + 0.1, vz: (Math.random() - 0.5) * 0.3, life: 20 });
-  }
-}
-
 function createExplosionEffect(x, z) {
   playSound('explosion');
   const expGroup = new THREE.Group();
@@ -747,7 +731,7 @@ function spawnContinuousSmoke(botObj) {
 }
 
 function botLaunchGuidedTorpedo(botObj, targetEntity, isTargetPlayer = false) {
-  if (botObj.torpedos <= 0) return; // Limite estrito de 10 torpedos para bots
+  if (botObj.torpedos <= 0) return;
   botObj.torpedos--;
   playSound('torpedo');
 
@@ -801,7 +785,7 @@ function launchGuidedTorpedo() {
 }
 
 /* ==========================================================================
-   CONTROLES (SMART TV & MOBILE) E CÂMERA LIVRE
+   CONTROLES (SMART TV & MOBILE) E CÂMERA LIVRE SUAVE
    ========================================================================== */
 let currentSpeed = 0;
 const cruisingSpeed = 0.45;
@@ -817,15 +801,9 @@ function bindPressEvent(id, actionName) {
     initAudio();
     if (!isPlayerAlive) return;
 
-    if (isFreeCamera) {
-      controlsState[actionName] = true;
-      btn.classList.add('pressed');
-      return;
-    }
-
-    controlsState[actionName] = true; 
-    btn.classList.add('pressed'); 
-    if (actionName === 'up' && currentSpeed === 0) currentSpeed = cruisingSpeed;
+    controlsState[actionName] = true;
+    btn.classList.add('pressed');
+    if (!isFreeCamera && actionName === 'up' && currentSpeed === 0) currentSpeed = cruisingSpeed;
   };
   const pressOff = (e) => { if (e) e.preventDefault(); controlsState[actionName] = false; btn.classList.remove('pressed'); };
 
@@ -846,8 +824,11 @@ function triggerActionOK() {
     launchGuidedTorpedo();
   } else if (currentSpeed === 0 && !isFreeCamera) {
     isFreeCamera = true;
-    freeCamPos = { x: shipPos.x, z: shipPos.z };
-    showToast("🗺️ Câmera Livre Ativada! Use direções para explorar.");
+    freeCamPos.x = shipPos.x;
+    freeCamPos.z = shipPos.z;
+    freeCamVel.x = 0;
+    freeCamVel.z = 0;
+    showToast("🗺️ Câmera Livre Fluida Ativada!");
   } else if (isFreeCamera) {
     isFreeCamera = false;
     showToast("⚓ Foco retornado ao navio.");
@@ -878,31 +859,31 @@ window.addEventListener('keydown', (e) => {
   const key = e.key;
   const code = e.keyCode;
 
+  // Botão CH (Canal Acima / Abaixo) para Zoom Fluido na TV (Códigos de tecla comuns para CH +/- ou PageUp/PageDown)
+  if (key === 'PageUp' || code === 33 || code === 427) {
+    cameraZoomDistance = Math.max(25, cameraZoomDistance - 20);
+    showToast(`🔍 Zoom CH+: ${Math.round(cameraZoomDistance)}m`);
+    return;
+  }
+  if (key === 'PageDown' || code === 34 || code === 428) {
+    cameraZoomDistance = Math.min(600, cameraZoomDistance + 20);
+    showToast(`🔍 Zoom CH-: ${Math.round(cameraZoomDistance)}m`);
+    return;
+  }
+
   if (key === '2' || code === 50 || code === 100 || key === 'ArrowUp') {
-    if (isFreeCamera) freeCamPos.z -= 15;
-    else {
-      controlsState.up = true;
-      document.getElementById('btnUp').classList.add('pressed');
-      if (currentSpeed === 0) currentSpeed = cruisingSpeed;
-    }
+    controlsState.up = true;
+    document.getElementById('btnUp').classList.add('pressed');
+    if (!isFreeCamera && currentSpeed === 0) currentSpeed = cruisingSpeed;
   } else if (key === '8' || code === 56 || code === 104 || key === 'ArrowDown') {
-    if (isFreeCamera) freeCamPos.z += 15;
-    else {
-      controlsState.down = true;
-      document.getElementById('btnDown').classList.add('pressed');
-    }
+    controlsState.down = true;
+    document.getElementById('btnDown').classList.add('pressed');
   } else if (key === '4' || code === 52 || code === 100 || key === 'ArrowLeft') {
-    if (isFreeCamera) freeCamPos.x -= 15;
-    else {
-      controlsState.left = true;
-      document.getElementById('btnLeft').classList.add('pressed');
-    }
+    controlsState.left = true;
+    document.getElementById('btnLeft').classList.add('pressed');
   } else if (key === '6' || code === 54 || code === 102 || key === 'ArrowRight') {
-    if (isFreeCamera) freeCamPos.x += 15;
-    else {
-      controlsState.right = true;
-      document.getElementById('btnRight').classList.add('pressed');
-    }
+    controlsState.right = true;
+    document.getElementById('btnRight').classList.add('pressed');
   } else if (key === '5' || code === 53 || code === 101 || key === 'Enter' || code === 13) {
     triggerActionOK();
     document.getElementById('btnCenter').classList.add('pressed');
@@ -1033,7 +1014,7 @@ function updateDayNightCycle(delta) {
     sunLight.intensity = 0.1;
     timeStr = "🌙 Noite";
   } else {
-    let t = (gameTime - (totalCycleDuration - 60)) / 60;
+    let t = (gameTime - (totalCycleDuration - (60))) / 60;
     currentSky.lerpColors(nightSky, daySky, t);
     ambientLight.intensity = THREE.MathUtils.lerp(0.25, 0.9, t);
     sunLight.intensity = THREE.MathUtils.lerp(0.1, 0.6, t);
@@ -1088,14 +1069,27 @@ function animate() {
       }
       shipGroup.rotation.y = currentHeading;
 
+      // Navegação livre ultra-fluida com inércia (estilo voo do Minecraft)
       if (isFreeCamera) {
-        if (controlsState.up) freeCamPos.z -= 4.0;
-        if (controlsState.down) freeCamPos.z += 4.0;
-        if (controlsState.left) freeCamPos.x -= 4.0;
-        if (controlsState.right) freeCamPos.x += 4.0;
+        let targetVx = 0;
+        let targetVz = 0;
+        const camAcc = 0.6;
+
+        if (controlsState.up) targetVz -= 5.0;
+        if (controlsState.down) targetVz += 5.0;
+        if (controlsState.left) targetVx -= 5.0;
+        if (controlsState.right) targetVx += 5.0;
+
+        freeCamVel.x += (targetVx - freeCamVel.x) * 0.1;
+        freeCamVel.z += (targetVz - freeCamVel.z) * 0.1;
+
+        freeCamPos.x += freeCamVel.x;
+        freeCamPos.z += freeCamVel.z;
       } else {
         freeCamPos.x = shipPos.x;
         freeCamPos.z = shipPos.z;
+        freeCamVel.x = 0;
+        freeCamVel.z = 0;
       }
 
       netSyncTimer += delta;
@@ -1202,6 +1196,7 @@ function animate() {
     }
   }
 
+  // Movimento perfeitamente suave e orgânico da câmera (Lerp)
   let targetCamX = freeCamPos.x;
   let targetCamZ = freeCamPos.z;
 
