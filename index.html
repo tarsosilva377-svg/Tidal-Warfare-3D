@@ -137,7 +137,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
   <div class="lobby-info" id="lobbyInfoStatus">
     🎮 <b>Controles da Smart TV:</b><br>
     • Teclas <b>2, 8, 4, 6</b> = Acelerar, Ré e Direção<br>
-    • Botão <b>OK (5)</b> = Parar navio / Câmera Livre<br>
+    • Botão <b>OK (5)</b> = Parar navio e ativar Câmera Livre<br>
     • Botão <b>CH (▲/▼)</b> = Zoom da Câmera
   </div>
 </div>
@@ -673,6 +673,32 @@ function buildTargetOptionsUI() {
 }
 
 /* ==========================================================================
+   SISTEMA DE ESPUMA / BANZEIRO (ÁGUA ESPIRRANDO NAS LATERAIS)
+   ========================================================================== */
+const sprayParticles = [];
+const sprayGeo = new THREE.SphereGeometry(0.18, 6, 6);
+const sprayMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+
+function spawnWaterSpray(shipX, shipZ, heading, speed) {
+  if (Math.abs(speed) < 0.05) return;
+  // Lado esquerdo e direito do navio
+  for (let side of [-1, 1]) {
+    const offsetX = Math.cos(heading) * 2.2 * side;
+    const offsetZ = Math.sin(heading) * 2.2 * side;
+    const mesh = new THREE.Mesh(sprayGeo, sprayMat);
+    mesh.position.set(shipX + offsetX, 0.1, shipZ + offsetZ);
+    scene.add(mesh);
+
+    sprayParticles.push({
+      mesh: mesh,
+      vx: (Math.random() - 0.5) * 0.2 + Math.sin(heading + (side > 0 ? 1.5 : -1.5)) * 0.3,
+      vz: (Math.random() - 0.5) * 0.2 + Math.cos(heading + (side > 0 ? 1.5 : -1.5)) * 0.3,
+      life: 25
+    });
+  }
+}
+
+/* ==========================================================================
    COMBATE E TORPEDOS (COM COLISÃO NAS ILHAS)
    ========================================================================== */
 let torpedoCount = 10;
@@ -680,7 +706,6 @@ const activeProjectiles = [];
 const botProjectiles = [];
 const activeTorpedos = [];
 const activeExplosions = [];
-const sparkParticles = [];
 
 const projectileGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.2, 6);
 projectileGeo.rotateX(Math.PI / 2);
@@ -825,29 +850,27 @@ function triggerActionOK() {
   if (targetModal.classList.contains('show')) {
     targetModal.classList.remove('show');
     launchGuidedTorpedo();
-  } else if (currentSpeed === 0 && !isFreeCamera) {
-    isFreeCamera = true;
-    freeCamPos.x = shipPos.x;
-    freeCamPos.z = shipPos.z;
-    freeCamVel.x = 0;
-    freeCamVel.z = 0;
-    showToast("🗺️ Câmera Livre Fluida Ativada!");
-  } else if (isFreeCamera) {
-    isFreeCamera = false;
-    showToast("⚓ Foco retornado ao navio.");
-  } else {
+  } else if (!isFreeCamera) {
+    // Parada imediata e ativação instantânea da câmera livre no local exato
     currentSpeed = 0;
     controlsState.up = false;
     controlsState.down = false;
     controlsState.left = false;
     controlsState.right = false;
-    showToast("⚓ Navio Parado. Aperte OK novamente para Câmera Livre.");
+    isFreeCamera = true;
+    freeCamPos.x = shipPos.x;
+    freeCamPos.z = shipPos.z;
+    freeCamVel.x = 0;
+    freeCamVel.z = 0;
+    showToast("🗺️ Navio Parado & Câmera Livre Ativada!");
+  } else {
+    isFreeCamera = false;
+    showToast("⚓ Foco retornado ao navio.");
   }
 }
 
 document.getElementById('btnCenter').onclick = triggerActionOK;
 
-// Zoom liberado a qualquer momento
 document.getElementById('btnZoomIn').onclick = () => {
   cameraZoomDistance = Math.max(25, cameraZoomDistance - 15);
   showToast(`🔍 Zoom: ${Math.round(cameraZoomDistance)}m`);
@@ -863,7 +886,6 @@ window.addEventListener('keydown', (e) => {
   const key = e.key;
   const code = e.keyCode;
 
-  // Botão CH (Canal Acima / Abaixo) para Zoom na Smart TV (Botão CH do controle Toshiba)
   if (key === 'PageUp' || code === 33 || code === 427 || key === 'ChannelUp') {
     cameraZoomDistance = Math.max(25, cameraZoomDistance - 20);
     showToast(`🔍 Zoom CH+: ${Math.round(cameraZoomDistance)}m`);
@@ -919,9 +941,9 @@ window.addEventListener('keyup', (e) => {
   const key = e.key;
   const code = e.keyCode;
   if (key === '2' || code === 50 || key === 'ArrowUp') controlsState.up = false;
-  if (key === '8' || code === 56 || key === 'ArrowDown') controlsState.down = false;
-  if (key === '4' || code === 52 || key === 'ArrowLeft') controlsState.left = false;
-  if (key === '6' || code === 54 || key === 'ArrowRight') controlsState.right = false;
+  if (key === '8' || code === 56 || code === 'ArrowDown') controlsState.down = false;
+  if (key === '4' || code === 52 || code === 'ArrowLeft') controlsState.left = false;
+  if (key === '6' || code === 54 || code === 'ArrowRight') controlsState.right = false;
 });
 
 const targetModal = document.getElementById('targetModal');
@@ -1049,42 +1071,46 @@ function animate() {
     checkWinConditions();
 
     if (isPlayerAlive) {
-      // Controles simultâneos de aceleração e direção
-      if (controlsState.up && !isFreeCamera) currentSpeed = maxBoostSpeed;
-      else if (controlsState.down && !isFreeCamera) currentSpeed = -0.3;
-      else if (!isFreeCamera) currentSpeed = cruisingSpeed; // Mantém velocidade de cruzeiro se não parado
+      if (!isFreeCamera) {
+        if (controlsState.up) currentSpeed = maxBoostSpeed;
+        else if (controlsState.down) currentSpeed = -0.3;
+        else currentSpeed = cruisingSpeed;
 
-      if (controlsState.left && !isFreeCamera) currentHeading += 0.035;
-      if (controlsState.right && !isFreeCamera) currentHeading -= 0.035;
+        if (controlsState.left) currentHeading += 0.035;
+        if (controlsState.right) currentHeading -= 0.035;
 
-      if (Math.abs(currentSpeed) > 0.01 && !isFreeCamera) {
-        let nextX = shipPos.x + Math.sin(currentHeading) * currentSpeed;
-        let nextZ = shipPos.z + Math.cos(currentHeading) * currentSpeed;
+        if (Math.abs(currentSpeed) > 0.01) {
+          let nextX = shipPos.x + Math.sin(currentHeading) * currentSpeed;
+          let nextZ = shipPos.z + Math.cos(currentHeading) * currentSpeed;
 
-        if (Math.abs(nextX) < halfMap && Math.abs(nextZ) < halfMap && !checkIslandCollision(nextX, nextZ, 5.0)) {
-          shipPos.x = nextX;
-          shipPos.z = nextZ;
-        } else {
-          currentSpeed = -0.4;
-          showToast("🏝️ Obstáculo!");
+          if (Math.abs(nextX) < halfMap && Math.abs(nextZ) < halfMap && !checkIslandCollision(nextX, nextZ, 5.0)) {
+            shipPos.x = nextX;
+            shipPos.z = nextZ;
+          } else {
+            currentSpeed = -0.4;
+            showToast("🏝️ Obstáculo!");
+          }
+          shipGroup.position.x = shipPos.x;
+          shipGroup.position.z = shipPos.z;
+
+          // Gerar banzeiro / espuma nas laterais proporcional à velocidade
+          if (Math.random() < 0.4) spawnWaterSpray(shipPos.x, shipPos.z, currentHeading, currentSpeed);
         }
-        shipGroup.position.x = shipPos.x;
-        shipGroup.position.z = shipPos.z;
+
+        let rollWave = Math.sin(elapsedTime * 6) * 0.04 * (Math.abs(currentSpeed) * 2);
+        let pitchWave = Math.cos(elapsedTime * 4) * 0.02 * (Math.abs(currentSpeed) * 2);
+        shipGroup.rotation.set(pitchWave, currentHeading, rollWave);
       }
 
-      // Adicionando Banzeiro Realista nas ondas proporcional à velocidade
-      let rollWave = Math.sin(elapsedTime * 6) * 0.04 * (Math.abs(currentSpeed) * 2);
-      let pitchWave = Math.cos(elapsedTime * 4) * 0.02 * (Math.abs(currentSpeed) * 2);
-      shipGroup.rotation.set(pitchWave, currentHeading, rollWave);
-
+      // Câmera Livre com movimentação fluida pelas setas do mapa
       if (isFreeCamera) {
         let targetVx = 0;
         let targetVz = 0;
 
-        if (controlsState.up) targetVz -= 5.0;
-        if (controlsState.down) targetVz += 5.0;
-        if (controlsState.left) targetVx -= 5.0;
-        if (controlsState.right) targetVx += 5.0;
+        if (controlsState.up) targetVz -= 6.0;
+        if (controlsState.down) targetVz += 6.0;
+        if (controlsState.left) targetVx -= 6.0;
+        if (controlsState.right) targetVx += 6.0;
 
         freeCamVel.x += (targetVx - freeCamVel.x) * 0.1;
         freeCamVel.z += (targetVz - freeCamVel.z) * 0.1;
@@ -1106,6 +1132,19 @@ function animate() {
         if (isHost && connectedPeers.length > 0) {
           connectedPeers.forEach(p => { if (p.open) p.send(syncData); });
         }
+      }
+    }
+
+    // Atualizar partículas de spray / banzeiro da água
+    for (let i = sprayParticles.length - 1; i >= 0; i--) {
+      const sp = sprayParticles[i];
+      sp.mesh.position.x += sp.vx;
+      sp.mesh.position.z += sp.vz;
+      sp.mesh.scale.multiplyScalar(0.92);
+      sp.life--;
+      if (sp.life <= 0) {
+        scene.remove(sp.mesh);
+        sprayParticles.splice(i, 1);
       }
     }
 
@@ -1165,7 +1204,7 @@ function animate() {
       if (bot.health < 100 && Math.random() < 0.3) spawnContinuousSmoke(bot);
     });
 
-    // Torpedos e Projéteis com Colisão nas Ilhas
+    // Torpedos com Colisão nas Ilhas
     for (let i = activeTorpedos.length - 1; i >= 0; i--) {
       const t = activeTorpedos[i];
       let targetX = 0, targetZ = 0, targetAlive = false;
@@ -1186,7 +1225,6 @@ function animate() {
       t.mesh.rotation.y = tAngle - Math.PI / 2;
       t.life--;
 
-      // Verificar colisão do torpedo com Ilhas
       if (checkIslandCollision(t.x, t.z, 2.0)) {
         createExplosionEffect(t.x, t.z);
         scene.remove(t.mesh);
