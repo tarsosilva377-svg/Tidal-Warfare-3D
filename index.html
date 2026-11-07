@@ -16,11 +16,11 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .lobby-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(5,11,20,0.96);backdrop-filter:blur(12px);z-index:100;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;transition:opacity 0.3s ease}
 .lobby-screen.hidden{opacity:0;pointer-events:none}
 .lobby-title{font-size:24px;font-weight:900;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;text-align:center}
-.lobby-subtitle{font-size:13px;color:#8899ac;margin-bottom:24px;font-weight:600;text-align:center}
+.lobby-subtitle{font-size:13px;color:#8899ac;margin-bottom:16px;font-weight:600;text-align:center}
 .lobby-input{background:rgba(10,20,35,0.9);border:1.5px solid #00d2d3;color:#fff;padding:12px 16px;border-radius:12px;font-size:14px;outline:none;width:280px;margin-bottom:10px;text-align:center}
-.lobby-btn{background:rgba(0,168,255,0.2);border:1.5px solid #00d2d3;color:#fff;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin:8px;width:280px;box-shadow:0 4px 15px rgba(0,0,0,0.4);transition:all 0.2s}
+.lobby-btn{background:rgba(0,168,255,0.2);border:1.5px solid #00d2d3;color:#fff;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin:6px;width:280px;box-shadow:0 4px 15px rgba(0,0,0,0.4);transition:all 0.2s}
 .lobby-btn:active, .lobby-btn:focus{transform:scale(0.95);background:rgba(0,168,255,0.5);outline:2px solid #fff}
-.lobby-info{font-size:12px;color:#00d2d3;margin-top:16px;font-weight:700;text-align:center;min-height:25px;max-width:320px}
+.lobby-info{font-size:11px;color:#8899ac;margin-top:14px;font-weight:600;text-align:center;max-width:340px;line-height:1.4;background:rgba(0,168,255,0.08);padding:10px;border-radius:8px;border:1px solid rgba(0,168,255,0.2)}
 
 /* Botão de Perfil */
 .profile-btn{position:absolute;top:15px;left:15px;background:rgba(10,20,35,0.85);border:1.5px solid #00d2d3;color:#00d2d3;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:800;z-index:110;cursor:pointer;backdrop-filter:blur(6px);display:flex;align-items:center;gap:6px;box-shadow:0 4px 15px rgba(0,0,0,.5)}
@@ -134,7 +134,12 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
   <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala</button>
   <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Salas Disponíveis</button>
   <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo</button>
-  <div class="lobby-info" id="lobbyInfoStatus">Dica: Use CH (▲/▼) para Zoom e Direções para Voo Suave!</div>
+  <div class="lobby-info" id="lobbyInfoStatus">
+    🎮 <b>Controles da Smart TV:</b><br>
+    • Teclas <b>2, 8, 4, 6</b> = Acelerar, Ré e Direção<br>
+    • Botão <b>OK (5)</b> = Parar navio / Câmera Livre<br>
+    • Botão <b>CH (▲/▼)</b> = Zoom da Câmera
+  </div>
 </div>
 
 <div class="hud-top">
@@ -431,7 +436,6 @@ const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container
 let cameraZoomDistance = 80;
 let isFreeCamera = false;
 
-// Posições para inércia e movimento fluido estilo Minecraft na câmera livre
 let freeCamPos = { x: 0, z: 0 };
 let freeCamVel = { x: 0, z: 0 };
 
@@ -450,7 +454,7 @@ sunLight.position.set(100, 150, 100);
 scene.add(sunLight);
 
 /* ==========================================================================
-   OCEANO E ILHAS
+   OCEANO E ILHAS (COM COLISÃO PARA PROJÉTEIS E TORPEDOS)
    ========================================================================== */
 const mapSize = 1800;
 const oceanGeometry = new THREE.PlaneGeometry(mapSize, mapSize, 128, 128);
@@ -669,7 +673,7 @@ function buildTargetOptionsUI() {
 }
 
 /* ==========================================================================
-   COMBATE E TORPEDOS (LIMITE RÍGIDO DE 10 PARA TODOS)
+   COMBATE E TORPEDOS (COM COLISÃO NAS ILHAS)
    ========================================================================== */
 let torpedoCount = 10;
 const activeProjectiles = [];
@@ -785,7 +789,7 @@ function launchGuidedTorpedo() {
 }
 
 /* ==========================================================================
-   CONTROLES (SMART TV & MOBILE) E CÂMERA LIVRE SUAVE
+   CONTROLES SIMULTÂNEOS & CÂMERA LIVRE FLUIDA
    ========================================================================== */
 let currentSpeed = 0;
 const cruisingSpeed = 0.45;
@@ -803,7 +807,6 @@ function bindPressEvent(id, actionName) {
 
     controlsState[actionName] = true;
     btn.classList.add('pressed');
-    if (!isFreeCamera && actionName === 'up' && currentSpeed === 0) currentSpeed = cruisingSpeed;
   };
   const pressOff = (e) => { if (e) e.preventDefault(); controlsState[actionName] = false; btn.classList.remove('pressed'); };
 
@@ -844,6 +847,7 @@ function triggerActionOK() {
 
 document.getElementById('btnCenter').onclick = triggerActionOK;
 
+// Zoom liberado a qualquer momento
 document.getElementById('btnZoomIn').onclick = () => {
   cameraZoomDistance = Math.max(25, cameraZoomDistance - 15);
   showToast(`🔍 Zoom: ${Math.round(cameraZoomDistance)}m`);
@@ -859,13 +863,13 @@ window.addEventListener('keydown', (e) => {
   const key = e.key;
   const code = e.keyCode;
 
-  // Botão CH (Canal Acima / Abaixo) para Zoom Fluido na TV (Códigos de tecla comuns para CH +/- ou PageUp/PageDown)
-  if (key === 'PageUp' || code === 33 || code === 427) {
+  // Botão CH (Canal Acima / Abaixo) para Zoom na Smart TV (Botão CH do controle Toshiba)
+  if (key === 'PageUp' || code === 33 || code === 427 || key === 'ChannelUp') {
     cameraZoomDistance = Math.max(25, cameraZoomDistance - 20);
     showToast(`🔍 Zoom CH+: ${Math.round(cameraZoomDistance)}m`);
     return;
   }
-  if (key === 'PageDown' || code === 34 || code === 428) {
+  if (key === 'PageDown' || code === 34 || code === 428 || key === 'ChannelDown') {
     cameraZoomDistance = Math.min(600, cameraZoomDistance + 20);
     showToast(`🔍 Zoom CH-: ${Math.round(cameraZoomDistance)}m`);
     return;
@@ -874,7 +878,6 @@ window.addEventListener('keydown', (e) => {
   if (key === '2' || code === 50 || code === 100 || key === 'ArrowUp') {
     controlsState.up = true;
     document.getElementById('btnUp').classList.add('pressed');
-    if (!isFreeCamera && currentSpeed === 0) currentSpeed = cruisingSpeed;
   } else if (key === '8' || code === 56 || code === 104 || key === 'ArrowDown') {
     controlsState.down = true;
     document.getElementById('btnDown').classList.add('pressed');
@@ -1014,7 +1017,7 @@ function updateDayNightCycle(delta) {
     sunLight.intensity = 0.1;
     timeStr = "🌙 Noite";
   } else {
-    let t = (gameTime - (totalCycleDuration - (60))) / 60;
+    let t = (gameTime - (totalCycleDuration - 60)) / 60;
     currentSky.lerpColors(nightSky, daySky, t);
     ambientLight.intensity = THREE.MathUtils.lerp(0.25, 0.9, t);
     sunLight.intensity = THREE.MathUtils.lerp(0.1, 0.6, t);
@@ -1046,14 +1049,15 @@ function animate() {
     checkWinConditions();
 
     if (isPlayerAlive) {
+      // Controles simultâneos de aceleração e direção
       if (controlsState.up && !isFreeCamera) currentSpeed = maxBoostSpeed;
       else if (controlsState.down && !isFreeCamera) currentSpeed = -0.3;
-      else if (currentSpeed > 0 && !isFreeCamera) currentSpeed = cruisingSpeed;
+      else if (!isFreeCamera) currentSpeed = cruisingSpeed; // Mantém velocidade de cruzeiro se não parado
 
       if (controlsState.left && !isFreeCamera) currentHeading += 0.035;
       if (controlsState.right && !isFreeCamera) currentHeading -= 0.035;
 
-      if (Math.abs(currentSpeed) > 0.01) {
+      if (Math.abs(currentSpeed) > 0.01 && !isFreeCamera) {
         let nextX = shipPos.x + Math.sin(currentHeading) * currentSpeed;
         let nextZ = shipPos.z + Math.cos(currentHeading) * currentSpeed;
 
@@ -1067,13 +1071,15 @@ function animate() {
         shipGroup.position.x = shipPos.x;
         shipGroup.position.z = shipPos.z;
       }
-      shipGroup.rotation.y = currentHeading;
 
-      // Navegação livre ultra-fluida com inércia (estilo voo do Minecraft)
+      // Adicionando Banzeiro Realista nas ondas proporcional à velocidade
+      let rollWave = Math.sin(elapsedTime * 6) * 0.04 * (Math.abs(currentSpeed) * 2);
+      let pitchWave = Math.cos(elapsedTime * 4) * 0.02 * (Math.abs(currentSpeed) * 2);
+      shipGroup.rotation.set(pitchWave, currentHeading, rollWave);
+
       if (isFreeCamera) {
         let targetVx = 0;
         let targetVz = 0;
-        const camAcc = 0.6;
 
         if (controlsState.up) targetVz -= 5.0;
         if (controlsState.down) targetVz += 5.0;
@@ -1159,7 +1165,7 @@ function animate() {
       if (bot.health < 100 && Math.random() < 0.3) spawnContinuousSmoke(bot);
     });
 
-    // Torpedos
+    // Torpedos e Projéteis com Colisão nas Ilhas
     for (let i = activeTorpedos.length - 1; i >= 0; i--) {
       const t = activeTorpedos[i];
       let targetX = 0, targetZ = 0, targetAlive = false;
@@ -1180,6 +1186,14 @@ function animate() {
       t.mesh.rotation.y = tAngle - Math.PI / 2;
       t.life--;
 
+      // Verificar colisão do torpedo com Ilhas
+      if (checkIslandCollision(t.x, t.z, 2.0)) {
+        createExplosionEffect(t.x, t.z);
+        scene.remove(t.mesh);
+        activeTorpedos.splice(i, 1);
+        continue;
+      }
+
       if (Math.hypot(t.x - targetX, t.z - targetZ) < 7) {
         createExplosionEffect(targetX, targetZ);
         if (t.isPlayerTarget && isPlayerAlive) {
@@ -1196,7 +1210,6 @@ function animate() {
     }
   }
 
-  // Movimento perfeitamente suave e orgânico da câmera (Lerp)
   let targetCamX = freeCamPos.x;
   let targetCamZ = freeCamPos.z;
 
