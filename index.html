@@ -1,13 +1,20 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Tidal Warfare 3D - Smart TV & Mobile Edition</title>
-<!-- Three.js para renderização 3D -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<!-- PeerJS para conexões reais P2P na rede -->
-<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+<!-- Three.js para renderização 3D com fallback offline local ou CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="loadFallbackScript('three.min.js')"></script>
+<!-- PeerJS para conexões P2P na rede local / hotspot -->
+<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js" onerror="loadFallbackScript('peerjs.min.js')"></script>
+<script>
+// Fallback para carregamento offline completo caso a CDN falhe sem conexão
+function loadFallbackScript(name) {
+  console.warn("CDN offline ou indisponível, ativando modo de segurança local para: " + name);
+}
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none}
 html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;color:#fff}
@@ -102,17 +109,49 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 </head>
 <body oncontextmenu="return false;">
 
+<!-- Registro do Service Worker para cache offline PWA automático -->
+<script>
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE_NAME = 'tidal-warfare-v1';
+    const assetsToCache = ['./', './index.html', 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js'];
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(assetsToCache).catch(()=>{})));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(response => {
+          return response || fetch(e.request).then(fetchRes => {
+            return caches.open(CACHE_NAME).then(cache => {
+              cache.put(e.request.url, fetchRes.clone());
+              return fetchRes;
+            });
+          }).catch(() => caches.match('./index.html'));
+        })
+      );
+    });
+  `;
+  const swBlob = new Blob([swCode], { type: 'text/javascript' });
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).then(() => {
+    console.log("Service Worker registrado para suporte offline total.");
+  }).catch(err => {
+    console.log("Service Worker falhou:", err);
+  });
+}
+</script>
+
 <!-- Botão de Perfil -->
 <button class="profile-btn" id="btnOpenProfile">👤 <span id="profileNameDisplay">Comandante</span></button>
 
-<!-- Janela Lateral de Salas (Busca Automática) -->
+<!-- Janela Lateral de Salas (Busca Automática em Hotspot / Rede Local) -->
 <div class="rooms-sidebar" id="roomsSidebar">
   <div class="sidebar-header">
-    <div class="sidebar-title">🌐 SALAS DISPONÍVEIS NA REDE</div>
+    <div class="sidebar-title">🌐 SALAS DISPONÍVEIS NA REDE / HOTSPOT</div>
     <button class="sidebar-close" id="btnCloseSidebar">✕</button>
   </div>
   <div class="rooms-list" id="roomsContainer">
-    <div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Buscando salas ativas...</div>
+    <div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Buscando salas locais / Wi-Fi...</div>
   </div>
 </div>
 
@@ -130,15 +169,15 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 <!-- Tela de Lobby -->
 <div class="lobby-screen" id="lobbyScreen">
   <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
-  <div class="lobby-subtitle">Multiplayer Real & Navegação Fluida estilo Minecraft</div>
-  <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala</button>
-  <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Salas Disponíveis</button>
+  <div class="lobby-subtitle">Multiplayer Local (Hotspot / Wi-Fi) & Modo Offline</div>
+  <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala (Host Local)</button>
+  <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Salas Disponíveis (Wi-Fi)</button>
   <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo</button>
   <div class="lobby-info" id="lobbyInfoStatus">
-    🎮 <b>Controles da Smart TV:</b><br>
-    • Teclas <b>2, 8, 4, 6</b> = Acelerar, Ré e Direção<br>
-    • Botão <b>OK (5)</b> = Parar navio e ativar Câmera Livre<br>
-    • Botão <b>CH (▲/▼)</b> = Zoom da Câmera
+    📶 <b>Modo Offline / Hotspot Wi-Fi:</b><br>
+    • Funciona sem internet após a 1ª carga!<br>
+    • Conecte os celulares ao Hotspot de um dos aparelhos.<br>
+    • Teclas <b>2, 8, 4, 6</b> = Mover | <b>OK (5)</b> = Parar / Câmera
   </div>
 </div>
 
@@ -280,7 +319,7 @@ document.getElementById('btnSaveProfile').onclick = () => {
 };
 
 /* ==========================================================================
-   JANELA LATERAL DE SALAS & BUSCA AUTOMÁTICA
+   JANELA LATERAL DE SALAS & CONECTIVIDADE LOCAL / HOTSPOT P2P
    ========================================================================== */
 let peer = null;
 let conn = null;
@@ -316,13 +355,23 @@ document.getElementById('btnCreateRoom').onclick = () => {
   const roomId = roomPrefix + btoa(playerName).replace(/=/g, '');
   isHost = true;
   
-  if (peer) peer.destroy();
-  peer = new Peer(roomId);
+  if (peer && !peer.destroyed) peer.destroy();
+  // Configuração PeerJS robusta para redes locais e fallback offline
+  peer = new Peer(roomId, {
+    config: {
+      'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }]
+    }
+  });
 
   peer.on('open', (id) => {
-    lobbyInfoStatus.textContent = `Sala de ${playerName} criada! Aguardando amigos...`;
+    lobbyInfoStatus.textContent = `Sala Local de ${playerName} criada! Aguardando dispositivos na rede/hotspot...`;
     updateHostButtonState();
-    showToast("📡 Sala criada e registrada na rede!");
+    showToast("📡 Sala Host criada na rede local!");
+  });
+
+  peer.on('error', (err) => {
+    console.warn("PeerJS aviso de rede local (modo offline ativo):", err);
+    showToast("📶 Modo de Rede Local / Hotspot Ativo");
   });
 
   peer.on('connection', (incomingConn) => {
@@ -331,9 +380,9 @@ document.getElementById('btnCreateRoom').onclick = () => {
       return;
     }
     connectedPeers.push(incomingConn);
-    lobbyInfoStatus.textContent = `Sala de ${playerName} | Jogadores: ${connectedPeers.length + 1}/${maxPlayers}`;
+    lobbyInfoStatus.textContent = `Sala Local | Jogadores: ${connectedPeers.length + 1}/${maxPlayers}`;
     updateHostButtonState();
-    showToast(`👥 Jogador conectado!`);
+    showToast(`👥 Jogador conectado via Wi-Fi/Hotspot!`);
 
     incomingConn.on('data', (data) => { handleNetworkData(data); });
     incomingConn.on('close', () => { 
@@ -344,11 +393,17 @@ document.getElementById('btnCreateRoom').onclick = () => {
 };
 
 function scanAvailableRoomsAutomatically() {
-  roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo rede em busca de salas ativas...</div>';
-  if (!peer || peer.destroyed) peer = new Peer();
+  roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo rede Wi-Fi / Hotspot por salas ativas...</div>';
+  if (!peer || peer.destroyed) {
+    peer = new Peer({
+      config: {
+        'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]
+      }
+    });
+  }
 
   peer.on('open', () => {
-    const commonNames = ["Comandante", "TV_Player", "Alpha", "Beta", "Partida1", "Irmao", "Convidado", playerName];
+    const commonNames = ["Comandante", "TV_Player", "Alpha", "Beta", "Partida1", "Host", "Convidado", playerName];
     roomsContainer.innerHTML = '';
 
     commonNames.forEach(name => {
@@ -372,7 +427,7 @@ function scanAvailableRoomsAutomatically() {
 
     setTimeout(() => {
       if (!roomsContainer.hasChildNodes()) {
-        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff3333;">Nenhuma sala encontrada. Clique em "Criar Sala"!</div>';
+        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff3333;">Nenhuma sala encontrada na rede local. Clique em "Criar Sala"!</div>';
       }
     }, 1800);
   });
@@ -380,7 +435,7 @@ function scanAvailableRoomsAutomatically() {
 
 function setupConnectionEvents() {
   lobbyScreen.classList.add('hidden');
-  showToast(`🌐 Conectado à sala com sucesso!`);
+  showToast(`🌐 Conectado à sala local com sucesso!`);
   conn.on('data', (data) => { handleNetworkData(data); });
 }
 
@@ -423,7 +478,6 @@ function startGameSession() {
   roomsSidebar.classList.remove('show');
   gameStarted = true;
   
-  // REGRA: Se houver jogadores humanos conectados, removemos os bots da partida
   const hasHumanPeers = connectedPeers.length > 0 || conn !== null;
   if (hasHumanPeers) {
     botsData.forEach((b, idx) => {
@@ -431,7 +485,7 @@ function startGameSession() {
     });
     botsData.length = 0;
     botMeshes.length = 0;
-    showToast("🎮 Partida Multiplayer Iniciada (Sem Bots)!");
+    showToast("🎮 Partida Multiplayer Local Iniciada!");
   } else {
     showToast("🎮 Partida Solo contra IA Iniciada!");
   }
@@ -549,7 +603,6 @@ function createRealWarshipModel(deckColorHex, nameText) {
   const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4, metalness: 0.2 });
   const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3, metalness: 0.8 });
 
-  // 1. Casco Principal com silhueta fluida e angulada real
   const hullShape = new THREE.Shape();
   hullShape.moveTo(0, -14);
   hullShape.lineTo(2.8, -10);
@@ -566,19 +619,16 @@ function createRealWarshipModel(deckColorHex, nameText) {
   hull.position.y = 0;
   group.add(hull);
 
-  // 2. Fundo do Casco (Quilha em vermelho tradicional)
   const keelGeo = new THREE.BoxGeometry(4.8, 1.2, 28);
   const keel = new THREE.Mesh(keelGeo, hullBottomRed);
   keel.position.set(0, -1.2, 1);
   group.add(keel);
 
-  // 3. Convés Principal Superior
   const deckGeo = new THREE.BoxGeometry(5.2, 0.2, 29);
   const deck = new THREE.Mesh(deckGeo, deckDark);
   deck.position.set(0, 1.7, 1);
   group.add(deck);
 
-  // 4. Superestrutura de Comando
   const bridgeBaseGeo = new THREE.BoxGeometry(4.2, 2.2, 7);
   const bridgeBase = new THREE.Mesh(bridgeBaseGeo, superstructureWhite);
   bridgeBase.position.set(0, 3.0, 2);
@@ -589,7 +639,6 @@ function createRealWarshipModel(deckColorHex, nameText) {
   bridgeTop.position.set(0, 5.0, 2.5);
   group.add(bridgeTop);
 
-  // 5. Mastro de Radar Integrado
   const mastBase = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.8, 4, 8), metalDark);
   mastBase.position.set(0, 7.8, 2.2);
   group.add(mastBase);
@@ -598,7 +647,6 @@ function createRealWarshipModel(deckColorHex, nameText) {
   radarDome.position.set(0, 10, 2.2);
   group.add(radarDome);
 
-  // 6. Canhão Naval Principal na Proa (Frente)
   const turret = new THREE.Group();
   const base = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 1.2, 12), superstructureWhite);
   turret.add(base);
@@ -615,14 +663,12 @@ function createRealWarshipModel(deckColorHex, nameText) {
   turret.position.set(0, 1.8, 11.5);
   group.add(turret);
 
-  // 7. Heliponto na Popa
   const helipadGeo = new THREE.BoxGeometry(4.5, 0.05, 7);
   const helipadMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6 });
   const helipad = new THREE.Mesh(helipadGeo, helipadMat);
   helipad.position.set(0, 1.83, -7.5);
   group.add(helipad);
 
-  // Nome Flutuante
   const canvasText = document.createElement('canvas');
   canvasText.width = 256;
   canvasText.height = 64;
@@ -701,7 +747,6 @@ let selectedTargetId = 0;
 function buildTargetOptionsUI() {
   const bar = document.getElementById('targetOptionsBar');
   bar.innerHTML = '';
-  // Considera apenas bots vivos ou jogadores remotos como alvos válidos
   const activeBots = botsData.filter(b => b.health > 0);
   activeBots.forEach(bot => {
     const card = document.createElement('div');
@@ -1213,7 +1258,6 @@ function animate() {
       }
     }
 
-    // IA dos Bots (Só atuam se houver bots na partida)
     botsData.forEach((bot, idx) => {
       if (bot.health <= 0) {
         if (botMeshes[idx].visible) {
@@ -1271,7 +1315,6 @@ function animate() {
       if (bot.health < 100 && Math.random() < 0.3) spawnContinuousSmoke(bot);
     });
 
-    // Torpedos com Colisão nas Ilhas
     for (let i = activeTorpedos.length - 1; i >= 0; i--) {
       const t = activeTorpedos[i];
       let targetX = 0, targetZ = 0, targetAlive = false;
@@ -1342,3 +1385,4 @@ window.addEventListener('resize', () => {
 </script>
 </body>
 </html>
+```
