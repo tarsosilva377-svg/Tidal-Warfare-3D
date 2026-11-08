@@ -9,9 +9,8 @@
 <!-- PeerJS para conexões P2P na rede local / hotspot -->
 <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js" onerror="loadFallbackScript('peerjs.min.js')"></script>
 <script>
-// Fallback para carregamento offline completo caso a CDN falhe sem conexão
 function loadFallbackScript(name) {
-  console.warn("CDN offline ou indisponível, ativando modo de segurança local para: " + name);
+  console.warn("Modo de segurança ativado para: " + name);
 }
 </script>
 <style>
@@ -23,7 +22,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .lobby-screen.hidden{opacity:0;pointer-events:none}
 .lobby-title{font-size:24px;font-weight:900;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;text-align:center}
 .lobby-subtitle{font-size:13px;color:#8899ac;margin-bottom:16px;font-weight:600;text-align:center}
-.lobby-input{background:rgba(10,20,35,0.9);border:1.5px solid #00d2d3;color:#fff;padding:12px 16px;border-radius:12px;font-size:14px;outline:none;width:280px;margin-bottom:10px;text-align:center}
+.lobby-input{background:rgba(10,20,35,0.9);border:1.5px solid #00d2d3;color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;outline:none;width:100%;margin-bottom:10px;text-align:center}
 .lobby-btn{background:rgba(0,168,255,0.2);border:1.5px solid #00d2d3;color:#fff;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;margin:6px;width:280px;box-shadow:0 4px 15px rgba(0,0,0,0.4);transition:all 0.2s}
 .lobby-btn:active, .lobby-btn:focus{transform:scale(0.95);background:rgba(0,168,255,0.5);outline:2px solid #fff}
 .lobby-info{font-size:11px;color:#8899ac;margin-top:14px;font-weight:600;text-align:center;max-width:340px;line-height:1.4;background:rgba(0,168,255,0.08);padding:10px;border-radius:8px;border:1px solid rgba(0,168,255,0.2)}
@@ -43,9 +42,12 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .room-item{padding:10px 14px;background:rgba(0,168,255,0.15);border:1px solid #00d2d3;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
 .room-item:hover{background:rgba(0,168,255,0.35)}
 
-/* Modal de Perfil */
-.profile-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.95);border:1.5px solid #00d2d3;padding:24px;border-radius:16px;z-index:120;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease}
+/* Modal de Perfil & Estilos de Navios Unificado */
+.profile-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.96);border:1.5px solid #00d2d3;padding:20px;border-radius:16px;z-index:120;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease;max-width:340px;width:90%}
 .profile-modal.show{opacity:1;transform:translate(-50%, -50%) scale(1);pointer-events:auto}
+.ship-styles-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:8px;margin:12px 0;max-height:160px;overflow-y:auto}
+.ship-style-card{background:rgba(20,35,55,0.7);border:1.5px solid rgba(0,168,255,0.3);border-radius:10px;padding:8px;cursor:pointer;font-size:11px;font-weight:700;color:#8899ac;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all 0.15s}
+.ship-style-card.selected{border-color:#00d2d3;background:rgba(0,168,255,0.25);color:#fff;transform:scale(1.02)}
 
 /* Barra Superior HUD */
 .hud-top{position:absolute;top:10px;left:0;width:100%;padding:0 16px;display:flex;justify-content:space-between;align-items:center;z-index:20;pointer-events:none}
@@ -56,9 +58,16 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .game-container{flex:1;position:relative;width:100%;min-height:0;touch-action:none}
 #canvas3d{width:100%;height:100%;display:block}
 
-/* Botão de Torpedo */
+/* Botões de Ação e Câmera */
 .torpedo-btn{position:absolute;top:65px;right:20px;background:rgba(10,20,35,0.85);border:1.5px solid #00d2d3;color:#00d2d3;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:800;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .torpedo-btn:active{transform:scale(0.95);background:rgba(0,168,255,.3)}
+
+.fpp-btn{position:absolute;top:115px;right:20px;background:rgba(10,20,35,0.85);border:1.5px solid #ffd700;color:#ffd700;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:800;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
+.fpp-btn:active{transform:scale(0.95);background:rgba(255,215,0,.3)}
+
+/* Botão de Defesa Ativa (Cargas Explosivas na Popa) */
+.defense-btn{position:absolute;bottom:185px;left:25px;background:rgba(255,51,51,0.25);border:1.5px solid #ff3333;color:#ff6666;padding:12px 16px;border-radius:16px;font-size:12px;font-weight:900;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
+.defense-btn:active{transform:scale(0.92);background:rgba(255,51,51,0.5)}
 
 /* Modal de Alvos */
 .target-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.95);border:1.5px solid #00d2d3;padding:20px 24px;border-radius:16px;z-index:40;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease}
@@ -87,7 +96,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .gameover-desc{font-size:12px;color:#8899ac;margin-bottom:20px;font-weight:600}
 
 /* Controles de Zoom na Tela */
-.zoom-controls{position:absolute;top:120px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:25}
+.zoom-controls{position:absolute;top:165px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:25}
 .zoom-btn{width:36px;height:36px;background:rgba(10,20,35,0.85);border:1.5px solid #00d2d3;color:#00d2d3;border-radius:50%;font-size:16px;font-weight:900;display:flex;justify-content:center;align-items:center;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.5)}
 .zoom-btn:active{background:rgba(0,168,255,.4)}
 
@@ -112,38 +121,30 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 <script>
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE_NAME = 'tidal-warfare-v1';
-    const assetsToCache = ['./', './index.html', 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js'];
-    self.addEventListener('install', e => {
-      e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(assetsToCache).catch(()=>{})));
-    });
+    const CACHE_NAME = 'tidal-warfare-v3';
+    self.addEventListener('install', e => { self.skipWaiting(); });
+    self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
     self.addEventListener('fetch', e => {
       e.respondWith(
-        caches.match(e.request).then(response => {
-          return response || fetch(e.request).then(fetchRes => {
-            return caches.open(CACHE_NAME).then(cache => {
-              cache.put(e.request.url, fetchRes.clone());
-              return fetchRes;
-            });
-          }).catch(() => caches.match('./index.html'));
-        })
+        fetch(e.request).then(response => {
+          return caches.open(CACHE_NAME).then(cache => {
+            cache.put(e.request, response.clone());
+            return response;
+          });
+        }).catch(() => { return caches.match(e.request); })
       );
     });
   `;
   const swBlob = new Blob([swCode], { type: 'text/javascript' });
   const swUrl = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swUrl).then(() => {
-    console.log("Service Worker registrado para suporte offline total.");
-  }).catch(err => {
-    console.log("Service Worker falhou:", err);
-  });
+  navigator.serviceWorker.register(swUrl).catch(() => {});
 }
 </script>
 
-<!-- Botão de Perfil -->
+<!-- Botão de Perfil & Estilos -->
 <button class="profile-btn" id="btnOpenProfile">👤 <span id="profileNameDisplay">Comandante</span></button>
 
-<!-- Janela Lateral de Salas (Busca Automática em Hotspot / Rede Local) -->
+<!-- Janela Lateral de Salas -->
 <div class="rooms-sidebar" id="roomsSidebar">
   <div class="sidebar-header">
     <div class="sidebar-title">🌐 SALAS DISPONÍVEIS NA REDE / HOTSPOT</div>
@@ -154,12 +155,29 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
-<!-- Modal de Perfil -->
+<!-- Modal de Perfil e Escolha de Navios Unificado -->
 <div class="profile-modal" id="profileModal">
-  <div class="modal-title">DEFINIR NOME DE PERFIL</div>
-  <div class="modal-desc">Insira seu nome de comandante:</div>
+  <div class="modal-title">PERFIL DO COMANDANTE</div>
+  <div class="modal-desc" style="margin-bottom:8px;">Seu nome:</div>
   <input type="text" id="profileNameInput" class="lobby-input" placeholder="Seu nome..." maxlength="15">
-  <div class="modal-actions">
+  
+  <div class="modal-desc" style="margin:10px 0 6px 0;">Escolha o Estilo do Navio:</div>
+  <div class="ship-styles-grid" id="shipStylesGrid">
+    <div class="ship-style-card selected" data-style="frigate">
+      <span>⛵ Padrão (Fragata)</span>
+    </div>
+    <div class="ship-style-card" data-style="destroyer">
+      <span>🚀 Destróier (Ágil)</span>
+    </div>
+    <div class="ship-style-card" data-style="cruiser">
+      <span>⚓ Cruzador (Equilibrado)</span>
+    </div>
+    <div class="ship-style-card" data-style="battleship">
+      <span>🛡️ Couraçado (Pesado)</span>
+    </div>
+  </div>
+
+  <div class="modal-actions" style="margin-top:12px;">
     <button class="btn-action" id="btnCancelProfile">Cancelar</button>
     <button class="btn-action btn-confirm" id="btnSaveProfile">Salvar</button>
   </div>
@@ -195,6 +213,8 @@ if ('serviceWorker' in navigator) {
   <canvas id="canvas3d"></canvas>
 
   <button class="torpedo-btn" id="btnTorpedo">🎯 Selecionar Alvo</button>
+  <button class="fpp-btn" id="btnFPP">👁️ Câmera 1ª Pessoa</button>
+  <button class="defense-btn" id="btnDropDefense">💣 Soltar Explosivo</button>
 
   <div class="zoom-controls">
     <button class="zoom-btn" id="btnZoomIn" title="Aproximar Zoom">+</button>
@@ -232,9 +252,6 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <script>
-/* ==========================================================================
-   SINTETIZADOR DE ÁUDIO & EFEITOS SONOROS (SFX)
-   ========================================================================== */
 let audioCtx = null;
 function initAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -293,11 +310,22 @@ function playSound(type) {
   } catch (e) {}
 }
 
-/* ==========================================================================
-   PERFIL PERMANENTE (LOCALSTORAGE)
-   ========================================================================== */
 let playerName = localStorage.getItem('tidal_player_name') || "Comandante";
+let selectedShipStyle = localStorage.getItem('tidal_ship_style') || "frigate";
 document.getElementById('profileNameDisplay').textContent = playerName;
+
+// Destacar estilo salvo no modal
+document.querySelectorAll('.ship-style-card').forEach(card => {
+  if (card.dataset.style === selectedShipStyle) {
+    document.querySelectorAll('.ship-style-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+  }
+  card.onclick = () => {
+    document.querySelectorAll('.ship-style-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedShipStyle = card.dataset.style;
+  };
+});
 
 const profileModal = document.getElementById('profileModal');
 document.getElementById('btnOpenProfile').onclick = () => {
@@ -312,14 +340,12 @@ document.getElementById('btnSaveProfile').onclick = () => {
     playerName = val;
     localStorage.setItem('tidal_player_name', playerName);
     document.getElementById('profileNameDisplay').textContent = playerName;
-    showToast("💾 Perfil salvo com sucesso!");
   }
+  localStorage.setItem('tidal_ship_style', selectedShipStyle);
+  showToast("💾 Perfil e Estilo salvos com sucesso!");
   profileModal.classList.remove('show');
 };
 
-/* ==========================================================================
-   JANELA LATERAL DE SALAS & CONECTIVIDADE LOCAL / HOTSPOT P2P
-   ========================================================================== */
 let peer = null;
 let conn = null;
 let connectedPeers = [];
@@ -355,7 +381,6 @@ document.getElementById('btnCreateRoom').onclick = () => {
   isHost = true;
   
   if (peer && !peer.destroyed) peer.destroy();
-  // Configuração PeerJS robusta para redes locais e fallback offline
   peer = new Peer(roomId, {
     config: {
       'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }]
@@ -369,7 +394,6 @@ document.getElementById('btnCreateRoom').onclick = () => {
   });
 
   peer.on('error', (err) => {
-    console.warn("PeerJS aviso de rede local (modo offline ativo):", err);
     showToast("📶 Modo de Rede Local / Hotspot Ativo");
   });
 
@@ -395,9 +419,7 @@ function scanAvailableRoomsAutomatically() {
   roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo rede Wi-Fi / Hotspot por salas ativas...</div>';
   if (!peer || peer.destroyed) {
     peer = new Peer({
-      config: {
-        'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]
-      }
+      config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
     });
   }
 
@@ -435,6 +457,7 @@ function scanAvailableRoomsAutomatically() {
 function setupConnectionEvents() {
   lobbyScreen.classList.add('hidden');
   showToast(`🌐 Conectado à sala local com sucesso!`);
+  startGameSession();
   conn.on('data', (data) => { handleNetworkData(data); });
 }
 
@@ -448,7 +471,7 @@ function handleNetworkData(data) {
     if (!remotePlayer && gameStarted) {
       remotePlayer = {
         name: data.name,
-        mesh: createRealWarshipModel(0x00a8ff, data.name),
+        mesh: createWarshipByStyle(data.style || 'frigate', 0x00a8ff, data.name),
         x: data.x, z: data.z, heading: data.heading, health: data.health
       };
       scene.add(remotePlayer.mesh);
@@ -477,6 +500,14 @@ function startGameSession() {
   roomsSidebar.classList.remove('show');
   gameStarted = true;
   
+  setTimeout(() => {
+    if (renderer && container) {
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+    }
+  }, 50);
+
   const hasHumanPeers = connectedPeers.length > 0 || conn !== null;
   if (hasHumanPeers) {
     botsData.forEach((b, idx) => {
@@ -490,9 +521,6 @@ function startGameSession() {
   }
 }
 
-/* ==========================================================================
-   CONFIGURAÇÃO 3D DO MUNDO E CÂMERA
-   ========================================================================== */
 const container = document.getElementById('gameContainer');
 const canvas = document.getElementById('canvas3d');
 
@@ -503,6 +531,7 @@ scene.fog = new THREE.FogExp2(0x87ceeb, 0.0012);
 const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 3000);
 let cameraZoomDistance = 80;
 let isFreeCamera = false;
+let isFirstPersonCamera = false;
 
 let freeCamPos = { x: 0, z: 0 };
 let freeCamVel = { x: 0, z: 0 };
@@ -510,7 +539,7 @@ let freeCamVel = { x: 0, z: 0 };
 camera.position.set(0, cameraZoomDistance, cameraZoomDistance);
 camera.lookAt(0, 0, 0);
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
 renderer.setSize(container.clientWidth, container.clientHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
@@ -521,9 +550,6 @@ const sunLight = new THREE.DirectionalLight(0xffffff, 0.6);
 sunLight.position.set(100, 150, 100);
 scene.add(sunLight);
 
-/* ==========================================================================
-   OCEANO E ILHAS
-   ========================================================================== */
 const mapSize = 1800;
 const oceanGeometry = new THREE.PlaneGeometry(mapSize, mapSize, 128, 128);
 const oceanMaterial = new THREE.MeshStandardMaterial({ color: 0x004477, roughness: 0.9, metalness: 0.1, flatShading: true });
@@ -590,12 +616,16 @@ function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
   return { x, z };
 }
 
-/* ==========================================================================
-   MODELO 3D REALISTA (FRAGATA MODERNA) COM CANHÃO NA PROUA E NOME FLUTUANTE
-   ========================================================================== */
+// Fábrica de Modelos de Navios (4 estilos disponíveis)
+function createWarshipByStyle(style, deckColorHex, nameText) {
+  if (style === 'battleship') return createBattleshipModel(deckColorHex, nameText);
+  if (style === 'destroyer') return createDestroyerModel(deckColorHex, nameText);
+  if (style === 'cruiser') return createCruiserModel(deckColorHex, nameText);
+  return createRealWarshipModel(deckColorHex, nameText); // Padrão: Fragata
+}
+
 function createRealWarshipModel(deckColorHex, nameText) {
   const group = new THREE.Group();
-
   const hullGrey = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5, metalness: 0.3 });
   const hullBottomRed = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.7, metalness: 0.1 });
   const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8, metalness: 0.2 });
@@ -615,7 +645,6 @@ function createRealWarshipModel(deckColorHex, nameText) {
   const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 3.2, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.4, bevelThickness: 0.4 });
   const hull = new THREE.Mesh(hullGeo, hullGrey);
   hull.rotation.x = Math.PI / 2;
-  hull.position.y = 0;
   group.add(hull);
 
   const keelGeo = new THREE.BoxGeometry(4.8, 1.2, 28);
@@ -633,41 +662,152 @@ function createRealWarshipModel(deckColorHex, nameText) {
   bridgeBase.position.set(0, 3.0, 2);
   group.add(bridgeBase);
 
-  const bridgeTopGeo = new THREE.BoxGeometry(3.6, 1.8, 4.5);
-  const bridgeTop = new THREE.Mesh(bridgeTopGeo, superstructureWhite);
-  bridgeTop.position.set(0, 5.0, 2.5);
-  group.add(bridgeTop);
-
-  const mastBase = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.8, 4, 8), metalDark);
-  mastBase.position.set(0, 7.8, 2.2);
-  group.add(mastBase);
-
-  const radarDome = new THREE.Mesh(new THREE.SphereGeometry(0.6, 12, 12), superstructureWhite);
-  radarDome.position.set(0, 10, 2.2);
-  group.add(radarDome);
-
   const turret = new THREE.Group();
   const base = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 1.2, 12), superstructureWhite);
   turret.add(base);
-
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.0, 2.2), superstructureWhite);
-  cabin.position.set(0, 0.4, 0.3);
-  turret.add(cabin);
-
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 4.0, 10), metalDark);
   barrel.rotation.x = Math.PI / 2;
+  barrel.name = "cannonBarrel";
   barrel.position.set(0, 0.6, 2.2);
   turret.add(barrel);
-
   turret.position.set(0, 1.8, 11.5);
   group.add(turret);
 
-  const helipadGeo = new THREE.BoxGeometry(4.5, 0.05, 7);
-  const helipadMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6 });
-  const helipad = new THREE.Mesh(helipadGeo, helipadMat);
-  helipad.position.set(0, 1.83, -7.5);
-  group.add(helipad);
+  addLabelSprite(group, nameText);
+  return group;
+}
 
+function createDestroyerModel(deckColorHex, nameText) {
+  const group = new THREE.Group();
+  const hullGrey = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
+  const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8 });
+  const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.4 });
+  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
+
+  const hullShape = new THREE.Shape();
+  hullShape.moveTo(0, -16);
+  hullShape.lineTo(2.2, -12);
+  hullShape.lineTo(2.0, 12);
+  hullShape.lineTo(0.8, 18);
+  hullShape.lineTo(-0.8, 18);
+  hullShape.lineTo(-2.0, 12);
+  hullShape.lineTo(-2.2, -12);
+  hullShape.closePath();
+
+  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 2.8, bevelEnabled: true });
+  const hull = new THREE.Mesh(hullGeo, hullGrey);
+  hull.rotation.x = Math.PI / 2;
+  group.add(hull);
+
+  const deckGeo = new THREE.BoxGeometry(4.2, 0.2, 32);
+  const deck = new THREE.Mesh(deckGeo, deckDark);
+  deck.position.set(0, 1.5, 1);
+  group.add(deck);
+
+  const turret = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 1.0, 10), superstructureWhite);
+  turret.add(base);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 4.5, 10), metalDark);
+  barrel.rotation.x = Math.PI / 2;
+  barrel.name = "cannonBarrel";
+  barrel.position.set(0, 0.5, 2.2);
+  turret.add(barrel);
+  turret.position.set(0, 1.6, 13.0);
+  group.add(turret);
+
+  addLabelSprite(group, nameText);
+  return group;
+}
+
+function createCruiserModel(deckColorHex, nameText) {
+  const group = new THREE.Group();
+  const hullGrey = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5 });
+  const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8 });
+  const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 });
+  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
+
+  const hullShape = new THREE.Shape();
+  hullShape.moveTo(0, -15);
+  hullShape.lineTo(3.5, -11);
+  hullShape.lineTo(3.2, 11);
+  hullShape.lineTo(1.5, 16);
+  hullShape.lineTo(-1.5, 16);
+  hullShape.lineTo(-3.2, 11);
+  hullShape.lineTo(-3.5, -11);
+  hullShape.closePath();
+
+  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 3.6, bevelEnabled: true });
+  const hull = new THREE.Mesh(hullGeo, hullGrey);
+  hull.rotation.x = Math.PI / 2;
+  group.add(hull);
+
+  const deckGeo = new THREE.BoxGeometry(6.2, 0.2, 30);
+  const deck = new THREE.Mesh(deckGeo, deckDark);
+  deck.position.set(0, 1.9, 1);
+  group.add(deck);
+
+  const turret = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.7, 1.2, 12), superstructureWhite);
+  turret.add(base);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 4.2, 10), metalDark);
+  barrel.rotation.x = Math.PI / 2;
+  barrel.name = "cannonBarrel";
+  barrel.position.set(0, 0.6, 2.2);
+  turret.add(barrel);
+  turret.position.set(0, 2.0, 12.0);
+  group.add(turret);
+
+  addLabelSprite(group, nameText);
+  return group;
+}
+
+function createBattleshipModel(deckColorHex, nameText) {
+  const group = new THREE.Group();
+  const hullGrey = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6, metalness: 0.4 });
+  const hullBottomRed = new THREE.MeshStandardMaterial({ color: 0x581c87, roughness: 0.7 });
+  const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8 });
+  const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.3 });
+  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2, metalness: 0.9 });
+
+  const hullShape = new THREE.Shape();
+  hullShape.moveTo(0, -18);
+  hullShape.lineTo(4.5, -13);
+  hullShape.lineTo(4.2, 13);
+  hullShape.lineTo(2.0, 20); 
+  hullShape.lineTo(-2.0, 20);
+  hullShape.lineTo(-4.2, 13);
+  hullShape.lineTo(-4.5, -13);
+  hullShape.closePath();
+
+  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 4.5, bevelEnabled: true });
+  const hull = new THREE.Mesh(hullGeo, hullGrey);
+  hull.rotation.x = Math.PI / 2;
+  group.add(hull);
+
+  const deckGeo = new THREE.BoxGeometry(8.0, 0.3, 38);
+  const deck = new THREE.Mesh(deckGeo, deckDark);
+  deck.position.set(0, 2.4, 1);
+  group.add(deck);
+
+  const turret = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.2, 1.5, 12), superstructureWhite);
+  turret.add(base);
+  const barrel1 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 5.0, 10), metalDark);
+  barrel1.rotation.x = Math.PI / 2;
+  barrel1.name = "cannonBarrel";
+  barrel1.position.set(-0.6, 0.5, 2.5);
+  const barrel2 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 5.0, 10), metalDark);
+  barrel2.rotation.x = Math.PI / 2;
+  barrel2.position.set(0.6, 0.5, 2.5);
+  turret.add(barrel1, barrel2);
+  turret.position.set(0, 2.5, 14.0);
+  group.add(turret);
+
+  addLabelSprite(group, nameText);
+  return group;
+}
+
+function addLabelSprite(group, nameText) {
   const canvasText = document.createElement('canvas');
   canvasText.width = 256;
   canvasText.height = 64;
@@ -686,8 +826,6 @@ function createRealWarshipModel(deckColorHex, nameText) {
   sprite.position.set(0, 12.5, 0);
   sprite.scale.set(6, 1.5, 1);
   group.add(sprite);
-
-  return group;
 }
 
 const occupiedPositions = [];
@@ -702,7 +840,7 @@ const playerColor = availableColors[0];
 const playerSpawn = getSafeSpawnPosition(0, -350, occupiedPositions);
 occupiedPositions.push(playerSpawn);
 
-const shipGroup = createRealWarshipModel(playerColor.hex, playerName);
+const shipGroup = createWarshipByStyle(selectedShipStyle, playerColor.hex, playerName);
 shipGroup.position.set(playerSpawn.x, 0.5, playerSpawn.z);
 scene.add(shipGroup);
 let shipPos = { x: playerSpawn.x, z: playerSpawn.z };
@@ -735,7 +873,7 @@ for (let i = 0; i < 3; i++) {
 }
 
 const botMeshes = botsData.map((b, idx) => {
-  const mesh = createRealWarshipModel(b.colorHex, b.name);
+  const mesh = createWarshipByStyle('frigate', b.colorHex, b.name);
   mesh.position.set(b.x, 0.5, b.z);
   scene.add(mesh);
   return mesh;
@@ -774,9 +912,6 @@ function buildTargetOptionsUI() {
   });
 }
 
-/* ==========================================================================
-   SISTEMA DE ESPUMA / BANZEIRO (PROUA E LATERAIS)
-   ========================================================================== */
 const sprayParticles = [];
 const sprayGeo = new THREE.SphereGeometry(0.2, 6, 6);
 const sprayMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
@@ -805,14 +940,12 @@ function spawnWaterSpray(shipX, shipZ, heading, speed) {
   });
 }
 
-/* ==========================================================================
-   COMBATE E TORPEDOS
-   ========================================================================== */
 let torpedoCount = 10;
 const activeProjectiles = [];
 const botProjectiles = [];
 const activeTorpedos = [];
 const activeExplosions = [];
+const defenseMines = [];
 
 const projectileGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.2, 6);
 projectileGeo.rotateX(Math.PI / 2);
@@ -828,15 +961,24 @@ const arrowGeo = new THREE.ConeGeometry(0.25, 1.0, 6);
 arrowGeo.rotateZ(Math.PI / 2);
 const arrowMat = new THREE.MeshBasicMaterial({ color: 0x00ff66 });
 
-function fireProjectile(fromPos, heading, isBot = false) {
+// Disparo de projétil partindo da ponta do cano
+function fireProjectileFromShip(shipObj, heading, isBot = false, customWorldPos = null) {
   playSound('shot');
+  let startX = shipObj.x;
+  let startZ = shipObj.z;
+
+  if (customWorldPos) {
+    startX = customWorldPos.x;
+    startZ = customWorldPos.z;
+  }
+
   const mesh = new THREE.Mesh(projectileGeo, isBot ? botProjectileMat : projectileMat);
-  mesh.position.set(fromPos.x, 2.0, fromPos.z);
+  mesh.position.set(startX, 2.5, startZ);
   mesh.rotation.y = heading;
   scene.add(mesh);
 
   const list = isBot ? botProjectiles : activeProjectiles;
-  list.push({ mesh: mesh, x: fromPos.x, z: fromPos.z, heading: heading, speed: 2.2, life: 120 });
+  list.push({ mesh: mesh, x: startX, z: startZ, heading: heading, speed: 2.5, life: 120 });
 }
 
 function createExplosionEffect(x, z) {
@@ -866,6 +1008,25 @@ function spawnContinuousSmoke(botObj) {
   botObj.smoke.push({ mesh: pMesh, velX: (Math.random() - 0.5) * 0.02, velY: 0.03 + Math.random() * 0.03, velZ: (Math.random() - 0.5) * 0.02, life: 90 });
 }
 
+function dropDefenseMine() {
+  if (!isPlayerAlive) return;
+  playSound('torpedo');
+  // Solta na popa (traseira) do navio
+  const dropX = shipPos.x - Math.sin(currentHeading) * 15.0;
+  const dropZ = shipPos.z - Math.cos(currentHeading) * 15.0;
+
+  const mineGeo = new THREE.SphereGeometry(0.8, 10, 10);
+  const mineMat = new THREE.MeshStandardMaterial({ color: 0xff3333, metalness: 0.8 });
+  const mineMesh = new THREE.Mesh(mineGeo, mineMat);
+  mineMesh.position.set(dropX, 0.4, dropZ);
+  scene.add(mineMesh);
+
+  defenseMines.push({ mesh: mineMesh, x: dropX, z: dropZ, life: 30.0 * 60 }); // 30 segundos a 60fps
+  showToast("💣 Carga explosiva defensiva lançada na popa!");
+}
+
+document.getElementById('btnDropDefense').onclick = dropDefenseMine;
+
 function botLaunchGuidedTorpedo(botObj, targetEntity, isTargetPlayer = false) {
   if (botObj.torpedos <= 0) return;
   botObj.torpedos--;
@@ -878,7 +1039,6 @@ function botLaunchGuidedTorpedo(botObj, targetEntity, isTargetPlayer = false) {
   const body = new THREE.Mesh(torpedoGeo, torpedoMat);
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), torpedoHeadMat);
   head.position.x = 1.0;
-
   torpedoGroup.add(body, head);
   torpedoGroup.position.set(launchX, 0.15, launchZ);
   scene.add(torpedoGroup);
@@ -920,9 +1080,6 @@ function launchGuidedTorpedo() {
   showToast(`🚀 Torpedo lançado contra ${targetBot.name}!`);
 }
 
-/* ==========================================================================
-   CONTROLES & CÂMERA LIVRE
-   ========================================================================== */
 let currentSpeed = 0;
 const cruisingSpeed = 0.45;
 const maxBoostSpeed = 0.75;
@@ -957,7 +1114,7 @@ function triggerActionOK() {
   if (targetModal.classList.contains('show')) {
     targetModal.classList.remove('show');
     launchGuidedTorpedo();
-  } else if (!isFreeCamera) {
+  } else if (!isFreeCamera && !isFirstPersonCamera) {
     currentSpeed = 0;
     controlsState.up = false;
     controlsState.down = false;
@@ -971,11 +1128,24 @@ function triggerActionOK() {
     showToast("🗺️ Navio Parado & Câmera Livre Ativada!");
   } else {
     isFreeCamera = false;
+    isFirstPersonCamera = false;
     showToast("⚓ Foco retornado ao navio.");
   }
 }
 
 document.getElementById('btnCenter').onclick = triggerActionOK;
+
+document.getElementById('btnFPP').onclick = () => {
+  initAudio();
+  if (!isPlayerAlive) return;
+  isFirstPersonCamera = !isFirstPersonCamera;
+  if (isFirstPersonCamera) {
+    isFreeCamera = false;
+    showToast("👁️ Visão em Primeira Pessoa Ativada");
+  } else {
+    showToast("📷 Visão Padrão Reativada");
+  }
+};
 
 document.getElementById('btnZoomIn').onclick = () => {
   cameraZoomDistance = Math.max(25, cameraZoomDistance - 15);
@@ -1026,23 +1196,6 @@ window.addEventListener('keydown', (e) => {
       showToast("⚠️ Nenhum alvo IA na sala multiplayer!");
     }
   }
-
-  if (targetModal.classList.contains('show') || key === '0') {
-    let selectColor = null;
-    if (code === 403 || key.toLowerCase() === 'r') selectColor = "VERMELHO";
-    if (code === 404 || key.toLowerCase() === 'g') selectColor = "VERDE";
-    if (code === 405 || key.toLowerCase() === 'y') selectColor = "AMARELO";
-    if (code === 406 || key.toLowerCase() === 'b') selectColor = "AZUL";
-
-    if (selectColor) {
-      const matchBot = botsData.find(b => b.colorName === selectColor && b.health > 0);
-      if (matchBot) {
-        selectedTargetId = matchBot.id;
-        buildTargetOptionsUI();
-        showToast(`🎯 Alvo: ${matchBot.name}!`);
-      }
-    }
-  }
 });
 
 window.addEventListener('keyup', (e) => {
@@ -1071,9 +1224,6 @@ document.getElementById('btnConfirmLaunch').onclick = () => {
   launchGuidedTorpedo();
 };
 
-/* ==========================================================================
-   FIM DE JOGO
-   ========================================================================== */
 let gameEnded = false;
 
 function checkWinConditions() {
@@ -1118,9 +1268,6 @@ document.getElementById('btnWatchMode').onclick = () => {
 };
 document.getElementById('btnExitGame').onclick = () => location.reload();
 
-/* ==========================================================================
-   CICLO DIA / NOITE
-   ========================================================================== */
 let gameTime = 0;
 const periodDuration = 600; 
 const totalCycleDuration = periodDuration * 2; 
@@ -1168,10 +1315,8 @@ function updateDayNightCycle(delta) {
 const halfMap = mapSize / 2 - 40;
 const clock = new THREE.Clock();
 let netSyncTimer = 0;
+let lastPlayerShotTime = 0;
 
-/* ==========================================================================
-   LOOP DE ANIMAÇÃO PRINCIPAL
-   ========================================================================== */
 function animate() {
   requestAnimationFrame(animate);
   const delta = clock.getDelta();
@@ -1234,10 +1379,40 @@ function animate() {
         freeCamVel.z = 0;
       }
 
+      // SISTEMA DE DISPARO AUTOMÁTICO FRONTAL DO JOGADOR
+      if (elapsedTime - lastPlayerShotTime > 1.2) {
+        let nearestBot = null;
+        let minDist = 350;
+        botsData.forEach(b => {
+          if (b.health > 0) {
+            let dist = Math.hypot(b.x - shipPos.x, b.z - shipPos.z);
+            if (dist < minDist) {
+              minDist = dist;
+              nearestBot = b;
+            }
+          }
+        });
+
+        if (nearestBot) {
+          let angleToBot = Math.atan2(nearestBot.x - shipPos.x, nearestBot.z - shipPos.z);
+          let diffAngle = angleToBot - currentHeading;
+          while (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
+          while (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
+
+          // Se o bot estiver dentro do cone frontal (aprox 25 graus)
+          if (Math.abs(diffAngle) < 0.45) {
+            lastPlayerShotTime = elapsedTime;
+            let muzzleX = shipPos.x + Math.sin(currentHeading) * 12.0;
+            let muzzleZ = shipPos.z + Math.cos(currentHeading) * 12.0;
+            fireProjectileFromShip({ x: shipPos.x, z: shipPos.z }, currentHeading, false, { x: muzzleX, z: muzzleZ });
+          }
+        }
+      }
+
       netSyncTimer += delta;
       if (netSyncTimer > 0.1) {
         netSyncTimer = 0;
-        const syncData = { type: 'PLAYER_SYNC', name: playerName, x: shipPos.x, z: shipPos.z, heading: currentHeading, health: playerHealth };
+        const syncData = { type: 'PLAYER_SYNC', name: playerName, style: selectedShipStyle, x: shipPos.x, z: shipPos.z, heading: currentHeading, health: playerHealth };
         if (conn && conn.open) conn.send(syncData);
         if (isHost && connectedPeers.length > 0) {
           connectedPeers.forEach(p => { if (p.open) p.send(syncData); });
@@ -1254,6 +1429,28 @@ function animate() {
       if (sp.life <= 0) {
         scene.remove(sp.mesh);
         sprayParticles.splice(i, 1);
+      }
+    }
+
+    // ATUALIZAR MINAS DEFENSIVAS DE POPA
+    for (let i = defenseMines.length - 1; i >= 0; i--) {
+      const mine = defenseMines[i];
+      mine.life--;
+      
+      // Verificar colisão com bots ou torpedos
+      botsData.forEach(b => {
+        if (b.health > 0 && Math.hypot(b.x - mine.x, b.z - mine.z) < 6.0) {
+          createExplosionEffect(mine.x, mine.z);
+          b.health = Math.max(0, b.health - 35);
+          scene.remove(mine.mesh);
+          defenseMines.splice(i, 1);
+          return;
+        }
+      });
+
+      if (mine.life <= 0) {
+        scene.remove(mine.mesh);
+        defenseMines.splice(i, 1);
       }
     }
 
@@ -1302,7 +1499,9 @@ function animate() {
       }
 
       if (closestTarget.dist < 300 && elapsedTime - bot.lastShot > 1.4) {
-        fireProjectile({ x: bot.x, z: bot.z }, bot.heading, true);
+        let muzzleX = bot.x + Math.sin(bot.heading) * 12.0;
+        let muzzleZ = bot.z + Math.cos(bot.heading) * 12.0;
+        fireProjectileFromShip(bot, bot.heading, true, { x: muzzleX, z: muzzleZ });
         bot.lastShot = elapsedTime;
       }
 
@@ -1314,6 +1513,52 @@ function animate() {
       if (bot.health < 100 && Math.random() < 0.3) spawnContinuousSmoke(bot);
     });
 
+    // ATUALIZAR PROJÉTEIS DE BALAS
+    for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+      const p = activeProjectiles[i];
+      p.x += Math.sin(p.heading) * p.speed;
+      p.z += Math.cos(p.heading) * p.speed;
+      p.mesh.position.set(p.x, 2.5, p.z);
+      p.life--;
+
+      let hit = false;
+      botsData.forEach(b => {
+        if (b.health > 0 && Math.hypot(b.x - p.x, b.z - p.z) < 6.0) {
+          b.health = Math.max(0, b.health - 10);
+          createExplosionEffect(p.x, p.z);
+          hit = true;
+        }
+      });
+
+      if (hit || p.life <= 0 || checkIslandCollision(p.x, p.z, 2.0)) {
+        scene.remove(p.mesh);
+        activeProjectiles.splice(i, 1);
+      }
+    }
+
+    for (let i = botProjectiles.length - 1; i >= 0; i--) {
+      const p = botProjectiles[i];
+      p.x += Math.sin(p.heading) * p.speed;
+      p.z += Math.cos(p.heading) * p.speed;
+      p.mesh.position.set(p.x, 2.5, p.z);
+      p.life--;
+
+      let hit = false;
+      if (isPlayerAlive && Math.hypot(shipPos.x - p.x, shipPos.z - p.z) < 6.0) {
+        playerHealth = Math.max(0, playerHealth - 10);
+        document.getElementById('playerHealth').textContent = `${playerHealth}%`;
+        createExplosionEffect(p.x, p.z);
+        if (playerHealth <= 0) { isPlayerAlive = false; shipGroup.visible = false; document.getElementById('gameOverModal').classList.add('show'); }
+        hit = true;
+      }
+
+      if (hit || p.life <= 0 || checkIslandCollision(p.x, p.z, 2.0)) {
+        scene.remove(p.mesh);
+        botProjectiles.splice(i, 1);
+      }
+    }
+
+    // ATUALIZAR TORPEDOS (COM DEFESA DE MINAS NA POPA)
     for (let i = activeTorpedos.length - 1; i >= 0; i--) {
       const t = activeTorpedos[i];
       let targetX = 0, targetZ = 0, targetAlive = false;
@@ -1334,8 +1579,20 @@ function animate() {
       t.mesh.rotation.y = tAngle - Math.PI / 2;
       t.life--;
 
-      if (checkIslandCollision(t.x, t.z, 2.0)) {
-        createExplosionEffect(t.x, t.z);
+      // Verificar se o torpedo colidiu com alguma carga explosiva defensiva solta na popa
+      let interceptedByMine = false;
+      for (let m = defenseMines.length - 1; m >= 0; m--) {
+        if (Math.hypot(defenseMines[m].x - t.x, defenseMines[m].z - t.z) < 4.5) {
+          createExplosionEffect(t.x, t.z);
+          scene.remove(defenseMines[m].mesh);
+          defenseMines.splice(m, 1);
+          interceptedByMine = true;
+          showToast("🛡️ Carga defensiva interceptou e destruiu o torpedo!");
+          break;
+        }
+      }
+
+      if (interceptedByMine || checkIslandCollision(t.x, t.z, 2.0)) {
         scene.remove(t.mesh);
         activeTorpedos.splice(i, 1);
         continue;
@@ -1357,13 +1614,24 @@ function animate() {
     }
   }
 
-  let targetCamX = freeCamPos.x;
-  let targetCamZ = freeCamPos.z;
+  // AJUSTE DA CÂMERA EM PRIMEIRA PESSOA (MAIS À FRENTE PARA CAMPO DE VISÃO AMPLIADO)
+  if (isFirstPersonCamera && isPlayerAlive) {
+    const fppX = shipPos.x + Math.sin(currentHeading) * 8.0;
+    const fppZ = shipPos.z + Math.cos(currentHeading) * 8.0;
+    camera.position.set(fppX, 4.2, fppZ);
 
-  camera.position.x += (targetCamX - camera.position.x) * 0.08;
-  camera.position.y += (cameraZoomDistance - camera.position.y) * 0.08;
-  camera.position.z += (targetCamZ + (isFreeCamera ? 0 : (cameraZoomDistance * 0.8)) - camera.position.z) * 0.08;
-  camera.lookAt(targetCamX, 0.5, targetCamZ);
+    const lookAheadX = shipPos.x + Math.sin(currentHeading) * 80;
+    const lookAheadZ = shipPos.z + Math.cos(currentHeading) * 80;
+    camera.lookAt(lookAheadX, 3.2, lookAheadZ);
+  } else {
+    let targetCamX = freeCamPos.x;
+    let targetCamZ = freeCamPos.z;
+
+    camera.position.x += (targetCamX - camera.position.x) * 0.08;
+    camera.position.y += (cameraZoomDistance - camera.position.y) * 0.08;
+    camera.position.z += (targetCamZ + (isFreeCamera ? 0 : (cameraZoomDistance * 0.8)) - camera.position.z) * 0.08;
+    camera.lookAt(targetCamX, 0.5, targetCamZ);
+  }
 
   renderer.render(scene, camera);
 }
@@ -1384,4 +1652,3 @@ window.addEventListener('resize', () => {
 </script>
 </body>
 </html>
-```
