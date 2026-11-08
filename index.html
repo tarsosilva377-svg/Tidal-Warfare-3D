@@ -42,6 +42,12 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .res-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;background:rgba(10,20,35,0.75);backdrop-filter:blur(6px);padding:6px 12px;border-radius:20px;border:1px solid rgba(0,168,255,0.3);pointer-events:auto;box-shadow:0 4px 15px rgba(0,0,0,0.4)}
 .center-title{text-align:center;font-weight:900;font-size:13px;letter-spacing:1px;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 2px 10px rgba(0,0,0,0.8)}
 
+/* Barra de Vida Inferior baseada na cor do navio */
+.hud-bottom-health{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:240px;background:rgba(10,20,35,0.85);border:1.5px solid rgba(0,168,255,0.4);padding:8px 12px;border-radius:14px;z-index:25;backdrop-filter:blur(6px);display:flex;flex-direction:column;gap:4px;box-shadow:0 4px 15px rgba(0,0,0,0.5)}
+.health-bar-container{width:100%;height:10px;background:rgba(255,255,255,0.1);border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,0.2)}
+.health-bar-fill{width:100%;height:100%;transition:width 0.2s ease, background-color 0.3s ease}
+.health-text{font-size:10px;font-weight:800;color:#fff;text-align:center}
+
 .game-container{flex:1;position:relative;width:100%;min-height:0;touch-action:none}
 #canvas3d{width:100%;height:100%;display:block}
 
@@ -51,7 +57,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .fpp-btn{position:absolute;top:115px;right:20px;background:rgba(10,20,35,0.85);border:1.5px solid #ffd700;color:#ffd700;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:800;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .fpp-btn:active{transform:scale(0.95);background:rgba(255,215,0,.3)}
 
-.defense-btn{position:absolute;bottom:185px;left:25px;background:rgba(255,51,51,0.25);border:1.5px solid #ff3333;color:#ff6666;padding:12px 16px;border-radius:16px;font-size:12px;font-weight:900;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
+.defense-btn{position:absolute;bottom:85px;left:25px;background:rgba(255,51,51,0.25);border:1.5px solid #ff3333;color:#ff6666;padding:12px 16px;border-radius:16px;font-size:12px;font-weight:900;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .defense-btn:active{transform:scale(0.92);background:rgba(255,51,51,0.5)}
 
 .target-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.95);border:1.5px solid #00d2d3;padding:20px 24px;border-radius:16px;z-index:40;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease}
@@ -143,12 +149,20 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 
 <div class="hud-top">
   <div class="res-item">
-    <span>🛡️ <span style="color:#00d2d3" id="playerHealth">100%</span></span>
+    <span>🛡️ <span style="color:#00d2d3" id="playerHealthText">100%</span></span>
     <span style="margin-left:8px;" id="timeBadge">☀️ 00:00</span>
   </div>
   <div class="center-title" id="hudPlayerName">⚓ TIDAL WARFARE 3D</div>
   <div class="res-item">
     <span>🚀 <span style="color:#00d2d3" id="torpedoCount">10/10</span></span>
+  </div>
+</div>
+
+<!-- BARRA DE VIDA INFERIOR -->
+<div class="hud-bottom-health" id="hudBottomHealth">
+  <div class="health-text" id="healthBarLabel">BLINDAGEM DO NAVIO: 100%</div>
+  <div class="health-bar-container">
+    <div class="health-bar-fill" id="healthBarFill" style="width: 100%; background-color: #e74c3c;"></div>
   </div>
 </div>
 
@@ -416,7 +430,7 @@ function handleNetworkData(data, sourceConn) {
     showToast(`👤 ${data.name} entrou na sala!`);
   } else if (data.type === 'PLAYER_SYNC') {
     if (!remotePlayersMap.has(data.peerId) && gameStarted) {
-      const rMesh = createWarshipByStyle(data.style || 'frigate', 0x00a8ff, data.name);
+      const rMesh = createWarshipByStyle(data.style || 'frigate', 0xe74c3c, data.name);
       rMesh.position.set(data.x, 0, data.z);
       scene.add(rMesh);
       remotePlayersMap.set(data.peerId, { 
@@ -570,10 +584,15 @@ function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
 }
 
 function createWarshipByStyle(style, deckColorHex, nameText) {
-  if (style === 'battleship') return createBattleshipModel(deckColorHex, nameText);
-  if (style === 'destroyer') return createDestroyerModel(deckColorHex, nameText);
-  if (style === 'cruiser') return createCruiserModel(deckColorHex, nameText);
-  return createRealWarshipModel(deckColorHex, nameText);
+  let group;
+  if (style === 'battleship') group = createBattleshipModel(deckColorHex, nameText);
+  else if (style === 'destroyer') group = createDestroyerModel(deckColorHex, nameText);
+  else if (style === 'cruiser') group = createCruiserModel(deckColorHex, nameText);
+  else group = createRealWarshipModel(deckColorHex, nameText);
+
+  // Correção de orientação: Mantém o navio nivelado corretamente sobre a água
+  group.rotation.x = 0;
+  return group;
 }
 
 function createRealWarshipModel(deckColorHex, nameText) {
@@ -789,6 +808,11 @@ let shipPos = { x: playerSpawn.x, z: playerSpawn.z };
 let playerHealth = 100;
 let isPlayerAlive = true;
 
+// Aplica cor dinâmica na barra de vida inferior de acordo com a cor do navio do jogador
+const healthBarFill = document.getElementById('healthBarFill');
+const healthBarLabel = document.getElementById('healthBarLabel');
+healthBarFill.style.backgroundColor = playerColor.css;
+
 const botNamesList = ["Capitão Robô 1", "Marujo IA", "Corsário Bot"];
 const botsData = [];
 for (let i = 0; i < 3; i++) {
@@ -866,26 +890,6 @@ function buildTargetOptionsUI() {
   }
 }
 
-const sprayParticles = [];
-const sprayGeo = new THREE.SphereGeometry(0.2, 6, 6);
-const sprayMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
-
-function spawnWaterSpray(shipX, shipZ, heading, speed) {
-  if (Math.abs(speed) < 0.05) return;
-  const offsetX = Math.cos(heading) * 2.8 + Math.sin(heading) * 14.0;
-  const offsetZ = Math.sin(heading) * 2.8 + Math.cos(heading) * 14.0;
-  const mesh = new THREE.Mesh(sprayGeo, sprayMat);
-  mesh.position.set(shipX + offsetX, 0.1, shipZ + offsetZ);
-  scene.add(mesh);
-
-  sprayParticles.push({
-    mesh: mesh,
-    vx: (Math.random() - 0.5) * 0.2 + Math.sin(heading) * 0.3,
-    vz: (Math.random() - 0.5) * 0.2 + Math.cos(heading) * 0.3,
-    life: 25
-  });
-}
-
 let torpedoCount = 10;
 const activeProjectiles = [];
 const botProjectiles = [];
@@ -901,7 +905,6 @@ const botProjectileMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
 const torpedoGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.0, 8);
 torpedoGeo.rotateZ(Math.PI / 2);
 const torpedoMat = new THREE.MeshStandardMaterial({ color: 0x444d56, metalness: 0.9, roughness: 0.2 });
-const torpedoHeadMat = new THREE.MeshBasicMaterial({ color: 0xff3300 });
 
 function fireProjectileFromShip(shipObj, heading, isBot = false, customWorldPos = null) {
   playSound('shot');
@@ -1065,11 +1068,55 @@ function showVictoryScreen(isPlayerWinner, winnerName) {
 document.getElementById('btnWatchMode').onclick = () => { document.getElementById('gameOverModal').classList.remove('show'); isFreeCamera = true; };
 document.getElementById('btnExitGame').onclick = () => location.reload();
 
+// CICLO DE DIA/NOITE EXATO DE 10 MINUTOS DE DIA E 10 MINUTOS DE NOITE (Total 20 min = 1200 segundos)
 let gameTime = 0;
 function updateDayNightCycle(delta) {
   gameTime = (gameTime + delta) % 1200;
-  let timeStr = gameTime < 600 ? "☀️ Dia" : "🌙 Noite";
-  document.getElementById('timeBadge').textContent = timeStr;
+  let timeStr = "";
+  
+  if (gameTime < 600) {
+    // 10 minutos de Dia (0 a 600s)
+    timeStr = "☀️ Dia";
+    scene.background.setHex(0x87ceeb);
+    scene.fog.color.setHex(0x87ceeb);
+    ambientLight.intensity = 0.9;
+    sunLight.intensity = 0.6;
+  } else if (gameTime >= 600 && gameTime < 720) {
+    // Transição Pôr do Sol (600 a 720s - 2 minutos)
+    timeStr = "🌇 Pôr do Sol";
+    let progress = (gameTime - 600) / 120;
+    let r = Math.floor(135 * (1 - progress) + 30 * progress);
+    let g = Math.floor(206 * (1 - progress) + 10 * progress);
+    let b = Math.floor(235 * (1 - progress) + 40 * progress);
+    let colHex = (r << 16) | (g << 8) | b;
+    scene.background.setHex(colHex);
+    scene.fog.color.setHex(colHex);
+    ambientLight.intensity = 0.9 - (0.6 * progress);
+    sunLight.intensity = 0.6 - (0.4 * progress);
+  } else if (gameTime >= 720 && gameTime < 1080) {
+    // 10 minutos de Noite (720 a 1080s)
+    timeStr = "🌙 Noite";
+    scene.background.setHex(0x050b14);
+    scene.fog.color.setHex(0x050b14);
+    ambientLight.intensity = 0.3;
+    sunLight.intensity = 0.1;
+  } else {
+    // Transição Amanhecer (1080 a 1200s - 2 minutos)
+    timeStr = "🌅 Amanhecer";
+    let progress = (gameTime - 1080) / 120;
+    let r = Math.floor(30 * (1 - progress) + 135 * progress);
+    let g = Math.floor(10 * (1 - progress) + 206 * progress);
+    let b = Math.floor(40 * (1 - progress) + 235 * progress);
+    let colHex = (r << 16) | (g << 8) | b;
+    scene.background.setHex(colHex);
+    scene.fog.color.setHex(colHex);
+    ambientLight.intensity = 0.3 + (0.6 * progress);
+    sunLight.intensity = 0.1 + (0.5 * progress);
+  }
+
+  let minutes = Math.floor(gameTime / 60);
+  let seconds = Math.floor(gameTime % 60);
+  document.getElementById('timeBadge').textContent = `${timeStr} (${minutes < 10 ? '0':''}${minutes}:${seconds < 10 ? '0':''}${seconds})`;
 }
 
 const halfMap = mapSize / 2 - 40;
@@ -1106,7 +1153,6 @@ function animate() {
         }
         shipGroup.position.set(shipPos.x, 0, shipPos.z);
         shipGroup.rotation.y = currentHeading;
-        if (Math.random() < 0.4) spawnWaterSpray(shipPos.x, shipPos.z, currentHeading, currentSpeed);
       }
 
       if (isFreeCamera) {
@@ -1145,7 +1191,6 @@ function animate() {
       }
     }
 
-    // Suavização do movimento dos jogadores remotos (LERP para evitar teletransporte)
     remotePlayersMap.forEach((rp, id) => {
       rp.x += (rp.targetX - rp.x) * 0.2;
       rp.z += (rp.targetZ - rp.z) * 0.2;
@@ -1226,7 +1271,9 @@ function animate() {
 
       if (isPlayerAlive && Math.hypot(shipPos.x - p.x, shipPos.z - p.z) < 6.0) {
         playerHealth = Math.max(0, playerHealth - 10);
-        document.getElementById('playerHealth').textContent = `${playerHealth}%`;
+        document.getElementById('playerHealthText').textContent = `${playerHealth}%`;
+        healthBarFill.style.width = `${playerHealth}%`;
+        healthBarLabel.textContent = `BLINDAGEM DO NAVIO: ${playerHealth}%`;
         createExplosionEffect(p.x, p.z);
         if (playerHealth <= 0) { isPlayerAlive = false; shipGroup.visible = false; document.getElementById('gameOverModal').classList.add('show'); }
         scene.remove(p.mesh);
