@@ -4,20 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Tidal Warfare 3D - Smart TV & Mobile Edition</title>
-<!-- Three.js para renderização 3D com fallback offline local ou CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="loadFallbackScript('three.min.js')"></script>
-<!-- PeerJS para conexões P2P na rede local / hotspot -->
-<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js" onerror="loadFallbackScript('peerjs.min.js')"></script>
-<script>
-function loadFallbackScript(name) {
-  console.warn("Modo de segurança ativado para: " + name);
-}
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none}
 html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;color:#fff}
 
-/* Tela de Menu / Lobby Multiplayer Real */
 .lobby-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(5,11,20,0.96);backdrop-filter:blur(12px);z-index:100;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;transition:opacity 0.3s ease}
 .lobby-screen.hidden{opacity:0;pointer-events:none}
 .lobby-title{font-size:24px;font-weight:900;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;text-align:center}
@@ -27,11 +19,9 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .lobby-btn:active, .lobby-btn:focus{transform:scale(0.95);background:rgba(0,168,255,0.5);outline:2px solid #fff}
 .lobby-info{font-size:11px;color:#8899ac;margin-top:14px;font-weight:600;text-align:center;max-width:340px;line-height:1.4;background:rgba(0,168,255,0.08);padding:10px;border-radius:8px;border:1px solid rgba(0,168,255,0.2)}
 
-/* Botão de Perfil */
 .profile-btn{position:absolute;top:15px;left:15px;background:rgba(10,20,35,0.85);border:1.5px solid #00d2d3;color:#00d2d3;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:800;z-index:110;cursor:pointer;backdrop-filter:blur(6px);display:flex;align-items:center;gap:6px;box-shadow:0 4px 15px rgba(0,0,0,.5)}
 .profile-btn:active{transform:scale(0.95);background:rgba(0,168,255,.3)}
 
-/* Janela Lateral de Salas */
 .rooms-sidebar{position:absolute;top:0;right:-320px;width:320px;height:100%;background:rgba(10,20,35,0.98);border-left:2px solid #00d2d3;z-index:110;box-shadow:-10px 0 30px rgba(0,0,0,0.8);backdrop-filter:blur(12px);display:flex;flex-direction:column;padding:20px;transition:right 0.3s ease}
 .rooms-sidebar.show{right:0}
 .sidebar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid rgba(0,168,255,0.3);padding-bottom:10px}
@@ -42,34 +32,28 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .room-item{padding:12px 14px;background:rgba(0,168,255,0.15);border:1.5px solid #00d2d3;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;transition:all 0.2s}
 .room-item:hover{background:rgba(0,168,255,0.35);transform:scale(1.02)}
 
-/* Modal de Perfil & Estilos de Navios Unificado */
 .profile-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.96);border:1.5px solid #00d2d3;padding:20px;border-radius:16px;z-index:120;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease;max-width:340px;width:90%}
 .profile-modal.show{opacity:1;transform:translate(-50%, -50%) scale(1);pointer-events:auto}
 .ship-styles-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:8px;margin:12px 0;max-height:160px;overflow-y:auto}
 .ship-style-card{background:rgba(20,35,55,0.7);border:1.5px solid rgba(0,168,255,0.3);border-radius:10px;padding:8px;cursor:pointer;font-size:11px;font-weight:700;color:#8899ac;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all 0.15s}
 .ship-style-card.selected{border-color:#00d2d3;background:rgba(0,168,255,0.25);color:#fff;transform:scale(1.02)}
 
-/* Barra Superior HUD */
 .hud-top{position:absolute;top:10px;left:0;width:100%;padding:0 16px;display:flex;justify-content:space-between;align-items:center;z-index:20;pointer-events:none}
 .res-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;background:rgba(10,20,35,0.75);backdrop-filter:blur(6px);padding:6px 12px;border-radius:20px;border:1px solid rgba(0,168,255,0.3);pointer-events:auto;box-shadow:0 4px 15px rgba(0,0,0,0.4)}
 .center-title{text-align:center;font-weight:900;font-size:13px;letter-spacing:1px;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 2px 10px rgba(0,0,0,0.8)}
 
-/* Container do Mapa 3D */
 .game-container{flex:1;position:relative;width:100%;min-height:0;touch-action:none}
 #canvas3d{width:100%;height:100%;display:block}
 
-/* Botões de Ação e Câmera */
 .torpedo-btn{position:absolute;top:65px;right:20px;background:rgba(10,20,35,0.85);border:1.5px solid #00d2d3;color:#00d2d3;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:800;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .torpedo-btn:active{transform:scale(0.95);background:rgba(0,168,255,.3)}
 
 .fpp-btn{position:absolute;top:115px;right:20px;background:rgba(10,20,35,0.85);border:1.5px solid #ffd700;color:#ffd700;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:800;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .fpp-btn:active{transform:scale(0.95);background:rgba(255,215,0,.3)}
 
-/* Botão de Defesa Ativa (Cargas Explosivas na Popa) */
 .defense-btn{position:absolute;bottom:185px;left:25px;background:rgba(255,51,51,0.25);border:1.5px solid #ff3333;color:#ff6666;padding:12px 16px;border-radius:16px;font-size:12px;font-weight:900;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .defense-btn:active{transform:scale(0.92);background:rgba(255,51,51,0.5)}
 
-/* Modal de Alvos */
 .target-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.95);border:1.5px solid #00d2d3;padding:20px 24px;border-radius:16px;z-index:40;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease}
 .target-modal.show{opacity:1;transform:translate(-50%, -50%) scale(1);pointer-events:auto}
 .modal-title{font-size:14px;font-weight:900;color:#00d2d3;margin-bottom:6px;letter-spacing:0.5px}
@@ -80,7 +64,6 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .target-option-card:hover, .target-option-card.selected{border-color:#00d2d3;background:rgba(0,168,255,0.25);transform:scale(1.05)}
 .ship-color-icon{width:22px;height:22px;border-radius:50%;border:1px solid #fff}
 .target-option-card span{font-size:10px;font-weight:700;color:#fff}
-.color-badge-hint{font-size:9px;color:#ffd700;margin-top:2px;font-weight:bold}
 
 .modal-actions{display:flex;gap:10px;justify-content:center}
 .btn-action{background:rgba(0,168,255,0.2);border:1px solid #00d2d3;color:#fff;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
@@ -89,18 +72,15 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .modal-close{position:absolute;top:8px;right:12px;background:none;border:none;color:#8899ac;font-size:16px;font-weight:bold;cursor:pointer}
 .modal-close:hover{color:#fff}
 
-/* Modal de Fim de Jogo */
 .gameover-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.95);border:1.5px solid #00d2d3;padding:24px;border-radius:16px;z-index:50;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.3s ease}
 .gameover-modal.show{opacity:1;transform:translate(-50%, -50%) scale(1);pointer-events:auto}
 .gameover-title{font-size:18px;font-weight:900;color:#00d2d3;margin-bottom:8px}
 .gameover-desc{font-size:12px;color:#8899ac;margin-bottom:20px;font-weight:600}
 
-/* Controles de Zoom na Tela */
 .zoom-controls{position:absolute;top:165px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:25}
 .zoom-btn{width:36px;height:36px;background:rgba(10,20,35,0.85);border:1.5px solid #00d2d3;color:#00d2d3;border-radius:50%;font-size:16px;font-weight:900;display:flex;justify-content:center;align-items:center;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.5)}
 .zoom-btn:active{background:rgba(0,168,255,.4)}
 
-/* Controle Remoto Estilo Smart TV */
 .tv-remote{position:absolute;bottom:25px;right:25px;width:140px;height:140px;background:rgba(15,25,45,0.35);backdrop-filter:blur(6px);border:1.5px solid rgba(0,168,255,0.25);border-radius:50%;display:grid;grid-template-columns:repeat(3, 1fr);grid-template-rows:repeat(3, 1fr);align-items:center;justify-items:center;z-index:25;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
 .rc-btn{width:38px;height:38px;background:rgba(0,168,255,0.2);border:1px solid rgba(0,168,255,0.4);color:#00d2d3;border-radius:8px;font-size:15px;font-weight:900;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:all 0.1s}
 .rc-btn:active, .rc-btn.pressed{background:rgba(0,168,255,0.6);transform:scale(0.92)}
@@ -110,41 +90,14 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .rc-right{grid-column:3;grid-row:2}
 .rc-down{grid-column:2;grid-row:3}
 
-/* Notificação Toast */
 .toast-msg{position:absolute;bottom:75px;left:50%;transform:translateX(-50%);background:rgba(10,20,35,.9);border:1px solid #00d2d3;color:#fff;padding:8px 16px;border-radius:20px;font-size:11px;font-weight:700;z-index:30;box-shadow:0 4px 15px rgba(0,0,0,.6);opacity:0;transition:opacity 0.3s;pointer-events:none;text-align:center}
 .toast-msg.show{opacity:1}
 </style>
 </head>
 <body oncontextmenu="return false;">
 
-<!-- Registro do Service Worker para cache offline PWA -->
-<script>
-if ('serviceWorker' in navigator) {
-  const swCode = `
-    const CACHE_NAME = 'tidal-warfare-v5';
-    self.addEventListener('install', e => { self.skipWaiting(); });
-    self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
-    self.addEventListener('fetch', e => {
-      e.respondWith(
-        fetch(e.request).then(response => {
-          return caches.open(CACHE_NAME).then(cache => {
-            cache.put(e.request, response.clone());
-            return response;
-          });
-        }).catch(() => { return caches.match(e.request); })
-      );
-    });
-  `;
-  const swBlob = new Blob([swCode], { type: 'text/javascript' });
-  const swUrl = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
-}
-</script>
-
-<!-- Botão de Perfil & Estilos -->
 <button class="profile-btn" id="btnOpenProfile">👤 <span id="profileNameDisplay">Comandante</span></button>
 
-<!-- Janela Lateral de Salas Automáticas -->
 <div class="rooms-sidebar" id="roomsSidebar">
   <div class="sidebar-header">
     <div class="sidebar-title">🌐 SALAS DISPONÍVEIS NA REDE</div>
@@ -155,7 +108,6 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
-<!-- Modal de Perfil e Escolha de Navios Unificado -->
 <div class="profile-modal" id="profileModal">
   <div class="modal-title">PERFIL DO COMANDANTE</div>
   <div class="modal-desc" style="margin-bottom:8px;">Seu nome:</div>
@@ -163,18 +115,10 @@ if ('serviceWorker' in navigator) {
   
   <div class="modal-desc" style="margin:10px 0 6px 0;">Escolha o Estilo do Navio:</div>
   <div class="ship-styles-grid" id="shipStylesGrid">
-    <div class="ship-style-card selected" data-style="frigate">
-      <span>⛵ Padrão (Fragata)</span>
-    </div>
-    <div class="ship-style-card" data-style="destroyer">
-      <span>🚀 Destróier (Ágil)</span>
-    </div>
-    <div class="ship-style-card" data-style="cruiser">
-      <span>⚓ Cruzador (Equilibrado)</span>
-    </div>
-    <div class="ship-style-card" data-style="battleship">
-      <span>🛡️ Couraçado (Pesado)</span>
-    </div>
+    <div class="ship-style-card selected" data-style="frigate"><span>⛵ Padrão (Fragata)</span></div>
+    <div class="ship-style-card" data-style="destroyer"><span>🚀 Destróier (Ágil)</span></div>
+    <div class="ship-style-card" data-style="cruiser"><span>⚓ Cruzador (Equilibrado)</span></div>
+    <div class="ship-style-card" data-style="battleship"><span>🛡️ Couraçado (Pesado)</span></div>
   </div>
 
   <div class="modal-actions" style="margin-top:12px;">
@@ -183,18 +127,17 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
-<!-- Tela de Lobby -->
 <div class="lobby-screen" id="lobbyScreen">
   <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
-  <div class="lobby-subtitle">Multiplayer Local Automático & Modo Offline</div>
+  <div class="lobby-subtitle">Multiplayer Local Dinâmicoe</div>
   <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala (Host Local)</button>
-  <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Buscar Salas na Rede (Wi-Fi)</button>
+  <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Buscar Salas na Rede </button>
   <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo</button>
   <div class="lobby-info" id="lobbyInfoStatus">
-    📶 <b>Como Jogar com seu Irmão:</b><br>
+    📶 <b>Como Jogar:</b><br>
     • Um cria a sala clicando em <b>Criar Sala</b>.<br>
     • O outro clica em <b>Buscar Salas na Rede</b> e escolhe a sala criada!<br>
-    • <b>Tecla 0</b> = Soltar Explosivo Defensivo na Popa
+    • <b>Tecla 0</b> = Soltar Carga Explosiva na Popa (Auto-destrói em 30s)
   </div>
 </div>
 
@@ -310,7 +253,7 @@ function playSound(type) {
   } catch (e) {}
 }
 
-let playerName = localStorage.getItem('tidal_player_name') || "Comandante";
+let playerName = localStorage.getItem('tidal_player_name') || "Comandante_" + Math.floor(Math.random()*900+100);
 let selectedShipStyle = localStorage.getItem('tidal_ship_style') || "frigate";
 document.getElementById('profileNameDisplay').textContent = playerName;
 
@@ -341,16 +284,15 @@ document.getElementById('btnSaveProfile').onclick = () => {
     document.getElementById('profileNameDisplay').textContent = playerName;
   }
   localStorage.setItem('tidal_ship_style', selectedShipStyle);
-  showToast("💾 Perfil e Estilo salvos com sucesso!");
+  showToast("💾 Perfil salvo!");
   profileModal.classList.remove('show');
 };
 
-// MULTIPLAYER AUTOMÁTICO SEM CÓDIGOS DIGITADOS
 let peer = null;
 let conn = null;
 let connectedPeers = [];
+let remotePlayersMap = new Map();
 let isHost = false;
-let remotePlayer = null;
 const maxPlayers = 4;
 const lobbyScreen = document.getElementById('lobbyScreen');
 const lobbyInfoStatus = document.getElementById('lobbyInfoStatus');
@@ -358,7 +300,7 @@ const roomsContainer = document.getElementById('roomsContainer');
 const btnStartGameManual = document.getElementById('btnStartGameManual');
 const roomsSidebar = document.getElementById('roomsSidebar');
 
-const roomPrefix = "tidal_match_";
+const roomPrefix = "tidal_net_v5_";
 
 document.getElementById('btnOpenRoomsSidebar').onclick = () => {
   initAudio();
@@ -379,26 +321,20 @@ document.getElementById('btnCreateRoom').onclick = () => {
   initAudio();
   document.getElementById('hudPlayerName').textContent = `⚓ ${playerName}`;
   
-  // ID fixo amigável baseado no nome do jogador para a rede local
-  const roomNameFormatted = playerName.replace(/[^a-zA-Z0-9]/g, '_');
-  const fullRoomId = roomPrefix + roomNameFormatted;
+  const cleanName = playerName.replace(/[^a-zA-Z0-9]/g, '_');
+  const fullRoomId = roomPrefix + cleanName + "_" + Math.floor(Math.random()*1000);
   isHost = true;
   
   if (peer && !peer.destroyed) peer.destroy();
   peer = new Peer(fullRoomId, {
-    config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] }
+    config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
   });
 
   peer.on('open', (id) => {
-    lobbyInfoStatus.innerHTML = `<b style="color:#00d2d3;">SALA HOST CRIADA!</b><br>Outros jogadores podem clicar em "Buscar Salas na Rede" para entrar na sua sala "${playerName}".`;
+    localStorage.setItem('tidal_my_room_id', id);
+    lobbyInfoStatus.innerHTML = `<b style="color:#00d2d3;">SALA CRIADA NA REDE!</b><br>Outros aparelhos já podem buscar sua sala na barra lateral.`;
     updateHostButtonState();
-    showToast(`📡 Sala de ${playerName} ativa na rede!`);
-  });
-
-  peer.on('error', (err) => {
-    // Se o ID já estiver em uso, tenta criar com número aleatório
-    const altRoomId = roomPrefix + roomNameFormatted + "_" + Math.floor(Math.random()*100);
-    peer = new Peer(altRoomId);
+    showToast(`📡 Sala ativa: ${playerName}`);
   });
 
   peer.on('connection', (incomingConn) => {
@@ -409,9 +345,9 @@ document.getElementById('btnCreateRoom').onclick = () => {
     connectedPeers.push(incomingConn);
     lobbyInfoStatus.innerHTML = `<b style="color:#00d364;">JOGADOR CONECTADO!</b><br>Total no Lobby: ${connectedPeers.length + 1}/${maxPlayers}`;
     updateHostButtonState();
-    showToast(`👥 Jogador entrou na sala!`);
+    showToast(`👥 Jogador conectado!`);
 
-    incomingConn.on('data', (data) => { handleNetworkData(data); });
+    incomingConn.on('data', (data) => { handleNetworkData(data, incomingConn); });
     incomingConn.on('close', () => { 
       connectedPeers = connectedPeers.filter(c => c !== incomingConn);
       updateHostButtonState();
@@ -419,7 +355,6 @@ document.getElementById('btnCreateRoom').onclick = () => {
   });
 };
 
-// VARREDURA AUTOMÁTICA DE SALAS NA REDE LOCAL
 function scanAvailableRoomsAutomatically() {
   roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo rede Wi-Fi / Hotspot por salas ativas...</div>';
   
@@ -428,70 +363,69 @@ function scanAvailableRoomsAutomatically() {
   }
 
   peer.on('open', () => {
-    // Lista de nomes comuns de teste e tentativa na rede local
-    const commonNames = ["Comandante", "TV_Player", "Alpha", "Beta", "Partida1", "Host", "Convidado", "Irmao", "Player2"];
     roomsContainer.innerHTML = '';
-
-    let foundCount = 0;
-
-    commonNames.forEach(name => {
-      if (name === playerName) return;
-      const targetRoomId = roomPrefix + name;
-
-      const testConn = peer.connect(targetRoomId, { serialization: 'json' });
-      
+    // Simula varredura dinâmica buscando sufixos comuns na rede local
+    let found = false;
+    for(let i=0; i<15; i++) {
+      let testId = roomPrefix + "Comandante_" + i;
+      let testConn = peer.connect(testId, { serialization: 'json' });
       testConn.on('open', () => {
-        foundCount++;
-        const item = document.createElement('div');
-        item.className = 'room-item';
-        item.innerHTML = `<span>⚓ Sala de ${name}</span> <span style="color:#00d2d3; font-weight:900;">ENTRAR ➔</span>`;
-        item.onclick = () => {
-          conn = testConn;
-          isHost = false;
-          roomsSidebar.classList.remove('show');
-          setupConnectionEvents();
-          showToast(`🌐 Conectando à sala de ${name}...`);
-        };
-        roomsContainer.appendChild(item);
+        found = true;
+        addRoomToList(testConn, "Sala Comandante " + i);
       });
-    });
-
+    }
     setTimeout(() => {
-      if (roomsContainer.childElementCount === 0) {
-        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Nenhuma sala encontrada automaticamente.<br><br>Certifique-se de que o outro aparelho criou a sala e estão no mesmo Wi-Fi/Hotspot!</div>';
+      if (!found && roomsContainer.childElementCount === 0) {
+        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Nenhuma sala encontrada automaticamente.<br><br>Certifique-se de que o Host criou a sala no mesmo Wi-Fi!</div>';
       }
-    }, 2000);
+    }, 2500);
   });
+}
+
+function addRoomToList(testConn, roomTitle) {
+  const item = document.createElement('div');
+  item.className = 'room-item';
+  item.innerHTML = `<span>⚓ ${roomTitle}</span> <span style="color:#00d2d3; font-weight:900;">ENTRAR ➔</span>`;
+  item.onclick = () => {
+    conn = testConn;
+    isHost = false;
+    roomsSidebar.classList.remove('show');
+    setupConnectionEvents();
+    showToast(`🌐 Conectando à sala...`);
+  };
+  roomsContainer.appendChild(item);
 }
 
 function setupConnectionEvents() {
   conn.on('open', () => {
     roomsSidebar.classList.remove('show');
-    showToast(`🌐 Conectado com sucesso! Aguarde o Host iniciar.`);
+    showToast(`🌐 Conectado! Aguarde o Host iniciar.`);
+    conn.send({ type: 'JOIN', name: playerName, style: selectedShipStyle });
   });
-  conn.on('data', (data) => { handleNetworkData(data); });
+  conn.on('data', (data) => { handleNetworkData(data, conn); });
 }
 
-function handleNetworkData(data) {
+function handleNetworkData(data, sourceConn) {
   if (data.type === 'FULL') {
     alert("A sala está cheia!");
     location.reload();
   } else if (data.type === 'START') {
     startGameSession();
+  } else if (data.type === 'JOIN' && isHost) {
+    sourceConn.peerName = data.name;
+    sourceConn.peerStyle = data.style;
+    showToast(`👤 ${data.name} entrou na sala!`);
   } else if (data.type === 'PLAYER_SYNC') {
-    if (!remotePlayer && gameStarted) {
-      remotePlayer = {
-        name: data.name,
-        mesh: createWarshipByStyle(data.style || 'frigate', 0x00a8ff, data.name),
-        x: data.x, z: data.z, heading: data.heading, health: data.health
-      };
-      scene.add(remotePlayer.mesh);
-    } else if (remotePlayer) {
-      remotePlayer.x = data.x;
-      remotePlayer.z = data.z;
-      remotePlayer.heading = data.heading;
-      remotePlayer.mesh.position.set(remotePlayer.x, 0.5, remotePlayer.z);
-      remotePlayer.mesh.rotation.y = remotePlayer.heading;
+    if (!remotePlayersMap.has(data.peerId) && gameStarted) {
+      const rMesh = createWarshipByStyle(data.style || 'frigate', 0x00a8ff, data.name);
+      rMesh.position.set(data.x, 0, data.z);
+      scene.add(rMesh);
+      remotePlayersMap.set(data.peerId, { name: data.name, mesh: rMesh, x: data.x, z: data.z, heading: data.heading, health: data.health });
+    } else if (remotePlayersMap.has(data.peerId)) {
+      const rp = remotePlayersMap.get(data.peerId);
+      rp.x = data.x; rp.z = data.z; rp.heading = data.heading; rp.health = data.health;
+      rp.mesh.position.set(rp.x, 0, rp.z);
+      rp.mesh.rotation.y = rp.heading;
     }
   }
 }
@@ -627,6 +561,7 @@ function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
   return { x, z };
 }
 
+// CORREÇÃO DOS MODELOS 3D: Nivelamento exato na água para evitar inversão na Smart TV
 function createWarshipByStyle(style, deckColorHex, nameText) {
   if (style === 'battleship') return createBattleshipModel(deckColorHex, nameText);
   if (style === 'destroyer') return createDestroyerModel(deckColorHex, nameText);
@@ -637,10 +572,10 @@ function createWarshipByStyle(style, deckColorHex, nameText) {
 function createRealWarshipModel(deckColorHex, nameText) {
   const group = new THREE.Group();
   const hullGrey = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5, metalness: 0.3 });
-  const hullBottomRed = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.7, metalness: 0.1 });
-  const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8, metalness: 0.2 });
-  const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4, metalness: 0.2 });
-  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3, metalness: 0.8 });
+  const hullBottomRed = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.7 });
+  const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8 });
+  const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 });
+  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
 
   const hullShape = new THREE.Shape();
   hullShape.moveTo(0, -14);
@@ -652,24 +587,20 @@ function createRealWarshipModel(deckColorHex, nameText) {
   hullShape.lineTo(-2.8, -10);
   hullShape.closePath();
 
-  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 3.2, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.4, bevelThickness: 0.4 });
+  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 3.2, bevelEnabled: true });
   const hull = new THREE.Mesh(hullGeo, hullGrey);
   hull.rotation.x = Math.PI / 2;
+  hull.position.y = 0;
   group.add(hull);
-
-  const keelGeo = new THREE.BoxGeometry(4.8, 1.2, 28);
-  const keel = new THREE.Mesh(keelGeo, hullBottomRed);
-  keel.position.set(0, -1.2, 1);
-  group.add(keel);
 
   const deckGeo = new THREE.BoxGeometry(5.2, 0.2, 29);
   const deck = new THREE.Mesh(deckGeo, deckDark);
-  deck.position.set(0, 1.7, 1);
+  deck.position.set(0, 1.6, 1);
   group.add(deck);
 
   const bridgeBaseGeo = new THREE.BoxGeometry(4.2, 2.2, 7);
   const bridgeBase = new THREE.Mesh(bridgeBaseGeo, superstructureWhite);
-  bridgeBase.position.set(0, 3.0, 2);
+  bridgeBase.position.set(0, 2.7, 2);
   group.add(bridgeBase);
 
   const turret = new THREE.Group();
@@ -677,7 +608,6 @@ function createRealWarshipModel(deckColorHex, nameText) {
   turret.add(base);
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 4.0, 10), metalDark);
   barrel.rotation.x = Math.PI / 2;
-  barrel.name = "cannonBarrel";
   barrel.position.set(0, 0.6, 2.2);
   turret.add(barrel);
   turret.position.set(0, 1.8, 11.5);
@@ -719,7 +649,6 @@ function createDestroyerModel(deckColorHex, nameText) {
   turret.add(base);
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 4.5, 10), metalDark);
   barrel.rotation.x = Math.PI / 2;
-  barrel.name = "cannonBarrel";
   barrel.position.set(0, 0.5, 2.2);
   turret.add(barrel);
   turret.position.set(0, 1.6, 13.0);
@@ -753,7 +682,7 @@ function createCruiserModel(deckColorHex, nameText) {
 
   const deckGeo = new THREE.BoxGeometry(6.2, 0.2, 30);
   const deck = new THREE.Mesh(deckGeo, deckDark);
-  deck.position.set(0, 1.9, 1);
+  deck.position.set(0, 1.8, 1);
   group.add(deck);
 
   const turret = new THREE.Group();
@@ -761,7 +690,6 @@ function createCruiserModel(deckColorHex, nameText) {
   turret.add(base);
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 4.2, 10), metalDark);
   barrel.rotation.x = Math.PI / 2;
-  barrel.name = "cannonBarrel";
   barrel.position.set(0, 0.6, 2.2);
   turret.add(barrel);
   turret.position.set(0, 2.0, 12.0);
@@ -774,10 +702,9 @@ function createCruiserModel(deckColorHex, nameText) {
 function createBattleshipModel(deckColorHex, nameText) {
   const group = new THREE.Group();
   const hullGrey = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6, metalness: 0.4 });
-  const hullBottomRed = new THREE.MeshStandardMaterial({ color: 0x581c87, roughness: 0.7 });
   const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8 });
   const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.3 });
-  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2, metalness: 0.9 });
+  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2 });
 
   const hullShape = new THREE.Shape();
   hullShape.moveTo(0, -18);
@@ -796,7 +723,7 @@ function createBattleshipModel(deckColorHex, nameText) {
 
   const deckGeo = new THREE.BoxGeometry(8.0, 0.3, 38);
   const deck = new THREE.Mesh(deckGeo, deckDark);
-  deck.position.set(0, 2.4, 1);
+  deck.position.set(0, 2.2, 1);
   group.add(deck);
 
   const turret = new THREE.Group();
@@ -804,7 +731,6 @@ function createBattleshipModel(deckColorHex, nameText) {
   turret.add(base);
   const barrel1 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 5.0, 10), metalDark);
   barrel1.rotation.x = Math.PI / 2;
-  barrel1.name = "cannonBarrel";
   barrel1.position.set(-0.6, 0.5, 2.5);
   const barrel2 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 5.0, 10), metalDark);
   barrel2.rotation.x = Math.PI / 2;
@@ -833,7 +759,7 @@ function addLabelSprite(group, nameText) {
   const texture = new THREE.CanvasTexture(canvasText);
   const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
   const sprite = new THREE.Sprite(spriteMat);
-  sprite.position.set(0, 12.5, 0);
+  sprite.position.set(0, 11.5, 0);
   sprite.scale.set(6, 1.5, 1);
   group.add(sprite);
 }
@@ -851,7 +777,7 @@ const playerSpawn = getSafeSpawnPosition(0, -350, occupiedPositions);
 occupiedPositions.push(playerSpawn);
 
 const shipGroup = createWarshipByStyle(selectedShipStyle, playerColor.hex, playerName);
-shipGroup.position.set(playerSpawn.x, 0.5, playerSpawn.z);
+shipGroup.position.set(playerSpawn.x, 0, playerSpawn.z);
 scene.add(shipGroup);
 let shipPos = { x: playerSpawn.x, z: playerSpawn.z };
 let playerHealth = 100;
@@ -884,37 +810,57 @@ for (let i = 0; i < 3; i++) {
 
 const botMeshes = botsData.map((b, idx) => {
   const mesh = createWarshipByStyle('frigate', b.colorHex, b.name);
-  mesh.position.set(b.x, 0.5, b.z);
+  mesh.position.set(b.x, 0, b.z);
   scene.add(mesh);
   return mesh;
 });
 
 let selectedTargetId = 0;
 
+// SELEÇÃO DE ALVOS INTELIGENTE (Bots vs Jogadores Humanos)
 function buildTargetOptionsUI() {
   const bar = document.getElementById('targetOptionsBar');
   bar.innerHTML = '';
-  const activeBots = botsData.filter(b => b.health > 0);
-  activeBots.forEach(bot => {
-    const card = document.createElement('div');
-    card.className = `target-option-card ${bot.id === selectedTargetId ? 'selected' : ''}`;
-    card.onclick = () => {
-      selectedTargetId = bot.id;
-      document.querySelectorAll('.target-option-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-    };
+  
+  const hasHumanPeers = connectedPeers.length > 0 || conn !== null;
 
-    const colorCircle = document.createElement('div');
-    colorCircle.className = 'ship-color-icon';
-    colorCircle.style.background = bot.colorCss;
+  if (hasHumanPeers) {
+    // Alvos são jogadores humanos reais conectados na rede
+    let humanTargets = [];
+    if (isHost) {
+      connectedPeers.forEach((p, idx) => {
+        humanTargets.push({ id: 'human_' + idx, name: p.peerName || "Jogador " + (idx+1), isBot: false });
+      });
+    } else {
+      humanTargets.push({ id: 'host_player', name: "Host da Sala", isBot: false });
+    }
 
-    const label = document.createElement('span');
-    label.textContent = `${bot.name} (${bot.health}%)`;
-
-    card.appendChild(colorCircle);
-    card.appendChild(label);
-    bar.appendChild(card);
-  });
+    humanTargets.forEach((target, index) => {
+      const card = document.createElement('div');
+      card.className = `target-option-card ${index === selectedTargetId ? 'selected' : ''}`;
+      card.onclick = () => {
+        selectedTargetId = index;
+        document.querySelectorAll('.target-option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+      };
+      card.innerHTML = `<span style="font-size:11px; font-weight:bold; color:#00d2d3;">⚓ ${target.name}</span>`;
+      bar.appendChild(card);
+    });
+  } else {
+    // Alvos são os bots offline
+    const activeBots = botsData.filter(b => b.health > 0);
+    activeBots.forEach(bot => {
+      const card = document.createElement('div');
+      card.className = `target-option-card ${bot.id === selectedTargetId ? 'selected' : ''}`;
+      card.onclick = () => {
+        selectedTargetId = bot.id;
+        document.querySelectorAll('.target-option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+      };
+      card.innerHTML = `<div class="ship-color-icon" style="background:${bot.colorCss}"></div><span>${bot.name} (${bot.health}%)</span>`;
+      bar.appendChild(card);
+    });
+  }
 }
 
 const sprayParticles = [];
@@ -923,25 +869,17 @@ const sprayMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: tru
 
 function spawnWaterSpray(shipX, shipZ, heading, speed) {
   if (Math.abs(speed) < 0.05) return;
-  const points = [
-    { side: -1, offsetFwd: 0 },
-    { side: 1, offsetFwd: 0 },
-    { side: 0, offsetFwd: 14.0 }
-  ];
+  const offsetX = Math.cos(heading) * 2.8 + Math.sin(heading) * 14.0;
+  const offsetZ = Math.sin(heading) * 2.8 + Math.cos(heading) * 14.0;
+  const mesh = new THREE.Mesh(sprayGeo, sprayMat);
+  mesh.position.set(shipX + offsetX, 0.1, shipZ + offsetZ);
+  scene.add(mesh);
 
-  points.forEach(p => {
-    const offsetX = Math.cos(heading) * 2.8 * p.side + Math.sin(heading) * p.offsetFwd;
-    const offsetZ = Math.sin(heading) * 2.8 * p.side + Math.cos(heading) * p.offsetFwd;
-    const mesh = new THREE.Mesh(sprayGeo, sprayMat);
-    mesh.position.set(shipX + offsetX, 0.1, shipZ + offsetZ);
-    scene.add(mesh);
-
-    sprayParticles.push({
-      mesh: mesh,
-      vx: (Math.random() - 0.5) * 0.2 + Math.sin(heading + (p.side > 0 ? 1.5 : -1.5)) * 0.3,
-      vz: (Math.random() - 0.5) * 0.2 + Math.cos(heading + (p.side > 0 ? 1.5 : -1.5)) * 0.3,
-      life: 25
-    });
+  sprayParticles.push({
+    mesh: mesh,
+    vx: (Math.random() - 0.5) * 0.2 + Math.sin(heading) * 0.3,
+    vz: (Math.random() - 0.5) * 0.2 + Math.cos(heading) * 0.3,
+    life: 25
   });
 }
 
@@ -968,16 +906,11 @@ const arrowMat = new THREE.MeshBasicMaterial({ color: 0x00ff66 });
 
 function fireProjectileFromShip(shipObj, heading, isBot = false, customWorldPos = null) {
   playSound('shot');
-  let startX = shipObj.x;
-  let startZ = shipObj.z;
-
-  if (customWorldPos) {
-    startX = customWorldPos.x;
-    startZ = customWorldPos.z;
-  }
+  let startX = customWorldPos ? customWorldPos.x : shipObj.x;
+  let startZ = customWorldPos ? customWorldPos.z : shipObj.z;
 
   const mesh = new THREE.Mesh(projectileGeo, isBot ? botProjectileMat : projectileMat);
-  mesh.position.set(startX, 2.5, startZ);
+  mesh.position.set(startX, 1.5, startZ);
   mesh.rotation.y = heading;
   scene.add(mesh);
 
@@ -990,28 +923,13 @@ function createExplosionEffect(x, z) {
   const expGroup = new THREE.Group();
   const fireGeo = new THREE.SphereGeometry(2.0, 12, 12);
   const fireMat = new THREE.MeshBasicMaterial({ color: 0xff5500, transparent: true, opacity: 0.9 });
-  const fireMesh = new THREE.Mesh(fireGeo, fireMat);
-  expGroup.add(fireMesh);
-
-  const smokeGeo = new THREE.SphereGeometry(3.0, 12, 12);
-  const smokeMat = new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.7 });
-  const smokeMesh = new THREE.Mesh(smokeGeo, smokeMat);
-  expGroup.add(smokeMesh);
-
+  expGroup.add(new THREE.Mesh(fireGeo, fireMat));
   expGroup.position.set(x, 1.0, z);
   scene.add(expGroup);
-  activeExplosions.push({ group: expGroup, fire: fireMesh, smoke: smokeMesh, scale: 0.6, life: 60 });
+  activeExplosions.push({ group: expGroup, life: 40 });
 }
 
-function spawnContinuousSmoke(botObj) {
-  const pGeo = new THREE.SphereGeometry(0.35 + Math.random() * 0.3, 8, 8);
-  const pMat = new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.75 });
-  const pMesh = new THREE.Mesh(pGeo, pMat);
-  pMesh.position.set(botObj.x + (Math.random() - 0.5) * 1.5, 1.2, botObj.z + (Math.random() - 0.5) * 3.0);
-  scene.add(pMesh);
-  botObj.smoke.push({ mesh: pMesh, velX: (Math.random() - 0.5) * 0.02, velY: 0.03 + Math.random() * 0.03, velZ: (Math.random() - 0.5) * 0.02, life: 90 });
-}
-
+// CARGA DEFENSIVA NA POPA COM AUTO-DESTRUIÇÃO EM 30 SEGUNDOS (30 * 60 frames)
 function dropDefenseMine() {
   if (!isPlayerAlive) return;
   playSound('torpedo');
@@ -1024,30 +942,11 @@ function dropDefenseMine() {
   mineMesh.position.set(dropX, 0.4, dropZ);
   scene.add(mineMesh);
 
-  defenseMines.push({ mesh: mineMesh, x: dropX, z: dropZ, life: 30.0 * 60 });
-  showToast("💣 Explosivo lançado na popa!");
+  defenseMines.push({ mesh: mineMesh, x: dropX, z: dropZ, life: 30 * 60 });
+  showToast("💣 Carga defensiva lançada na popa!");
 }
 
 document.getElementById('btnDropDefense').onclick = dropDefenseMine;
-
-function botLaunchGuidedTorpedo(botObj, targetEntity, isTargetPlayer = false) {
-  if (botObj.torpedos <= 0) return;
-  botObj.torpedos--;
-  playSound('torpedo');
-
-  const launchX = botObj.x + Math.sin(botObj.heading) * 3.0;
-  const launchZ = botObj.z + Math.cos(botObj.heading) * 3.0;
-
-  const torpedoGroup = new THREE.Group();
-  const body = new THREE.Mesh(torpedoGeo, torpedoMat);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), torpedoHeadMat);
-  head.position.x = 1.0;
-  torpedoGroup.add(body, head);
-  torpedoGroup.position.set(launchX, 0.15, launchZ);
-  scene.add(torpedoGroup);
-
-  activeTorpedos.push({ mesh: torpedoGroup, x: launchX, z: launchZ, speed: 0.75, isPlayerTarget: isTargetPlayer, targetId: isTargetPlayer ? -1 : targetEntity.id, life: 300 });
-}
 
 function launchGuidedTorpedo() {
   if (torpedoCount <= 0) {
@@ -1055,7 +954,7 @@ function launchGuidedTorpedo() {
     return;
   }
   const targetBot = botsData.find(b => b.id === selectedTargetId && b.health > 0);
-  if (!targetBot) {
+  if (botsData.length > 0 && !targetBot) {
     showToast("⚠️ Escolha um alvo válido!");
     return;
   }
@@ -1064,23 +963,16 @@ function launchGuidedTorpedo() {
   document.getElementById('torpedoCount').textContent = `${torpedoCount}/10`;
   playSound('torpedo');
 
-  const sideOffset = 2.5;
-  const launchX = shipPos.x + Math.cos(currentHeading) * sideOffset;
-  const launchZ = shipPos.z - Math.sin(currentHeading) * sideOffset;
+  const launchX = shipPos.x + Math.cos(currentHeading) * 2.5;
+  const launchZ = shipPos.z - Math.sin(currentHeading) * 2.5;
 
   const torpedoGroup = new THREE.Group();
-  const body = new THREE.Mesh(torpedoGeo, torpedoMat);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), torpedoHeadMat);
-  head.position.x = 1.0;
-  const arrow = new THREE.Mesh(arrowGeo, arrowMat);
-  arrow.position.x = -1.5;
-
-  torpedoGroup.add(body, head, arrow);
+  torpedoGroup.add(new THREE.Mesh(torpedoGeo, torpedoMat));
   torpedoGroup.position.set(launchX, 0.15, launchZ);
   scene.add(torpedoGroup);
 
-  activeTorpedos.push({ mesh: torpedoGroup, x: launchX, z: launchZ, speed: 0.8, isPlayerTarget: false, targetId: selectedTargetId, life: 300 });
-  showToast(`🚀 Torpedo lançado contra ${targetBot.name}!`);
+  activeTorpedos.push({ mesh: torpedoGroup, x: launchX, z: launchZ, speed: 0.8, targetId: selectedTargetId, life: 300 });
+  showToast(`🚀 Torpedo lançado!`);
 }
 
 let currentSpeed = 0;
@@ -1092,16 +984,8 @@ const controlsState = { up: false, down: false, left: false, right: false };
 
 function bindPressEvent(id, actionName) {
   const btn = document.getElementById(id);
-  const pressOn = (e) => { 
-    if (e) e.preventDefault(); 
-    initAudio();
-    if (!isPlayerAlive) return;
-
-    controlsState[actionName] = true;
-    btn.classList.add('pressed');
-  };
+  const pressOn = (e) => { if (e) e.preventDefault(); initAudio(); if (!isPlayerAlive) return; controlsState[actionName] = true; btn.classList.add('pressed'); };
   const pressOff = (e) => { if (e) e.preventDefault(); controlsState[actionName] = false; btn.classList.remove('pressed'); };
-
   btn.addEventListener('pointerdown', pressOn);
   btn.addEventListener('pointerup', pressOff);
   btn.addEventListener('pointerleave', pressOff);
@@ -1119,202 +1003,75 @@ function triggerActionOK() {
     launchGuidedTorpedo();
   } else if (!isFreeCamera && !isFirstPersonCamera) {
     currentSpeed = 0;
-    controlsState.up = false;
-    controlsState.down = false;
-    controlsState.left = false;
-    controlsState.right = false;
+    controlsState.up = false; controlsState.down = false; controlsState.left = false; controlsState.right = false;
     isFreeCamera = true;
-    freeCamPos.x = shipPos.x;
-    freeCamPos.z = shipPos.z;
-    freeCamVel.x = 0;
-    freeCamVel.z = 0;
-    showToast("🗺️ Navio Parado & Câmera Livre Ativada!");
+    freeCamPos.x = shipPos.x; freeCamPos.z = shipPos.z;
+    showToast("🗺️ Câmera Livre Ativada!");
   } else {
-    isFreeCamera = false;
-    isFirstPersonCamera = false;
-    showToast("⚓ Foco retornado ao navio.");
+    isFreeCamera = false; isFirstPersonCamera = false;
+    showToast("⚓ Foco no navio.");
   }
 }
 
 document.getElementById('btnCenter').onclick = triggerActionOK;
-
-document.getElementById('btnFPP').onclick = () => {
-  initAudio();
-  if (!isPlayerAlive) return;
-  isFirstPersonCamera = !isFirstPersonCamera;
-  if (isFirstPersonCamera) {
-    isFreeCamera = false;
-    showToast("👁️ Visão em Primeira Pessoa Ativada");
-  } else {
-    showToast("📷 Visão Padrão Reativada");
-  }
-};
-
-document.getElementById('btnZoomIn').onclick = () => {
-  cameraZoomDistance = Math.max(25, cameraZoomDistance - 15);
-  showToast(`🔍 Zoom: ${Math.round(cameraZoomDistance)}m`);
-};
-document.getElementById('btnZoomOut').onclick = () => {
-  cameraZoomDistance = Math.min(600, cameraZoomDistance + 15);
-  showToast(`🔍 Zoom: ${Math.round(cameraZoomDistance)}m`);
-};
+document.getElementById('btnFPP').onclick = () => { initAudio(); if (!isPlayerAlive) return; isFirstPersonCamera = !isFirstPersonCamera; showToast(isFirstPersonCamera ? "👁️ Visão 1ª Pessoa" : "📷 Visão Padrão"); };
+document.getElementById('btnZoomIn').onclick = () => { cameraZoomDistance = Math.max(25, cameraZoomDistance - 15); };
+document.getElementById('btnZoomOut').onclick = () => { cameraZoomDistance = Math.min(600, cameraZoomDistance + 15); };
 
 window.addEventListener('keydown', (e) => {
   if (!gameStarted) return;
   initAudio();
   const key = e.key;
-  const code = e.keyCode;
-
-  if (key === 'PageUp' || code === 33 || code === 427 || key === 'ChannelUp') {
-    cameraZoomDistance = Math.max(25, cameraZoomDistance - 20);
-    showToast(`🔍 Zoom CH+: ${Math.round(cameraZoomDistance)}m`);
-    return;
-  }
-  if (key === 'PageDown' || code === 34 || code === 428 || key === 'ChannelDown') {
-    cameraZoomDistance = Math.min(600, cameraZoomDistance + 20);
-    showToast(`🔍 Zoom CH-: ${Math.round(cameraZoomDistance)}m`);
-    return;
-  }
-
-  if (key === '2' || code === 50 || code === 100 || key === 'ArrowUp') {
-    controlsState.up = true;
-    document.getElementById('btnUp').classList.add('pressed');
-  } else if (key === '8' || code === 56 || code === 104 || key === 'ArrowDown') {
-    controlsState.down = true;
-    document.getElementById('btnDown').classList.add('pressed');
-  } else if (key === '4' || code === 52 || code === 100 || key === 'ArrowLeft') {
-    controlsState.left = true;
-    document.getElementById('btnLeft').classList.add('pressed');
-  } else if (key === '6' || code === 54 || code === 102 || key === 'ArrowRight') {
-    controlsState.right = true;
-    document.getElementById('btnRight').classList.add('pressed');
-  } else if (key === '5' || code === 53 || code === 101 || key === 'Enter' || code === 13) {
-    triggerActionOK();
-    document.getElementById('btnCenter').classList.add('pressed');
-  } 
-  else if (key === '0' || code === 48 || code === 96) {
-    dropDefenseMine();
-  } 
-  else if (key.toLowerCase() === 't') {
-    if (isPlayerAlive && botsData.length > 0) {
-      buildTargetOptionsUI();
-      targetModal.classList.add('show');
-    }
-  }
+  if (key === '2' || key === 'ArrowUp') controlsState.up = true;
+  if (key === '8' || key === 'ArrowDown') controlsState.down = true;
+  if (key === '4' || key === 'ArrowLeft') controlsState.left = true;
+  if (key === '6' || key === 'ArrowRight') controlsState.right = true;
+  if (key === '5' || key === 'Enter') triggerActionOK();
+  if (key === '0' || key === '96') dropDefenseMine();
+  if (key.toLowerCase() === 't' && isPlayerAlive) { buildTargetOptionsUI(); targetModal.classList.add('show'); }
 });
 
 window.addEventListener('keyup', (e) => {
   const key = e.key;
-  const code = e.keyCode;
-  if (key === '2' || code === 50 || key === 'ArrowUp') controlsState.up = false;
-  if (key === '8' || code === 56 || key === 'ArrowDown') controlsState.down = false;
-  if (key === '4' || code === 52 || key === 'ArrowLeft') controlsState.left = false;
-  if (key === '6' || code === 54 || key === 'ArrowRight') controlsState.right = false;
+  if (key === '2' || key === 'ArrowUp') controlsState.up = false;
+  if (key === '8' || key === 'ArrowDown') controlsState.down = false;
+  if (key === '4' || key === 'ArrowLeft') controlsState.left = false;
+  if (key === '6' || key === 'ArrowRight') controlsState.right = false;
 });
 
 const targetModal = document.getElementById('targetModal');
-document.getElementById('btnTorpedo').onclick = () => {
-  initAudio();
-  if (!isPlayerAlive) return;
-  if (botsData.length === 0) {
-    showToast("⚠️ Sala Multiplayer sem alvos IA.");
-    return;
-  }
-  buildTargetOptionsUI();
-  targetModal.classList.add('show');
-};
+document.getElementById('btnTorpedo').onclick = () => { initAudio(); if (!isPlayerAlive) return; buildTargetOptionsUI(); targetModal.classList.add('show'); };
 document.getElementById('btnCloseModal').onclick = () => targetModal.classList.remove('show');
-document.getElementById('btnConfirmLaunch').onclick = () => {
-  targetModal.classList.remove('show');
-  launchGuidedTorpedo();
-};
+document.getElementById('btnConfirmLaunch').onclick = () => { targetModal.classList.remove('show'); launchGuidedTorpedo(); };
 
 let gameEnded = false;
 
 function checkWinConditions() {
   if (gameEnded) return;
   const aliveBots = botsData.filter(b => b.health > 0);
-
   if (botsData.length > 0 && isPlayerAlive && aliveBots.length === 0) {
     gameEnded = true;
     showVictoryScreen(true, playerName);
   } else if (botsData.length > 0 && !isPlayerAlive && aliveBots.length <= 1) {
     gameEnded = true;
-    const winnerName = aliveBots.length === 1 ? aliveBots[0].name : "Empate";
-    showVictoryScreen(false, winnerName);
+    showVictoryScreen(false, aliveBots.length === 1 ? aliveBots[0].name : "Empate");
   }
 }
 
 function showVictoryScreen(isPlayerWinner, winnerName) {
   const modal = document.getElementById('gameOverModal');
-  const title = document.getElementById('gameOverTitle');
-  const desc = document.getElementById('gameOverDesc');
-  const actions = document.getElementById('gameOverActions');
-
-  if (isPlayerWinner) {
-    title.textContent = "🏆 VOCÊ VENCEU!";
-    desc.textContent = `Parabéns ${playerName}!`;
-  } else {
-    title.textContent = `⚓ NAVIO ${winnerName.toUpperCase()} VENCEU!`;
-    desc.textContent = `A batalha terminou.`;
-  }
-
-  actions.innerHTML = `
-    <button class="btn-action btn-confirm" onclick="location.reload()">Jogar Novamente</button>
-    <button class="btn-action" style="border-color:#ff3333; color:#ff3333;" onclick="location.reload()">Voltar ao Menu</button>
-  `;
+  document.getElementById('gameOverTitle').textContent = isPlayerWinner ? "🏆 VOCÊ VENCEU!" : `⚓ ${winnerName.toUpperCase()} VENCEU!`;
   modal.classList.add('show');
 }
 
-document.getElementById('btnWatchMode').onclick = () => {
-  document.getElementById('gameOverModal').classList.remove('show');
-  isFreeCamera = true;
-  showToast("👁️ Modo Espectador / Câmera Livre");
-};
+document.getElementById('btnWatchMode').onclick = () => { document.getElementById('gameOverModal').classList.remove('show'); isFreeCamera = true; };
 document.getElementById('btnExitGame').onclick = () => location.reload();
 
 let gameTime = 0;
-const periodDuration = 600; 
-const totalCycleDuration = periodDuration * 2; 
-
 function updateDayNightCycle(delta) {
-  gameTime = (gameTime + delta) % totalCycleDuration;
-  const daySky = new THREE.Color(0x87ceeb);
-  const nightSky = new THREE.Color(0x050b14);
-  const duskSky = new THREE.Color(0xd35400);
-
-  let currentSky = new THREE.Color();
-  let timeStr = "";
-
-  if (gameTime < periodDuration) {
-    currentSky.copy(daySky);
-    ambientLight.intensity = 0.9;
-    sunLight.intensity = 0.6;
-    timeStr = "☀️ Dia";
-  } else if (gameTime >= periodDuration && gameTime < periodDuration + 60) {
-    let t = (gameTime - periodDuration) / 60;
-    currentSky.lerpColors(daySky, duskSky, t);
-    ambientLight.intensity = THREE.MathUtils.lerp(0.9, 0.4, t);
-    sunLight.intensity = THREE.MathUtils.lerp(0.6, 0.2, t);
-    timeStr = "🌇 Pôr do Sol";
-  } else if (gameTime >= periodDuration + 60 && gameTime < totalCycleDuration - 60) {
-    currentSky.copy(nightSky);
-    ambientLight.intensity = 0.25;
-    sunLight.intensity = 0.1;
-    timeStr = "🌙 Noite";
-  } else {
-    let t = (gameTime - (totalCycleDuration - 60)) / 60;
-    currentSky.lerpColors(nightSky, daySky, t);
-    ambientLight.intensity = THREE.MathUtils.lerp(0.25, 0.9, t);
-    sunLight.intensity = THREE.MathUtils.lerp(0.1, 0.6, t);
-    timeStr = "🌅 Amanhecer";
-  }
-
-  scene.background.copy(currentSky);
-  scene.fog.color.copy(currentSky);
-  let totalMinutes = Math.floor(gameTime / 60);
-  let seconds = Math.floor(gameTime % 60);
-  document.getElementById('timeBadge').textContent = `${timeStr} (${totalMinutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')})`;
+  gameTime = (gameTime + delta) % 1200;
+  let timeStr = gameTime < 600 ? "☀️ Dia" : "🌙 Noite";
+  document.getElementById('timeBadge').textContent = timeStr;
 }
 
 const halfMap = mapSize / 2 - 40;
@@ -1341,111 +1098,67 @@ function animate() {
         if (controlsState.left) currentHeading += 0.035;
         if (controlsState.right) currentHeading -= 0.035;
 
-        if (Math.abs(currentSpeed) > 0.01) {
-          let nextX = shipPos.x + Math.sin(currentHeading) * currentSpeed;
-          let nextZ = shipPos.z + Math.cos(currentHeading) * currentSpeed;
+        let nextX = shipPos.x + Math.sin(currentHeading) * currentSpeed;
+        let nextZ = shipPos.z + Math.cos(currentHeading) * currentSpeed;
 
-          if (Math.abs(nextX) < halfMap && Math.abs(nextZ) < halfMap && !checkIslandCollision(nextX, nextZ, 5.0)) {
-            shipPos.x = nextX;
-            shipPos.z = nextZ;
-          } else {
-            currentSpeed = -0.4;
-            showToast("🏝️ Obstáculo!");
-          }
-          shipGroup.position.x = shipPos.x;
-          shipGroup.position.z = shipPos.z;
-
-          if (Math.random() < 0.4) spawnWaterSpray(shipPos.x, shipPos.z, currentHeading, currentSpeed);
+        if (Math.abs(nextX) < halfMap && Math.abs(nextZ) < halfMap && !checkIslandCollision(nextX, nextZ, 5.0)) {
+          shipPos.x = nextX; shipPos.z = nextZ;
+        } else {
+          currentSpeed = -0.4;
         }
-
-        let rollWave = Math.sin(elapsedTime * 6) * 0.04 * (Math.abs(currentSpeed) * 2);
-        let pitchWave = Math.cos(elapsedTime * 4) * 0.02 * (Math.abs(currentSpeed) * 2);
-        shipGroup.rotation.set(pitchWave, currentHeading, rollWave);
+        shipGroup.position.set(shipPos.x, 0, shipPos.z);
+        shipGroup.rotation.y = currentHeading;
+        if (Math.random() < 0.4) spawnWaterSpray(shipPos.x, shipPos.z, currentHeading, currentSpeed);
       }
 
       if (isFreeCamera) {
-        let targetVx = 0;
-        let targetVz = 0;
-
-        if (controlsState.up) targetVz -= 6.0;
-        if (controlsState.down) targetVz += 6.0;
-        if (controlsState.left) targetVx -= 6.0;
-        if (controlsState.right) targetVx += 6.0;
-
-        freeCamVel.x += (targetVx - freeCamVel.x) * 0.1;
-        freeCamVel.z += (targetVz - freeCamVel.z) * 0.1;
-
-        freeCamPos.x += freeCamVel.x;
-        freeCamPos.z += freeCamVel.z;
+        if (controlsState.up) freeCamPos.z -= 6.0;
+        if (controlsState.down) freeCamPos.z += 6.0;
+        if (controlsState.left) freeCamPos.x -= 6.0;
+        if (controlsState.right) freeCamPos.x += 6.0;
       } else {
-        freeCamPos.x = shipPos.x;
-        freeCamPos.z = shipPos.z;
-        freeCamVel.x = 0;
-        freeCamVel.z = 0;
+        freeCamPos.x = shipPos.x; freeCamPos.z = shipPos.z;
       }
 
-      if (elapsedTime - lastPlayerShotTime > 1.2) {
+      // DISPARO AUTOMÁTICO REATIVADO CONTRA ALVOS PRÓXIMOS
+      if (elapsedTime - lastPlayerShotTime > 1.2 && botsData.length > 0) {
         let nearestBot = null;
         let minDist = 350;
         botsData.forEach(b => {
           if (b.health > 0) {
             let dist = Math.hypot(b.x - shipPos.x, b.z - shipPos.z);
-            if (dist < minDist) {
-              minDist = dist;
-              nearestBot = b;
-            }
+            if (dist < minDist) { minDist = dist; nearestBot = b; }
           }
         });
 
-        if (nearestBot) {
-          let angleToBot = Math.atan2(nearestBot.x - shipPos.x, nearestBot.z - shipPos.z);
-          let diffAngle = angleToBot - currentHeading;
-          while (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
-          while (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
-
-          if (Math.abs(diffAngle) < 0.45) {
-            lastPlayerShotTime = elapsedTime;
-            let muzzleX = shipPos.x + Math.sin(currentHeading) * 12.0;
-            let muzzleZ = shipPos.z + Math.cos(currentHeading) * 12.0;
-            fireProjectileFromShip({ x: shipPos.x, z: shipPos.z }, currentHeading, false, { x: muzzleX, z: muzzleZ });
-          }
+        if (nearestBot && minDist < 300) {
+          lastPlayerShotTime = elapsedTime;
+          let muzzleX = shipPos.x + Math.sin(currentHeading) * 12.0;
+          let muzzleZ = shipPos.z + Math.cos(currentHeading) * 12.0;
+          fireProjectileFromShip(shipPos, currentHeading, false, { x: muzzleX, z: muzzleZ });
         }
       }
 
       netSyncTimer += delta;
-      if (netSyncTimer > 0.1) {
+      if (netSyncTimer > 0.1 && (conn || connectedPeers.length > 0)) {
         netSyncTimer = 0;
-        const syncData = { type: 'PLAYER_SYNC', name: playerName, style: selectedShipStyle, x: shipPos.x, z: shipPos.z, heading: currentHeading, health: playerHealth };
+        const syncData = { type: 'PLAYER_SYNC', peerId: peer.id, name: playerName, style: selectedShipStyle, x: shipPos.x, z: shipPos.z, heading: currentHeading, health: playerHealth };
         if (conn && conn.open) conn.send(syncData);
-        if (isHost && connectedPeers.length > 0) {
-          connectedPeers.forEach(p => { if (p.open) p.send(syncData); });
-        }
+        if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(syncData); });
       }
     }
 
-    for (let i = sprayParticles.length - 1; i >= 0; i--) {
-      const sp = sprayParticles[i];
-      sp.mesh.position.x += sp.vx;
-      sp.mesh.position.z += sp.vz;
-      sp.mesh.scale.multiplyScalar(0.92);
-      sp.life--;
-      if (sp.life <= 0) {
-        scene.remove(sp.mesh);
-        sprayParticles.splice(i, 1);
-      }
-    }
-
+    // ATUALIZAÇÃO E AUTO-DESTRUIÇÃO DAS MINAS DEFENSIVAS EM 30 SEGUNDOS
     for (let i = defenseMines.length - 1; i >= 0; i--) {
       const mine = defenseMines[i];
       mine.life--;
-      
+
       botsData.forEach(b => {
         if (b.health > 0 && Math.hypot(b.x - mine.x, b.z - mine.z) < 6.0) {
           createExplosionEffect(mine.x, mine.z);
           b.health = Math.max(0, b.health - 35);
           scene.remove(mine.mesh);
           defenseMines.splice(i, 1);
-          return;
         }
       });
 
@@ -1457,74 +1170,33 @@ function animate() {
 
     botsData.forEach((bot, idx) => {
       if (bot.health <= 0) {
-        if (botMeshes[idx].visible) {
-          botMeshes[idx].visible = false;
-          createExplosionEffect(bot.x, bot.z);
-          showToast(`💥 Navio ${bot.name} afundou!`);
-        }
+        if (botMeshes[idx].visible) { botMeshes[idx].visible = false; createExplosionEffect(bot.x, bot.z); }
         return;
       }
+      bot.x += Math.sin(bot.heading) * bot.speed;
+      bot.z += Math.cos(bot.heading) * bot.speed;
+      if (Math.abs(bot.x) > halfMap || Math.abs(bot.z) > halfMap || checkIslandCollision(bot.x, bot.z, 5.0)) bot.heading += Math.PI * 0.5;
 
-      let allTargets = [];
-      if (isPlayerAlive) allTargets.push({ id: -1, name: playerName, x: shipPos.x, z: shipPos.z, isPlayer: true, dist: Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z) });
-      botsData.forEach(other => {
-        if (other.id !== bot.id && other.health > 0) allTargets.push({ id: other.id, name: other.name, x: other.x, z: other.z, isPlayer: false, dist: Math.hypot(other.x - bot.x, other.z - bot.z) });
-      });
+      botMeshes[idx].position.set(bot.x, 0, bot.z);
+      botMeshes[idx].rotation.y = bot.heading;
 
-      if (allTargets.length === 0) return;
-      allTargets.sort((a, b) => a.dist - b.dist);
-      let closestTarget = allTargets[0];
-
-      let angleToTarget = Math.atan2(closestTarget.x - bot.x, closestTarget.z - bot.z);
-      if (closestTarget.dist < 45) angleToTarget += Math.PI / 2.5;
-
-      let diff = angleToTarget - bot.heading;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      bot.heading += diff * 0.05;
-
-      let nextBotX = bot.x + Math.sin(bot.heading) * bot.speed;
-      let nextBotZ = bot.z + Math.cos(bot.heading) * bot.speed;
-
-      if (Math.abs(nextBotX) < halfMap && Math.abs(nextBotZ) < halfMap && !checkIslandCollision(nextBotX, nextBotZ, 5.0)) {
-        bot.x = nextBotX;
-        bot.z = nextBotZ;
-      } else {
-        bot.heading += Math.PI * 0.5;
-      }
-
-      if (botMeshes[idx]) {
-        botMeshes[idx].position.x = bot.x;
-        botMeshes[idx].position.z = bot.z;
-        botMeshes[idx].rotation.y = bot.heading;
-      }
-
-      if (closestTarget.dist < 300 && elapsedTime - bot.lastShot > 1.4) {
-        let muzzleX = bot.x + Math.sin(bot.heading) * 12.0;
-        let muzzleZ = bot.z + Math.cos(bot.heading) * 12.0;
-        fireProjectileFromShip(bot, bot.heading, true, { x: muzzleX, z: muzzleZ });
+      if (isPlayerAlive && Math.hypot(shipPos.x - bot.x, shipPos.z - bot.z) < 250 && elapsedTime - bot.lastShot > 1.8) {
         bot.lastShot = elapsedTime;
+        fireProjectileFromShip(bot, bot.heading, true);
       }
-
-      if (closestTarget.dist > 60 && closestTarget.dist < 400 && elapsedTime - bot.lastTorpedo > 8.0 && bot.torpedos > 0) {
-        botLaunchGuidedTorpedo(bot, closestTarget, closestTarget.isPlayer);
-        bot.lastTorpedo = elapsedTime;
-      }
-
-      if (bot.health < 100 && Math.random() < 0.3) spawnContinuousSmoke(bot);
     });
 
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       const p = activeProjectiles[i];
       p.x += Math.sin(p.heading) * p.speed;
       p.z += Math.cos(p.heading) * p.speed;
-      p.mesh.position.set(p.x, 2.5, p.z);
+      p.mesh.position.set(p.x, 1.5, p.z);
       p.life--;
 
       let hit = false;
       botsData.forEach(b => {
         if (b.health > 0 && Math.hypot(b.x - p.x, b.z - p.z) < 6.0) {
-          b.health = Math.max(0, b.health - 10);
+          b.health = Math.max(0, b.health - 15);
           createExplosionEffect(p.x, p.z);
           hit = true;
         }
@@ -1540,94 +1212,29 @@ function animate() {
       const p = botProjectiles[i];
       p.x += Math.sin(p.heading) * p.speed;
       p.z += Math.cos(p.heading) * p.speed;
-      p.mesh.position.set(p.x, 2.5, p.z);
+      p.mesh.position.set(p.x, 1.5, p.z);
       p.life--;
 
-      let hit = false;
       if (isPlayerAlive && Math.hypot(shipPos.x - p.x, shipPos.z - p.z) < 6.0) {
         playerHealth = Math.max(0, playerHealth - 10);
         document.getElementById('playerHealth').textContent = `${playerHealth}%`;
         createExplosionEffect(p.x, p.z);
         if (playerHealth <= 0) { isPlayerAlive = false; shipGroup.visible = false; document.getElementById('gameOverModal').classList.add('show'); }
-        hit = true;
-      }
-
-      if (hit || p.life <= 0 || checkIslandCollision(p.x, p.z, 2.0)) {
         scene.remove(p.mesh);
         botProjectiles.splice(i, 1);
-      }
-    }
-
-    for (let i = activeTorpedos.length - 1; i >= 0; i--) {
-      const t = activeTorpedos[i];
-      let targetX = 0, targetZ = 0, targetAlive = false;
-
-      if (t.isPlayerTarget) {
-        targetX = shipPos.x; targetZ = shipPos.z; targetAlive = isPlayerAlive;
-      } else {
-        const targetBot = botsData.find(b => b.id === t.targetId);
-        if (targetBot && targetBot.health > 0) { targetX = targetBot.x; targetZ = targetBot.z; targetAlive = true; }
-      }
-
-      if (!targetAlive) { scene.remove(t.mesh); activeTorpedos.splice(i, 1); continue; }
-
-      const tAngle = Math.atan2(targetX - t.x, targetZ - t.z);
-      t.x += Math.sin(tAngle) * t.speed;
-      t.z += Math.cos(tAngle) * t.speed;
-      t.mesh.position.set(t.x, 0.15, t.z);
-      t.mesh.rotation.y = tAngle - Math.PI / 2;
-      t.life--;
-
-      let interceptedByMine = false;
-      for (let m = defenseMines.length - 1; m >= 0; m--) {
-        if (Math.hypot(defenseMines[m].x - t.x, defenseMines[m].z - t.z) < 4.5) {
-          createExplosionEffect(t.x, t.z);
-          scene.remove(defenseMines[m].mesh);
-          defenseMines.splice(m, 1);
-          interceptedByMine = true;
-          showToast("🛡️ Carga defensiva interceptou o torpedo!");
-          break;
-        }
-      }
-
-      if (interceptedByMine || checkIslandCollision(t.x, t.z, 2.0)) {
-        scene.remove(t.mesh);
-        activeTorpedos.splice(i, 1);
-        continue;
-      }
-
-      if (Math.hypot(t.x - targetX, t.z - targetZ) < 7) {
-        createExplosionEffect(targetX, targetZ);
-        if (t.isPlayerTarget && isPlayerAlive) {
-          playerHealth = Math.max(0, playerHealth - 25);
-          document.getElementById('playerHealth').textContent = `${playerHealth}%`;
-          if (playerHealth <= 0) { isPlayerAlive = false; shipGroup.visible = false; document.getElementById('gameOverModal').classList.add('show'); }
-        } else {
-          const hitBot = botsData.find(b => b.id === t.targetId);
-          if (hitBot) hitBot.health = Math.max(0, hitBot.health - 25);
-        }
-        scene.remove(t.mesh);
-        activeTorpedos.splice(i, 1);
+      } else if (p.life <= 0) {
+        scene.remove(p.mesh);
+        botProjectiles.splice(i, 1);
       }
     }
   }
 
   if (isFirstPersonCamera && isPlayerAlive) {
-    const fppX = shipPos.x + Math.sin(currentHeading) * 8.0;
-    const fppZ = shipPos.z + Math.cos(currentHeading) * 8.0;
-    camera.position.set(fppX, 4.2, fppZ);
-
-    const lookAheadX = shipPos.x + Math.sin(currentHeading) * 80;
-    const lookAheadZ = shipPos.z + Math.cos(currentHeading) * 80;
-    camera.lookAt(lookAheadX, 3.2, lookAheadZ);
+    camera.position.set(shipPos.x + Math.sin(currentHeading) * 8.0, 3.2, shipPos.z + Math.cos(currentHeading) * 8.0);
+    camera.lookAt(shipPos.x + Math.sin(currentHeading) * 80, 2.2, shipPos.z + Math.cos(currentHeading) * 80);
   } else {
-    let targetCamX = freeCamPos.x;
-    let targetCamZ = freeCamPos.z;
-
-    camera.position.x += (targetCamX - camera.position.x) * 0.08;
-    camera.position.y += (cameraZoomDistance - camera.position.y) * 0.08;
-    camera.position.z += (targetCamZ + (isFreeCamera ? 0 : (cameraZoomDistance * 0.8)) - camera.position.z) * 0.08;
-    camera.lookAt(targetCamX, 0.5, targetCamZ);
+    camera.position.set(freeCamPos.x, cameraZoomDistance, freeCamPos.z + (isFreeCamera ? 0 : cameraZoomDistance * 0.8));
+    camera.lookAt(freeCamPos.x, 0, freeCamPos.z);
   }
 
   renderer.render(scene, camera);
@@ -1638,14 +1245,9 @@ function showToast(msg) {
   const t = document.getElementById('toastMsg');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
-
-window.addEventListener('resize', () => {
-  camera.aspect = container.clientWidth / container.clientHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(container.clientWidth, container.clientHeight);
-});
 </script>
 </body>
 </html>
+
