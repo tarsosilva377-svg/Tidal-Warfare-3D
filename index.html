@@ -129,14 +129,14 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 
 <div class="lobby-screen" id="lobbyScreen">
   <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
-  <div class="lobby-subtitle">Multiplayer Local Dinâmicoe</div>
+  <div class="lobby-subtitle">Multiplayer Local Dinâmico</div>
   <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala (Host Local)</button>
-  <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Buscar Salas na Rede </button>
+  <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Buscar Salas na Rede</button>
   <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo</button>
   <div class="lobby-info" id="lobbyInfoStatus">
     📶 <b>Como Jogar:</b><br>
-    • Um cria a sala clicando em <b>Criar Sala</b>.<br>
-    • O outro clica em <b>Buscar Salas na Rede</b> e escolhe a sala criada!<br>
+    • Crie sua sala ou busque salas abertas na rede.<br>
+    • Conecte-se e aguarde o início da partida.<br>
     • <b>Tecla 0</b> = Soltar Carga Explosiva na Popa (Auto-destrói em 30s)
   </div>
 </div>
@@ -364,7 +364,6 @@ function scanAvailableRoomsAutomatically() {
 
   peer.on('open', () => {
     roomsContainer.innerHTML = '';
-    // Simula varredura dinâmica buscando sufixos comuns na rede local
     let found = false;
     for(let i=0; i<15; i++) {
       let testId = roomPrefix + "Comandante_" + i;
@@ -420,12 +419,21 @@ function handleNetworkData(data, sourceConn) {
       const rMesh = createWarshipByStyle(data.style || 'frigate', 0x00a8ff, data.name);
       rMesh.position.set(data.x, 0, data.z);
       scene.add(rMesh);
-      remotePlayersMap.set(data.peerId, { name: data.name, mesh: rMesh, x: data.x, z: data.z, heading: data.heading, health: data.health });
+      remotePlayersMap.set(data.peerId, { 
+        name: data.name, 
+        mesh: rMesh, 
+        x: data.x, z: data.z, 
+        targetX: data.x, targetZ: data.z, 
+        heading: data.heading, 
+        targetHeading: data.heading,     
+        health: data.health 
+      });
     } else if (remotePlayersMap.has(data.peerId)) {
       const rp = remotePlayersMap.get(data.peerId);
-      rp.x = data.x; rp.z = data.z; rp.heading = data.heading; rp.health = data.health;
-      rp.mesh.position.set(rp.x, 0, rp.z);
-      rp.mesh.rotation.y = rp.heading;
+      rp.targetX = data.x;
+      rp.targetZ = data.z;
+      rp.targetHeading = data.heading;
+      rp.health = data.health;
     }
   }
 }
@@ -561,7 +569,6 @@ function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
   return { x, z };
 }
 
-// CORREÇÃO DOS MODELOS 3D: Nivelamento exato na água para evitar inversão na Smart TV
 function createWarshipByStyle(style, deckColorHex, nameText) {
   if (style === 'battleship') return createBattleshipModel(deckColorHex, nameText);
   if (style === 'destroyer') return createDestroyerModel(deckColorHex, nameText);
@@ -572,7 +579,6 @@ function createWarshipByStyle(style, deckColorHex, nameText) {
 function createRealWarshipModel(deckColorHex, nameText) {
   const group = new THREE.Group();
   const hullGrey = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5, metalness: 0.3 });
-  const hullBottomRed = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.7 });
   const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8 });
   const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 });
   const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
@@ -817,7 +823,6 @@ const botMeshes = botsData.map((b, idx) => {
 
 let selectedTargetId = 0;
 
-// SELEÇÃO DE ALVOS INTELIGENTE (Bots vs Jogadores Humanos)
 function buildTargetOptionsUI() {
   const bar = document.getElementById('targetOptionsBar');
   bar.innerHTML = '';
@@ -825,7 +830,6 @@ function buildTargetOptionsUI() {
   const hasHumanPeers = connectedPeers.length > 0 || conn !== null;
 
   if (hasHumanPeers) {
-    // Alvos são jogadores humanos reais conectados na rede
     let humanTargets = [];
     if (isHost) {
       connectedPeers.forEach((p, idx) => {
@@ -847,7 +851,6 @@ function buildTargetOptionsUI() {
       bar.appendChild(card);
     });
   } else {
-    // Alvos são os bots offline
     const activeBots = botsData.filter(b => b.health > 0);
     activeBots.forEach(bot => {
       const card = document.createElement('div');
@@ -900,10 +903,6 @@ torpedoGeo.rotateZ(Math.PI / 2);
 const torpedoMat = new THREE.MeshStandardMaterial({ color: 0x444d56, metalness: 0.9, roughness: 0.2 });
 const torpedoHeadMat = new THREE.MeshBasicMaterial({ color: 0xff3300 });
 
-const arrowGeo = new THREE.ConeGeometry(0.25, 1.0, 6);
-arrowGeo.rotateZ(Math.PI / 2);
-const arrowMat = new THREE.MeshBasicMaterial({ color: 0x00ff66 });
-
 function fireProjectileFromShip(shipObj, heading, isBot = false, customWorldPos = null) {
   playSound('shot');
   let startX = customWorldPos ? customWorldPos.x : shipObj.x;
@@ -929,7 +928,6 @@ function createExplosionEffect(x, z) {
   activeExplosions.push({ group: expGroup, life: 40 });
 }
 
-// CARGA DEFENSIVA NA POPA COM AUTO-DESTRUIÇÃO EM 30 SEGUNDOS (30 * 60 frames)
 function dropDefenseMine() {
   if (!isPlayerAlive) return;
   playSound('torpedo');
@@ -1120,7 +1118,6 @@ function animate() {
         freeCamPos.x = shipPos.x; freeCamPos.z = shipPos.z;
       }
 
-      // DISPARO AUTOMÁTICO REATIVADO CONTRA ALVOS PRÓXIMOS
       if (elapsedTime - lastPlayerShotTime > 1.2 && botsData.length > 0) {
         let nearestBot = null;
         let minDist = 350;
@@ -1148,7 +1145,19 @@ function animate() {
       }
     }
 
-    // ATUALIZAÇÃO E AUTO-DESTRUIÇÃO DAS MINAS DEFENSIVAS EM 30 SEGUNDOS
+    // Suavização do movimento dos jogadores remotos (LERP para evitar teletransporte)
+    remotePlayersMap.forEach((rp, id) => {
+      rp.x += (rp.targetX - rp.x) * 0.2;
+      rp.z += (rp.targetZ - rp.z) * 0.2;
+      rp.mesh.position.set(rp.x, 0, rp.z);
+
+      let angleDiff = rp.targetHeading - rp.heading;
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+      rp.heading += angleDiff * 0.2;
+      rp.mesh.rotation.y = rp.heading;
+    });
+
     for (let i = defenseMines.length - 1; i >= 0; i--) {
       const mine = defenseMines[i];
       mine.life--;
@@ -1250,4 +1259,3 @@ function showToast(msg) {
 </script>
 </body>
 </html>
-
