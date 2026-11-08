@@ -39,8 +39,8 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .sidebar-close{background:none;border:none;color:#8899ac;font-size:18px;font-weight:bold;cursor:pointer}
 .sidebar-close:hover{color:#fff}
 .rooms-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
-.room-item{padding:10px 14px;background:rgba(0,168,255,0.15);border:1px solid #00d2d3;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
-.room-item:hover{background:rgba(0,168,255,0.35)}
+.room-item{padding:12px 14px;background:rgba(0,168,255,0.15);border:1.5px solid #00d2d3;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;transition:all 0.2s}
+.room-item:hover{background:rgba(0,168,255,0.35);transform:scale(1.02)}
 
 /* Modal de Perfil & Estilos de Navios Unificado */
 .profile-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.96);border:1.5px solid #00d2d3;padding:20px;border-radius:16px;z-index:120;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease;max-width:340px;width:90%}
@@ -117,11 +117,11 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 </head>
 <body oncontextmenu="return false;">
 
-<!-- Registro do Service Worker para cache offline PWA automático -->
+<!-- Registro do Service Worker para cache offline PWA -->
 <script>
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE_NAME = 'tidal-warfare-v3';
+    const CACHE_NAME = 'tidal-warfare-v5';
     self.addEventListener('install', e => { self.skipWaiting(); });
     self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
     self.addEventListener('fetch', e => {
@@ -144,14 +144,14 @@ if ('serviceWorker' in navigator) {
 <!-- Botão de Perfil & Estilos -->
 <button class="profile-btn" id="btnOpenProfile">👤 <span id="profileNameDisplay">Comandante</span></button>
 
-<!-- Janela Lateral de Salas -->
+<!-- Janela Lateral de Salas Automáticas -->
 <div class="rooms-sidebar" id="roomsSidebar">
   <div class="sidebar-header">
-    <div class="sidebar-title">🌐 SALAS DISPONÍVEIS NA REDE / HOTSPOT</div>
+    <div class="sidebar-title">🌐 SALAS DISPONÍVEIS NA REDE</div>
     <button class="sidebar-close" id="btnCloseSidebar">✕</button>
   </div>
   <div class="rooms-list" id="roomsContainer">
-    <div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Buscando salas locais / Wi-Fi...</div>
+    <div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Buscando salas abertas automaticamente...</div>
   </div>
 </div>
 
@@ -186,15 +186,15 @@ if ('serviceWorker' in navigator) {
 <!-- Tela de Lobby -->
 <div class="lobby-screen" id="lobbyScreen">
   <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
-  <div class="lobby-subtitle">Multiplayer Local (Hotspot / Wi-Fi) & Modo Offline</div>
+  <div class="lobby-subtitle">Multiplayer Local Automático & Modo Offline</div>
   <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala (Host Local)</button>
-  <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Salas Disponíveis (Wi-Fi)</button>
+  <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Buscar Salas na Rede (Wi-Fi)</button>
   <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo</button>
   <div class="lobby-info" id="lobbyInfoStatus">
-    📶 <b>Modo Offline / Hotspot Wi-Fi:</b><br>
-    • Funciona sem internet após a 1ª carga!<br>
-    • Conecte os celulares ao Hotspot de um dos aparelhos.<br>
-    • Teclas <b>2, 8, 4, 6</b> = Mover | <b>OK (5)</b> = Parar / Câmera
+    📶 <b>Como Jogar com seu Irmão:</b><br>
+    • Um cria a sala clicando em <b>Criar Sala</b>.<br>
+    • O outro clica em <b>Buscar Salas na Rede</b> e escolhe a sala criada!<br>
+    • <b>Tecla 0</b> = Soltar Explosivo Defensivo na Popa
   </div>
 </div>
 
@@ -214,7 +214,7 @@ if ('serviceWorker' in navigator) {
 
   <button class="torpedo-btn" id="btnTorpedo">🎯 Selecionar Alvo</button>
   <button class="fpp-btn" id="btnFPP">👁️ Câmera 1ª Pessoa</button>
-  <button class="defense-btn" id="btnDropDefense">💣 Soltar Explosivo</button>
+  <button class="defense-btn" id="btnDropDefense">💣 Soltar Explosivo (Tecla 0)</button>
 
   <div class="zoom-controls">
     <button class="zoom-btn" id="btnZoomIn" title="Aproximar Zoom">+</button>
@@ -224,7 +224,7 @@ if ('serviceWorker' in navigator) {
   <div class="target-modal" id="targetModal">
     <button class="modal-close" id="btnCloseModal">✕</button>
     <div class="modal-title">SELECIONAR ALVO DO TORPEDO</div>
-    <div class="modal-desc">Use as teclas coloridas da TV ou clique para escolher:</div>
+    <div class="modal-desc">Escolha o alvo para disparo:</div>
     <div class="target-options-bar" id="targetOptionsBar"></div>
     <div class="modal-actions">
       <button class="btn-action btn-confirm" id="btnConfirmLaunch">Confirmar Disparo (OK / 5)</button>
@@ -314,7 +314,6 @@ let playerName = localStorage.getItem('tidal_player_name') || "Comandante";
 let selectedShipStyle = localStorage.getItem('tidal_ship_style') || "frigate";
 document.getElementById('profileNameDisplay').textContent = playerName;
 
-// Destacar estilo salvo no modal
 document.querySelectorAll('.ship-style-card').forEach(card => {
   if (card.dataset.style === selectedShipStyle) {
     document.querySelectorAll('.ship-style-card').forEach(c => c.classList.remove('selected'));
@@ -346,6 +345,7 @@ document.getElementById('btnSaveProfile').onclick = () => {
   profileModal.classList.remove('show');
 };
 
+// MULTIPLAYER AUTOMÁTICO SEM CÓDIGOS DIGITADOS
 let peer = null;
 let conn = null;
 let connectedPeers = [];
@@ -358,6 +358,8 @@ const roomsContainer = document.getElementById('roomsContainer');
 const btnStartGameManual = document.getElementById('btnStartGameManual');
 const roomsSidebar = document.getElementById('roomsSidebar');
 
+const roomPrefix = "tidal_match_";
+
 document.getElementById('btnOpenRoomsSidebar').onclick = () => {
   initAudio();
   roomsSidebar.classList.add('show');
@@ -366,7 +368,6 @@ document.getElementById('btnOpenRoomsSidebar').onclick = () => {
 document.getElementById('btnCloseSidebar').onclick = () => roomsSidebar.classList.remove('show');
 
 let gameStarted = false; 
-const roomPrefix = "tidal_room_v4_";
 
 function updateHostButtonState() {
   const totalConnected = connectedPeers.length + 1;
@@ -377,24 +378,27 @@ function updateHostButtonState() {
 document.getElementById('btnCreateRoom').onclick = () => {
   initAudio();
   document.getElementById('hudPlayerName').textContent = `⚓ ${playerName}`;
-  const roomId = roomPrefix + btoa(playerName).replace(/=/g, '');
+  
+  // ID fixo amigável baseado no nome do jogador para a rede local
+  const roomNameFormatted = playerName.replace(/[^a-zA-Z0-9]/g, '_');
+  const fullRoomId = roomPrefix + roomNameFormatted;
   isHost = true;
   
   if (peer && !peer.destroyed) peer.destroy();
-  peer = new Peer(roomId, {
-    config: {
-      'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }]
-    }
+  peer = new Peer(fullRoomId, {
+    config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] }
   });
 
   peer.on('open', (id) => {
-    lobbyInfoStatus.textContent = `Sala Local de ${playerName} criada! Aguardando dispositivos na rede/hotspot...`;
+    lobbyInfoStatus.innerHTML = `<b style="color:#00d2d3;">SALA HOST CRIADA!</b><br>Outros jogadores podem clicar em "Buscar Salas na Rede" para entrar na sua sala "${playerName}".`;
     updateHostButtonState();
-    showToast("📡 Sala Host criada na rede local!");
+    showToast(`📡 Sala de ${playerName} ativa na rede!`);
   });
 
   peer.on('error', (err) => {
-    showToast("📶 Modo de Rede Local / Hotspot Ativo");
+    // Se o ID já estiver em uso, tenta criar com número aleatório
+    const altRoomId = roomPrefix + roomNameFormatted + "_" + Math.floor(Math.random()*100);
+    peer = new Peer(altRoomId);
   });
 
   peer.on('connection', (incomingConn) => {
@@ -403,9 +407,9 @@ document.getElementById('btnCreateRoom').onclick = () => {
       return;
     }
     connectedPeers.push(incomingConn);
-    lobbyInfoStatus.textContent = `Sala Local | Jogadores: ${connectedPeers.length + 1}/${maxPlayers}`;
+    lobbyInfoStatus.innerHTML = `<b style="color:#00d364;">JOGADOR CONECTADO!</b><br>Total no Lobby: ${connectedPeers.length + 1}/${maxPlayers}`;
     updateHostButtonState();
-    showToast(`👥 Jogador conectado via Wi-Fi/Hotspot!`);
+    showToast(`👥 Jogador entrou na sala!`);
 
     incomingConn.on('data', (data) => { handleNetworkData(data); });
     incomingConn.on('close', () => { 
@@ -415,49 +419,56 @@ document.getElementById('btnCreateRoom').onclick = () => {
   });
 };
 
+// VARREDURA AUTOMÁTICA DE SALAS NA REDE LOCAL
 function scanAvailableRoomsAutomatically() {
   roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo rede Wi-Fi / Hotspot por salas ativas...</div>';
+  
   if (!peer || peer.destroyed) {
-    peer = new Peer({
-      config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
-    });
+    peer = new Peer({ config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] } });
   }
 
   peer.on('open', () => {
-    const commonNames = ["Comandante", "TV_Player", "Alpha", "Beta", "Partida1", "Host", "Convidado", playerName];
+    // Lista de nomes comuns de teste e tentativa na rede local
+    const commonNames = ["Comandante", "TV_Player", "Alpha", "Beta", "Partida1", "Host", "Convidado", "Irmao", "Player2"];
     roomsContainer.innerHTML = '';
 
-    commonNames.forEach(name => {
-      if (name === playerName && isHost) return;
-      const targetRoomId = roomPrefix + btoa(name).replace(/=/g, '');
+    let foundCount = 0;
 
-      const testConn = peer.connect(targetRoomId);
+    commonNames.forEach(name => {
+      if (name === playerName) return;
+      const targetRoomId = roomPrefix + name;
+
+      const testConn = peer.connect(targetRoomId, { serialization: 'json' });
+      
       testConn.on('open', () => {
+        foundCount++;
         const item = document.createElement('div');
         item.className = 'room-item';
-        item.innerHTML = `<span>⚓ Sala de ${name}</span> <span style="color:#00d2d3;">Entrar ➔</span>`;
+        item.innerHTML = `<span>⚓ Sala de ${name}</span> <span style="color:#00d2d3; font-weight:900;">ENTRAR ➔</span>`;
         item.onclick = () => {
           conn = testConn;
           isHost = false;
           roomsSidebar.classList.remove('show');
           setupConnectionEvents();
+          showToast(`🌐 Conectando à sala de ${name}...`);
         };
         roomsContainer.appendChild(item);
       });
     });
 
     setTimeout(() => {
-      if (!roomsContainer.hasChildNodes()) {
-        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff3333;">Nenhuma sala encontrada na rede local. Clique em "Criar Sala"!</div>';
+      if (roomsContainer.childElementCount === 0) {
+        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Nenhuma sala encontrada automaticamente.<br><br>Certifique-se de que o outro aparelho criou a sala e estão no mesmo Wi-Fi/Hotspot!</div>';
       }
-    }, 1800);
+    }, 2000);
   });
 }
 
 function setupConnectionEvents() {
-  lobbyScreen.classList.add('hidden');
-  showToast(`🌐 Conectado à sala local com sucesso!`);
-  startGameSession();
+  conn.on('open', () => {
+    roomsSidebar.classList.remove('show');
+    showToast(`🌐 Conectado com sucesso! Aguarde o Host iniciar.`);
+  });
   conn.on('data', (data) => { handleNetworkData(data); });
 }
 
@@ -515,7 +526,7 @@ function startGameSession() {
     });
     botsData.length = 0;
     botMeshes.length = 0;
-    showToast("🎮 Partida Multiplayer Local Iniciada!");
+    showToast("🎮 Partida Multiplayer Iniciada!");
   } else {
     showToast("🎮 Partida Solo contra IA Iniciada!");
   }
@@ -616,12 +627,11 @@ function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
   return { x, z };
 }
 
-// Fábrica de Modelos de Navios (4 estilos disponíveis)
 function createWarshipByStyle(style, deckColorHex, nameText) {
   if (style === 'battleship') return createBattleshipModel(deckColorHex, nameText);
   if (style === 'destroyer') return createDestroyerModel(deckColorHex, nameText);
   if (style === 'cruiser') return createCruiserModel(deckColorHex, nameText);
-  return createRealWarshipModel(deckColorHex, nameText); // Padrão: Fragata
+  return createRealWarshipModel(deckColorHex, nameText);
 }
 
 function createRealWarshipModel(deckColorHex, nameText) {
@@ -901,13 +911,8 @@ function buildTargetOptionsUI() {
     const label = document.createElement('span');
     label.textContent = `${bot.name} (${bot.health}%)`;
 
-    const hint = document.createElement('div');
-    hint.className = 'color-badge-hint';
-    hint.textContent = `[Botão ${bot.colorName}]`;
-
     card.appendChild(colorCircle);
     card.appendChild(label);
-    card.appendChild(hint);
     bar.appendChild(card);
   });
 }
@@ -961,7 +966,6 @@ const arrowGeo = new THREE.ConeGeometry(0.25, 1.0, 6);
 arrowGeo.rotateZ(Math.PI / 2);
 const arrowMat = new THREE.MeshBasicMaterial({ color: 0x00ff66 });
 
-// Disparo de projétil partindo da ponta do cano
 function fireProjectileFromShip(shipObj, heading, isBot = false, customWorldPos = null) {
   playSound('shot');
   let startX = shipObj.x;
@@ -1011,7 +1015,6 @@ function spawnContinuousSmoke(botObj) {
 function dropDefenseMine() {
   if (!isPlayerAlive) return;
   playSound('torpedo');
-  // Solta na popa (traseira) do navio
   const dropX = shipPos.x - Math.sin(currentHeading) * 15.0;
   const dropZ = shipPos.z - Math.cos(currentHeading) * 15.0;
 
@@ -1021,8 +1024,8 @@ function dropDefenseMine() {
   mineMesh.position.set(dropX, 0.4, dropZ);
   scene.add(mineMesh);
 
-  defenseMines.push({ mesh: mineMesh, x: dropX, z: dropZ, life: 30.0 * 60 }); // 30 segundos a 60fps
-  showToast("💣 Carga explosiva defensiva lançada na popa!");
+  defenseMines.push({ mesh: mineMesh, x: dropX, z: dropZ, life: 30.0 * 60 });
+  showToast("💣 Explosivo lançado na popa!");
 }
 
 document.getElementById('btnDropDefense').onclick = dropDefenseMine;
@@ -1188,12 +1191,14 @@ window.addEventListener('keydown', (e) => {
   } else if (key === '5' || code === 53 || code === 101 || key === 'Enter' || code === 13) {
     triggerActionOK();
     document.getElementById('btnCenter').classList.add('pressed');
-  } else if (key === '0' || code === 48 || key.toLowerCase() === 't') {
+  } 
+  else if (key === '0' || code === 48 || code === 96) {
+    dropDefenseMine();
+  } 
+  else if (key.toLowerCase() === 't') {
     if (isPlayerAlive && botsData.length > 0) {
       buildTargetOptionsUI();
       targetModal.classList.add('show');
-    } else {
-      showToast("⚠️ Nenhum alvo IA na sala multiplayer!");
     }
   }
 });
@@ -1379,7 +1384,6 @@ function animate() {
         freeCamVel.z = 0;
       }
 
-      // SISTEMA DE DISPARO AUTOMÁTICO FRONTAL DO JOGADOR
       if (elapsedTime - lastPlayerShotTime > 1.2) {
         let nearestBot = null;
         let minDist = 350;
@@ -1399,7 +1403,6 @@ function animate() {
           while (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
           while (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
 
-          // Se o bot estiver dentro do cone frontal (aprox 25 graus)
           if (Math.abs(diffAngle) < 0.45) {
             lastPlayerShotTime = elapsedTime;
             let muzzleX = shipPos.x + Math.sin(currentHeading) * 12.0;
@@ -1432,12 +1435,10 @@ function animate() {
       }
     }
 
-    // ATUALIZAR MINAS DEFENSIVAS DE POPA
     for (let i = defenseMines.length - 1; i >= 0; i--) {
       const mine = defenseMines[i];
       mine.life--;
       
-      // Verificar colisão com bots ou torpedos
       botsData.forEach(b => {
         if (b.health > 0 && Math.hypot(b.x - mine.x, b.z - mine.z) < 6.0) {
           createExplosionEffect(mine.x, mine.z);
@@ -1513,7 +1514,6 @@ function animate() {
       if (bot.health < 100 && Math.random() < 0.3) spawnContinuousSmoke(bot);
     });
 
-    // ATUALIZAR PROJÉTEIS DE BALAS
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       const p = activeProjectiles[i];
       p.x += Math.sin(p.heading) * p.speed;
@@ -1558,7 +1558,6 @@ function animate() {
       }
     }
 
-    // ATUALIZAR TORPEDOS (COM DEFESA DE MINAS NA POPA)
     for (let i = activeTorpedos.length - 1; i >= 0; i--) {
       const t = activeTorpedos[i];
       let targetX = 0, targetZ = 0, targetAlive = false;
@@ -1579,7 +1578,6 @@ function animate() {
       t.mesh.rotation.y = tAngle - Math.PI / 2;
       t.life--;
 
-      // Verificar se o torpedo colidiu com alguma carga explosiva defensiva solta na popa
       let interceptedByMine = false;
       for (let m = defenseMines.length - 1; m >= 0; m--) {
         if (Math.hypot(defenseMines[m].x - t.x, defenseMines[m].z - t.z) < 4.5) {
@@ -1587,7 +1585,7 @@ function animate() {
           scene.remove(defenseMines[m].mesh);
           defenseMines.splice(m, 1);
           interceptedByMine = true;
-          showToast("🛡️ Carga defensiva interceptou e destruiu o torpedo!");
+          showToast("🛡️ Carga defensiva interceptou o torpedo!");
           break;
         }
       }
@@ -1614,7 +1612,6 @@ function animate() {
     }
   }
 
-  // AJUSTE DA CÂMERA EM PRIMEIRA PESSOA (MAIS À FRENTE PARA CAMPO DE VISÃO AMPLIADO)
   if (isFirstPersonCamera && isPlayerAlive) {
     const fppX = shipPos.x + Math.sin(currentHeading) * 8.0;
     const fppZ = shipPos.z + Math.cos(currentHeading) * 8.0;
