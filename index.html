@@ -341,6 +341,7 @@ document.getElementById('btnCreateRoom').onclick = () => {
   });
 };
 
+// VARREDURA AUTOMÁTICA REAL DE SALAS USANDO A API PÚBLICA DO PEERJS
 function scanAvailableRoomsAutomatically() {
   roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo rede por salas ativas...</div>';
   
@@ -349,21 +350,31 @@ function scanAvailableRoomsAutomatically() {
   }
 
   peer.on('open', () => {
-    roomsContainer.innerHTML = '';
-    let found = false;
-    for(let i=0; i<15; i++) {
-      let testId = roomPrefix + "Comandante_" + i;
-      let testConn = peer.connect(testId, { serialization: 'json' });
-      testConn.on('open', () => {
-        found = true;
-        addRoomToList(testConn, "Sala Comandante " + i);
+    // Consulta o servidor público do PeerJS para listar todos os peers conectados no mesmo broker
+    fetch('https://0.peerjs.com/peers')
+      .then(res => res.json())
+      .then(ids => {
+        roomsContainer.innerHTML = '';
+        let found = false;
+        
+        ids.forEach(id => {
+          if (id.startsWith(roomPrefix)) {
+            found = true;
+            let parts = id.replace(roomPrefix, '').split('_');
+            let roomTitle = "Sala de " + parts[0];
+            
+            let testConn = peer.connect(id, { serialization: 'json' });
+            addRoomToList(testConn, roomTitle);
+          }
+        });
+
+        if (!found) {
+          roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Nenhuma sala encontrada online.<br><br>Certifique-se de que o Host criou a sala!</div>';
+        }
+      })
+      .catch(err => {
+        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Erro ao varrer salas. Verifique sua conexão.</div>';
       });
-    }
-    setTimeout(() => {
-      if (!found && roomsContainer.childElementCount === 0) {
-        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Nenhuma sala encontrada automaticamente.<br><br>Certifique-se de que o Host criou a sala na mesma rede!</div>';
-      }
-    }, 2500);
   });
 }
 
@@ -463,7 +474,7 @@ const container = document.getElementById('gameContainer');
 const canvas = document.getElementById('canvas3d');
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb); // Início diurno tradicional
+scene.background = new THREE.Color(0x87ceeb);
 scene.fog = new THREE.FogExp2(0x87ceeb, 0.0012);
 
 const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 3000);
@@ -498,7 +509,6 @@ scene.add(dirLight);
 const mapSize = 1800;
 const oceanGeometry = new THREE.PlaneGeometry(mapSize, mapSize, 80, 80);
 oceanGeometry.rotateX(-Math.PI / 2);
-// Água com menor brilho/reflexo excessivo para evitar incandescência
 const oceanMaterial = new THREE.MeshStandardMaterial({ color: 0x0a3d62, roughness: 0.65, metalness: 0.2, transparent: true, opacity: 0.95 });
 const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
 ocean.receiveShadow = true;
@@ -563,7 +573,6 @@ function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
   return { x, z };
 }
 
-// --- HYPER-REALISTIC FRIGATE MODEL (NWS VANGUARD) ---
 function createDetailedFrigateModel(deckColorHex, nameText) {
   const group = new THREE.Group();
 
@@ -773,43 +782,28 @@ function buildTargetOptionsUI() {
   const bar = document.getElementById('targetOptionsBar');
   bar.innerHTML = '';
   
-  const hasHumanPeers = connectedPeers.length > 0 || conn !== null;
-
-  if (hasHumanPeers) {
-    let humanTargets = [];
-    if (isHost) {
-      connectedPeers.forEach((p, idx) => {
-        humanTargets.push({ id: 'human_' + idx, name: p.peerName || "Jogador " + (idx+1) });
-      });
-    } else {
-      humanTargets.push({ id: 'host_player', name: "Host da Sala" });
-    }
-
-    humanTargets.forEach((target, index) => {
-      const card = document.createElement('div');
-      card.className = `target-option-card ${index === selectedTargetId ? 'selected' : ''}`;
-      card.onclick = () => {
-        selectedTargetId = index;
-        document.querySelectorAll('.target-option-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-      };
-      card.innerHTML = `<span style="font-size:11px; font-weight:bold; color:#00d2d3;">⚓ ${target.name}</span>`;
-      bar.appendChild(card);
-    });
-  } else {
-    const activeBots = botsData.filter(b => b.health > 0);
-    activeBots.forEach(bot => {
-      const card = document.createElement('div');
-      card.className = `target-option-card ${bot.id === selectedTargetId ? 'selected' : ''}`;
-      card.onclick = () => {
-        selectedTargetId = bot.id;
-        document.querySelectorAll('.target-option-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-      };
-      card.innerHTML = `<div class="ship-color-icon" style="background:${bot.colorCss}"></div><span>${bot.name} (${bot.health}%)</span>`;
-      bar.appendChild(card);
-    });
+  const activeBots = botsData.filter(b => b.health > 0);
+  if (activeBots.length === 0) {
+    bar.innerHTML = '<div style="font-size:11px; color:#ff6666;">Nenhum alvo ativo!</div>';
+    return;
   }
+
+  // Garante que se o alvo selecionado morreu, muda para o primeiro disponível
+  if (!activeBots.some(b => b.id === selectedTargetId)) {
+    selectedTargetId = activeBots[0].id;
+  }
+
+  activeBots.forEach(bot => {
+    const card = document.createElement('div');
+    card.className = `target-option-card ${bot.id === selectedTargetId ? 'selected' : ''}`;
+    card.onclick = () => {
+      selectedTargetId = bot.id;
+      document.querySelectorAll('.target-option-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    };
+    card.innerHTML = `<div class="ship-color-icon" style="background:${bot.colorCss}"></div><span>${bot.name} (${bot.health}%)</span>`;
+    bar.appendChild(card);
+  });
 }
 
 let torpedoCount = 10;
@@ -894,8 +888,15 @@ function launchGuidedTorpedo() {
   torpedoGroup.position.set(launchX, 0.15, launchZ);
   scene.add(torpedoGroup);
 
-  activeTorpedos.push({ mesh: torpedoGroup, x: launchX, z: launchZ, speed: 0.8, targetId: selectedTargetId, life: 300 });
-  showToast(`🚀 Torpedo lançado!`);
+  activeTorpedos.push({ 
+    mesh: torpedoGroup, 
+    x: launchX, 
+    z: launchZ, 
+    speed: 0.7, 
+    targetId: selectedTargetId, 
+    life: 350 
+  });
+  showToast(`🚀 Torpedo guiado lançado!`);
 }
 
 let currentSpeed = 0;
@@ -991,18 +992,16 @@ function showVictoryScreen(isPlayerWinner, winnerName) {
 document.getElementById('btnWatchMode').onclick = () => { document.getElementById('gameOverModal').classList.remove('show'); isFreeCamera = true; };
 document.getElementById('btnExitGame').onclick = () => location.reload();
 
-let gameTime = 0; // Ciclo total de 600 segundos (10 minutos) para dia/noite completos
+let gameTime = 0;
 function updateDayNightCycle(delta) {
   gameTime = (gameTime + delta) % 600;
-  let progress = gameTime / 600; // 0.0 a 1.0 ao longo de 10 minutos
-  let angle = progress * Math.PI * 2;
+  let progress = gameTime / 600;
 
   let timeStr = "";
   let skyColor = new THREE.Color();
   let ambientInt = 0.7;
   let sunInt = 1.0;
 
-  // Transição suave simulando dia, pôr do sol, noite e amanhecer
   if (progress < 0.45) {
     timeStr = "☀️ Dia";
     skyColor.setHex(0x87ceeb);
@@ -1050,7 +1049,6 @@ function animate() {
 
   updateDayNightCycle(delta);
 
-  // Animate ocean waves
   const pos = oceanGeometry.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     const vx = pos.getX(i);
@@ -1086,7 +1084,6 @@ function animate() {
         shipGroup.rotation.z = Math.sin(elapsedTime * 0.9) * 0.018;
       }
 
-      // Câmera livre com suavização (Lerp) para navegação fluida
       if (isFreeCamera) {
         let camMoveSpeed = 6.0;
         if (controlsState.up) freeCamTarget.z -= camMoveSpeed;
@@ -1179,6 +1176,55 @@ function animate() {
       }
     });
 
+    // ATUALIZAÇÃO DA LÓGICA DO TORPEDO INTELIGENTE COM RASTREIO E REDIRECIONAMENTO AUTOMÁTICO
+    for (let i = activeTorpedos.length - 1; i >= 0; i--) {
+      let t = activeTorpedos[i];
+      t.life--;
+
+      let target = botsData.find(b => b.id === t.targetId && b.health > 0);
+      if (!target) {
+        // Se o alvo morreu, busca automaticamente o bot vivo mais próximo
+        let aliveBots = botsData.filter(b => b.health > 0);
+        if (aliveBots.length > 0) {
+          let closest = aliveBots.reduce((prev, curr) => {
+            let distPrev = Math.hypot(prev.x - t.x, prev.z - t.z);
+            let distCurr = Math.hypot(curr.x - t.x, curr.z - t.z);
+            return distCurr < distPrev ? curr : prev;
+          });
+          t.targetId = closest.id;
+          target = closest;
+        }
+      }
+
+      if (target) {
+        let dx = target.x - t.x;
+        let dz = target.z - t.z;
+        let targetAngle = Math.atan2(dx, dz);
+        
+        // Guia suavemente o torpedo em direção ao alvo
+        let angleDiff = targetAngle - t.mesh.rotation.y;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        t.mesh.rotation.y += angleDiff * 0.1;
+      }
+
+      t.x += Math.sin(t.mesh.rotation.y) * t.speed;
+      t.z += Math.cos(t.mesh.rotation.y) * t.speed;
+      t.mesh.position.set(t.x, 0.15, t.z);
+
+      let hit = false;
+      if (target && Math.hypot(target.x - t.x, target.z - t.z) < 5.0) {
+        target.health = Math.max(0, target.health - 50);
+        createExplosionEffect(t.x, t.z);
+        hit = true;
+      }
+
+      if (hit || t.life <= 0 || checkIslandCollision(t.x, t.z, 2.0)) {
+        scene.remove(t.mesh);
+        activeTorpedos.splice(i, 1);
+      }
+    }
+
     for (let i = activeProjectiles.length - 1; i >= 0; i--) {
       const p = activeProjectiles[i];
       p.x += Math.sin(p.heading) * p.speed;
@@ -1224,7 +1270,6 @@ function animate() {
     }
   }
 
-  // Visão em primeira pessoa (FPP) elevada e limpa acima do canhão frontal
   if (isFirstPersonCamera && isPlayerAlive) {
     camera.position.set(shipPos.x + Math.sin(currentHeading) * 4.0, 7.8, shipPos.z + Math.cos(currentHeading) * 4.0);
     camera.lookAt(shipPos.x + Math.sin(currentHeading) * 90, 6.5, shipPos.z + Math.cos(currentHeading) * 90);
