@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Tidal Warfare 3D - Smart TV & Mobile Edition</title>
+<title>Tidal Warfare 3D - NWS Vanguard Edition</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 <style>
@@ -34,9 +34,6 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 
 .profile-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.96);border:1.5px solid #00d2d3;padding:20px;border-radius:16px;z-index:120;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease;max-width:340px;width:90%}
 .profile-modal.show{opacity:1;transform:translate(-50%, -50%) scale(1);pointer-events:auto}
-.ship-styles-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:8px;margin:12px 0;max-height:160px;overflow-y:auto}
-.ship-style-card{background:rgba(20,35,55,0.7);border:1.5px solid rgba(0,168,255,0.3);border-radius:10px;padding:8px;cursor:pointer;font-size:11px;font-weight:700;color:#8899ac;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all 0.15s}
-.ship-style-card.selected{border-color:#00d2d3;background:rgba(0,168,255,0.25);color:#fff;transform:scale(1.02)}
 
 .hud-top{position:absolute;top:10px;left:0;width:100%;padding:0 16px;display:flex;justify-content:space-between;align-items:center;z-index:20;pointer-events:none}
 .res-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;background:rgba(10,20,35,0.75);backdrop-filter:blur(6px);padding:6px 12px;border-radius:20px;border:1px solid rgba(0,168,255,0.3);pointer-events:auto;box-shadow:0 4px 15px rgba(0,0,0,0.4)}
@@ -115,17 +112,8 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 
 <div class="profile-modal" id="profileModal">
   <div class="modal-title">PERFIL DO COMANDANTE</div>
-  <div class="modal-desc" style="margin-bottom:8px;">Seu nome:</div>
+  <div class="modal-desc" style="margin-bottom:8px;">Seu nome personalizado:</div>
   <input type="text" id="profileNameInput" class="lobby-input" placeholder="Seu nome..." maxlength="15">
-  
-  <div class="modal-desc" style="margin:10px 0 6px 0;">Escolha o Estilo do Navio:</div>
-  <div class="ship-styles-grid" id="shipStylesGrid">
-    <div class="ship-style-card selected" data-style="frigate"><span>⛵ Padrão (Fragata)</span></div>
-    <div class="ship-style-card" data-style="destroyer"><span>🚀 Destróier (Ágil)</span></div>
-    <div class="ship-style-card" data-style="cruiser"><span>⚓ Cruzador (Equilibrado)</span></div>
-    <div class="ship-style-card" data-style="battleship"><span>🛡️ Couraçado (Pesado)</span></div>
-  </div>
-
   <div class="modal-actions" style="margin-top:12px;">
     <button class="btn-action" id="btnCancelProfile">Cancelar</button>
     <button class="btn-action btn-confirm" id="btnSaveProfile">Salvar</button>
@@ -134,7 +122,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 
 <div class="lobby-screen" id="lobbyScreen">
   <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
-  <div class="lobby-subtitle">Multiplayer Local Dinâmico</div>
+  <div class="lobby-subtitle">Fragata de Patrulha Avançada - NWS VANGUARD</div>
   <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala (Host Local)</button>
   <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Buscar Salas na Rede</button>
   <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo</button>
@@ -142,7 +130,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
     📶 <b>Como Jogar:</b><br>
     • Crie sua sala ou busque salas abertas na rede.<br>
     • Conecte-se e aguarde o início da partida.<br>
-    • <b>Tecla 0</b> = Soltar Carga Explosiva na Popa (Auto-destrói em 30s)
+    • <b>Tecla 0</b> = Soltar Carga Explosiva na Popa
   </div>
 </div>
 
@@ -151,16 +139,16 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
     <span>🛡️ <span style="color:#00d2d3" id="playerHealthText">100%</span></span>
     <span style="margin-left:8px;" id="timeBadge">☀️ 00:00</span>
   </div>
-  <div class="center-title" id="hudPlayerName">⚓ TIDAL WARFARE 3D</div>
+  <div class="center-title" id="hudPlayerName">⚓ NWS VANGUARD</div>
   <div class="res-item">
     <span>🚀 <span style="color:#00d2d3" id="torpedoCount">10/10</span></span>
   </div>
 </div>
 
 <div class="hud-bottom-health" id="hudBottomHealth">
-  <div class="health-text" id="healthBarLabel">BLINDAGEM DO NAVIO: 100%</div>
+  <div class="health-text" id="healthBarLabel">BLINDAGEM DA FRAGATA: 100%</div>
   <div class="health-bar-container">
-    <div class="health-bar-fill" id="healthBarFill" style="width: 100%; background-color: #e74c3c;"></div>
+    <div class="health-bar-fill" id="healthBarFill" style="width: 100%; background-color: #38bdf8;"></div>
   </div>
 </div>
 
@@ -266,20 +254,7 @@ function playSound(type) {
 }
 
 let playerName = localStorage.getItem('tidal_player_name') || "Comandante_" + Math.floor(Math.random()*900+100);
-let selectedShipStyle = localStorage.getItem('tidal_ship_style') || "frigate";
 document.getElementById('profileNameDisplay').textContent = playerName;
-
-document.querySelectorAll('.ship-style-card').forEach(card => {
-  if (card.dataset.style === selectedShipStyle) {
-    document.querySelectorAll('.ship-style-card').forEach(c => c.classList.remove('selected'));
-    card.classList.add('selected');
-  }
-  card.onclick = () => {
-    document.querySelectorAll('.ship-style-card').forEach(c => c.classList.remove('selected'));
-    card.classList.add('selected');
-    selectedShipStyle = card.dataset.style;
-  };
-});
 
 const profileModal = document.getElementById('profileModal');
 document.getElementById('btnOpenProfile').onclick = () => {
@@ -295,7 +270,6 @@ document.getElementById('btnSaveProfile').onclick = () => {
     localStorage.setItem('tidal_player_name', playerName);
     document.getElementById('profileNameDisplay').textContent = playerName;
   }
-  localStorage.setItem('tidal_ship_style', selectedShipStyle);
   showToast("💾 Perfil salvo!");
   profileModal.classList.remove('show');
 };
@@ -312,7 +286,7 @@ const roomsContainer = document.getElementById('roomsContainer');
 const btnStartGameManual = document.getElementById('btnStartGameManual');
 const roomsSidebar = document.getElementById('roomsSidebar');
 
-const roomPrefix = "tidal_net_v5_";
+const roomPrefix = "tidal_vanguard_room_";
 
 document.getElementById('btnOpenRoomsSidebar').onclick = () => {
   initAudio();
@@ -368,7 +342,7 @@ document.getElementById('btnCreateRoom').onclick = () => {
 };
 
 function scanAvailableRoomsAutomatically() {
-  roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo rede Wi-Fi / Hotspot por salas ativas...</div>';
+  roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo rede por salas ativas...</div>';
   
   if (!peer || peer.destroyed) {
     peer = new Peer({ config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] } });
@@ -387,7 +361,7 @@ function scanAvailableRoomsAutomatically() {
     }
     setTimeout(() => {
       if (!found && roomsContainer.childElementCount === 0) {
-        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Nenhuma sala encontrada automaticamente.<br><br>Certifique-se de que o Host criou a sala no mesmo Wi-Fi!</div>';
+        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Nenhuma sala encontrada automaticamente.<br><br>Certifique-se de que o Host criou a sala na mesma rede!</div>';
       }
     }, 2500);
   });
@@ -411,7 +385,7 @@ function setupConnectionEvents() {
   conn.on('open', () => {
     roomsSidebar.classList.remove('show');
     showToast(`🌐 Conectado! Aguarde o Host iniciar.`);
-    conn.send({ type: 'JOIN', name: playerName, style: selectedShipStyle });
+    conn.send({ type: 'JOIN', name: playerName });
   });
   conn.on('data', (data) => { handleNetworkData(data, conn); });
 }
@@ -424,11 +398,10 @@ function handleNetworkData(data, sourceConn) {
     startGameSession();
   } else if (data.type === 'JOIN' && isHost) {
     sourceConn.peerName = data.name;
-    sourceConn.peerStyle = data.style;
     showToast(`👤 ${data.name} entrou na sala!`);
   } else if (data.type === 'PLAYER_SYNC') {
     if (!remotePlayersMap.has(data.peerId) && gameStarted) {
-      const rMesh = createWarshipByStyle(data.style || 'frigate', 0xe74c3c, data.name);
+      const rMesh = createDetailedFrigateModel(0xe74c3c, data.name);
       rMesh.position.set(data.x, 0, data.z);
       scene.add(rMesh);
       remotePlayersMap.set(data.peerId, { 
@@ -490,16 +463,16 @@ const container = document.getElementById('gameContainer');
 const canvas = document.getElementById('canvas3d');
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
+scene.background = new THREE.Color(0x87ceeb); // Início diurno tradicional
 scene.fog = new THREE.FogExp2(0x87ceeb, 0.0012);
 
 const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 3000);
-let cameraZoomDistance = 80;
+let cameraZoomDistance = 90;
 let isFreeCamera = false;
 let isFirstPersonCamera = false;
 
 let freeCamPos = { x: 0, z: 0 };
-let freeCamVel = { x: 0, z: 0 };
+let freeCamTarget = { x: 0, z: 0 };
 
 camera.position.set(0, cameraZoomDistance, cameraZoomDistance);
 camera.lookAt(0, 0, 0);
@@ -507,19 +480,28 @@ camera.lookAt(0, 0, 0);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
 renderer.setSize(container.clientWidth, container.clientHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
 scene.add(ambientLight);
 
-const sunLight = new THREE.DirectionalLight(0xffffff, 0.6);
-sunLight.position.set(100, 150, 100);
-scene.add(sunLight);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x0f172a, 0.4);
+hemiLight.position.set(0, 50, 0);
+scene.add(hemiLight);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+dirLight.position.set(60, 90, 50);
+dirLight.castShadow = true;
+scene.add(dirLight);
 
 const mapSize = 1800;
-const oceanGeometry = new THREE.PlaneGeometry(mapSize, mapSize, 128, 128);
-const oceanMaterial = new THREE.MeshStandardMaterial({ color: 0x004477, roughness: 0.9, metalness: 0.1, flatShading: true });
+const oceanGeometry = new THREE.PlaneGeometry(mapSize, mapSize, 80, 80);
+oceanGeometry.rotateX(-Math.PI / 2);
+// Água com menor brilho/reflexo excessivo para evitar incandescência
+const oceanMaterial = new THREE.MeshStandardMaterial({ color: 0x0a3d62, roughness: 0.65, metalness: 0.2, transparent: true, opacity: 0.95 });
 const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
-ocean.rotation.x = -Math.PI / 2;
+ocean.receiveShadow = true;
 scene.add(ocean);
 
 const islandColliders = [];
@@ -581,186 +563,132 @@ function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
   return { x, z };
 }
 
-function createWarshipByStyle(style, deckColorHex, nameText) {
-  let group;
-  if (style === 'battleship') group = createBattleshipModel(deckColorHex, nameText);
-  else if (style === 'destroyer') group = createDestroyerModel(deckColorHex, nameText);
-  else if (style === 'cruiser') group = createCruiserModel(deckColorHex, nameText);
-  else group = createRealWarshipModel(deckColorHex, nameText);
-
-  group.rotation.x = 0;
-  return group;
-}
-
-function createRealWarshipModel(deckColorHex, nameText) {
+// --- HYPER-REALISTIC FRIGATE MODEL (NWS VANGUARD) ---
+function createDetailedFrigateModel(deckColorHex, nameText) {
   const group = new THREE.Group();
-  const hullGrey = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5, metalness: 0.3 });
-  const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8 });
-  const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 });
-  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
+
+  const hullMat = new THREE.MeshStandardMaterial({ color: 0x242d3d, roughness: 0.45, metalness: 0.65 });
+  const hullBelowMat = new THREE.MeshStandardMaterial({ color: 0x7c1d1d, roughness: 0.6, metalness: 0.2 });
+  const superStructMat = new THREE.MeshStandardMaterial({ color: 0xd9e2ec, roughness: 0.35, metalness: 0.5 });
+  const deckMat = new THREE.MeshStandardMaterial({ color: deckColorHex || 0x1b2433, roughness: 0.75, metalness: 0.3 });
+  const metalDarkMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.2, metalness: 0.85 });
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.05, metalness: 0.9, transparent: true, opacity: 0.65 });
 
   const hullShape = new THREE.Shape();
-  hullShape.moveTo(0, -14);
-  hullShape.lineTo(2.8, -10);
-  hullShape.lineTo(2.5, 10);
-  hullShape.lineTo(1.2, 16); 
-  hullShape.lineTo(-1.2, 16);
-  hullShape.lineTo(-2.5, 10);
-  hullShape.lineTo(-2.8, -10);
+  hullShape.moveTo(0, 19);
+  hullShape.lineTo(3.8, 12);
+  hullShape.lineTo(4.4, -14);
+  hullShape.lineTo(3.2, -20);
+  hullShape.lineTo(-3.2, -20);
+  hullShape.lineTo(-4.4, -14);
+  hullShape.lineTo(-3.8, 12);
   hullShape.closePath();
 
-  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 3.2, bevelEnabled: true });
-  const hull = new THREE.Mesh(hullGeo, hullGrey);
-  // CORREÇÃO: Usar -Math.PI / 2 para que a extrusão fique posicionada para baixo (submersa)
-  hull.rotation.x = -Math.PI / 2;
-  hull.position.y = 0;
-  group.add(hull);
+  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 5.5, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.4, bevelThickness: 1.8 });
+  hullGeo.rotateX(Math.PI / 2);
+  hullGeo.translate(0, 1.6, 0);
 
-  const deckGeo = new THREE.BoxGeometry(5.2, 0.2, 29);
-  const deck = new THREE.Mesh(deckGeo, deckDark);
-  deck.position.set(0, 0.1, 1);
-  group.add(deck);
+  const hullMesh = new THREE.Mesh(hullGeo, hullMat);
+  hullMesh.castShadow = true;
+  hullMesh.receiveShadow = true;
+  group.add(hullMesh);
 
-  const bridgeBaseGeo = new THREE.BoxGeometry(4.2, 2.2, 7);
-  const bridgeBase = new THREE.Mesh(bridgeBaseGeo, superstructureWhite);
-  bridgeBase.position.set(0, 1.2, 2);
+  const keelGeo = new THREE.BoxGeometry(7.6, 2.2, 37);
+  keelGeo.translate(0, -0.6, 0);
+  const keelMesh = new THREE.Mesh(keelGeo, hullBelowMat);
+  keelMesh.castShadow = true;
+  group.add(keelMesh);
+
+  const mainDeckGeo = new THREE.BoxGeometry(8.2, 0.3, 38);
+  const mainDeck = new THREE.Mesh(mainDeckGeo, deckMat);
+  mainDeck.position.set(0, 4.45, 0);
+  mainDeck.receiveShadow = true;
+  group.add(mainDeck);
+
+  const bridgeBaseGeo = new THREE.BoxGeometry(6.2, 3.8, 10);
+  const bridgeBase = new THREE.Mesh(bridgeBaseGeo, superStructMat);
+  bridgeBase.position.set(0, 6.5, 2.5);
+  bridgeBase.castShadow = true;
   group.add(bridgeBase);
 
-  const turret = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.6, 1.2, 12), superstructureWhite);
-  turret.add(base);
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 4.0, 10), metalDark);
-  barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.6, 2.2);
-  turret.add(barrel);
-  turret.position.set(0, 0.8, 11.5);
-  group.add(turret);
+  const bridgeWindowsGeo = new THREE.BoxGeometry(6.3, 1.4, 4.5);
+  const bridgeWindows = new THREE.Mesh(bridgeWindowsGeo, glassMat);
+  bridgeWindows.position.set(0, 7.4, 4.8);
+  group.add(bridgeWindows);
 
-  addLabelSprite(group, nameText);
-  return group;
-}
+  const bridgeTopGeo = new THREE.BoxGeometry(4.6, 2.6, 6.5);
+  const bridgeTop = new THREE.Mesh(bridgeTopGeo, superStructMat);
+  bridgeTop.position.set(0, 9.6, 2.0);
+  bridgeTop.castShadow = true;
+  group.add(bridgeTop);
 
-function createDestroyerModel(deckColorHex, nameText) {
-  const group = new THREE.Group();
-  const hullGrey = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
-  const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8 });
-  const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.4 });
-  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
+  const mastGeo = new THREE.ConeGeometry(2.4, 9.5, 4);
+  const mast = new THREE.Mesh(mastGeo, superStructMat);
+  mast.position.set(0, 16.0, 1.5);
+  mast.rotation.y = Math.PI / 4;
+  mast.castShadow = true;
+  group.add(mast);
 
-  const hullShape = new THREE.Shape();
-  hullShape.moveTo(0, -16);
-  hullShape.lineTo(2.2, -12);
-  hullShape.lineTo(2.0, 12);
-  hullShape.lineTo(0.8, 18);
-  hullShape.lineTo(-0.8, 18);
-  hullShape.lineTo(-2.0, 12);
-  hullShape.lineTo(-2.2, -12);
-  hullShape.closePath();
+  const radarBoxGeo = new THREE.BoxGeometry(2.2, 1.5, 2.2);
+  const radarBox = new THREE.Mesh(radarBoxGeo, metalDarkMat);
+  radarBox.position.set(0, 14.5, 1.5);
+  radarBox.rotation.y = Math.PI / 4;
+  group.add(radarBox);
 
-  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 2.8, bevelEnabled: true });
-  const hull = new THREE.Mesh(hullGeo, hullGrey);
-  hull.rotation.x = -Math.PI / 2;
-  group.add(hull);
+  const mastDomeGeo = new THREE.SphereGeometry(0.85, 16, 16);
+  const mastDome = new THREE.Mesh(mastDomeGeo, superStructMat);
+  mastDome.position.set(0, 21.2, 1.5);
+  group.add(mastDome);
 
-  const deckGeo = new THREE.BoxGeometry(4.2, 0.2, 32);
-  const deck = new THREE.Mesh(deckGeo, deckDark);
-  deck.position.set(0, 0.1, 1);
-  group.add(deck);
+  const gunBaseGeo = new THREE.CylinderGeometry(1.4, 1.6, 1.6, 16);
+  const gunBase = new THREE.Mesh(gunBaseGeo, superStructMat);
+  gunBase.position.set(0, 5.2, 13.5);
+  gunBase.castShadow = true;
+  group.add(gunBase);
 
-  const turret = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 1.0, 10), superstructureWhite);
-  turret.add(base);
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 4.5, 10), metalDark);
-  barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.5, 2.2);
-  turret.add(barrel);
-  turret.position.set(0, 0.7, 13.0);
-  group.add(turret);
+  const turretHeadGroup = new THREE.Group();
+  turretHeadGroup.position.set(0, 5.8, 13.5);
+  const turretDomeGeo = new THREE.SphereGeometry(1.2, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+  const turretDome = new THREE.Mesh(turretDomeGeo, superStructMat);
+  turretHeadGroup.add(turretDome);
+  const gunBarrelGeo = new THREE.CylinderGeometry(0.22, 0.28, 4.5, 10);
+  gunBarrelGeo.rotateX(Math.PI / 2);
+  const gunBarrel = new THREE.Mesh(gunBarrelGeo, metalDarkMat);
+  gunBarrel.position.set(0, 0.2, 2.0);
+  turretHeadGroup.add(gunBarrel);
+  group.add(turretHeadGroup);
 
-  addLabelSprite(group, nameText);
-  return group;
-}
+  const vlsGeo = new THREE.BoxGeometry(3.6, 0.4, 3.2);
+  const vls = new THREE.Mesh(vlsGeo, metalDarkMat);
+  vls.position.set(0, 4.7, 8.0);
+  group.add(vls);
 
-function createCruiserModel(deckColorHex, nameText) {
-  const group = new THREE.Group();
-  const hullGrey = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5 });
-  const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8 });
-  const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 });
-  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
+  for (let i = 0; i < 2; i++) {
+    const launcherGroup = new THREE.Group();
+    const xPos = (i === 0 ? 3.0 : -3.0);
+    launcherGroup.position.set(xPos, 5.3, -1.0);
+    launcherGroup.rotation.y = (i === 0 ? 0.35 : -0.35);
+    for(let cx = -0.4; cx <= 0.4; cx += 0.8) {
+      for(let cy = -0.4; cy <= 0.4; cy += 0.8) {
+        const canisterGeo = new THREE.CylinderGeometry(0.35, 0.35, 4.2, 12);
+        canisterGeo.rotateX(Math.PI / 2);
+        const canister = new THREE.Mesh(canisterGeo, metalDarkMat);
+        canister.position.set(cx, cy, 0);
+        launcherGroup.add(canister);
+      }
+    }
+    group.add(launcherGroup);
+  }
 
-  const hullShape = new THREE.Shape();
-  hullShape.moveTo(0, -15);
-  hullShape.lineTo(3.5, -11);
-  hullShape.lineTo(3.2, 11);
-  hullShape.lineTo(1.5, 16);
-  hullShape.lineTo(-1.5, 16);
-  hullShape.lineTo(-3.2, 11);
-  hullShape.lineTo(-3.5, -11);
-  hullShape.closePath();
+  const funnelGeo = new THREE.BoxGeometry(2.4, 4.5, 3.0);
+  const funnel = new THREE.Mesh(funnelGeo, superStructMat);
+  funnel.position.set(0, 8.5, -4.5);
+  group.add(funnel);
 
-  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 3.6, bevelEnabled: true });
-  const hull = new THREE.Mesh(hullGeo, hullGrey);
-  hull.rotation.x = -Math.PI / 2;
-  group.add(hull);
-
-  const deckGeo = new THREE.BoxGeometry(6.2, 0.2, 30);
-  const deck = new THREE.Mesh(deckGeo, deckDark);
-  deck.position.set(0, 0.1, 1);
-  group.add(deck);
-
-  const turret = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.7, 1.2, 12), superstructureWhite);
-  turret.add(base);
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 4.2, 10), metalDark);
-  barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.6, 2.2);
-  turret.add(barrel);
-  turret.position.set(0, 0.9, 12.0);
-  group.add(turret);
-
-  addLabelSprite(group, nameText);
-  return group;
-}
-
-function createBattleshipModel(deckColorHex, nameText) {
-  const group = new THREE.Group();
-  const hullGrey = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6, metalness: 0.4 });
-  const deckDark = new THREE.MeshStandardMaterial({ color: deckColorHex, roughness: 0.8 });
-  const superstructureWhite = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.3 });
-  const metalDark = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2 });
-
-  const hullShape = new THREE.Shape();
-  hullShape.moveTo(0, -18);
-  hullShape.lineTo(4.5, -13);
-  hullShape.lineTo(4.2, 13);
-  hullShape.lineTo(2.0, 20); 
-  hullShape.lineTo(-2.0, 20);
-  hullShape.lineTo(-4.2, 13);
-  hullShape.lineTo(-4.5, -13);
-  hullShape.closePath();
-
-  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 4.5, bevelEnabled: true });
-  const hull = new THREE.Mesh(hullGeo, hullGrey);
-  hull.rotation.x = -Math.PI / 2;
-  group.add(hull);
-
-  const deckGeo = new THREE.BoxGeometry(8.0, 0.3, 38);
-  const deck = new THREE.Mesh(deckGeo, deckDark);
-  deck.position.set(0, 0.15, 1);
-  group.add(deck);
-
-  const turret = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.2, 1.5, 12), superstructureWhite);
-  turret.add(base);
-  const barrel1 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 5.0, 10), metalDark);
-  barrel1.rotation.x = Math.PI / 2;
-  barrel1.position.set(-0.6, 0.5, 2.5);
-  const barrel2 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 5.0, 10), metalDark);
-  barrel2.rotation.x = Math.PI / 2;
-  barrel2.position.set(0.6, 0.5, 2.5);
-  turret.add(barrel1, barrel2);
-  turret.position.set(0, 1.0, 14.0);
-  group.add(turret);
+  const hangarGeo = new THREE.BoxGeometry(5.2, 4.6, 7.5);
+  const hangar = new THREE.Mesh(hangarGeo, superStructMat);
+  hangar.position.set(0, 6.9, -10.5);
+  group.add(hangar);
 
   addLabelSprite(group, nameText);
   return group;
@@ -782,24 +710,24 @@ function addLabelSprite(group, nameText) {
   const texture = new THREE.CanvasTexture(canvasText);
   const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
   const sprite = new THREE.Sprite(spriteMat);
-  sprite.position.set(0, 10.5, 0);
-  sprite.scale.set(6, 1.5, 1);
+  sprite.position.set(0, 14.5, 0);
+  sprite.scale.set(7, 1.75, 1);
   group.add(sprite);
 }
 
 const occupiedPositions = [];
 const availableColors = [
-  { name: "VERMELHO", hex: 0xe74c3c, css: "#e74c3c" },
-  { name: "VERDE", hex: 0x2ecc71, css: "#2ecc71" },
-  { name: "AMARELO", hex: 0xd4ac0d, css: "#d4ac0d" },
-  { name: "AZUL", hex: 0x00a8ff, css: "#00a8ff" }
+  { name: "AZUL VANGUARD", hex: 0x1b2433, css: "#38bdf8" },
+  { name: "VERDE", hex: 0x1c4532, css: "#2ecc71" },
+  { name: "AMARELO", hex: 0x5a4a16, css: "#d4ac0d" },
+  { name: "VERMELHO", hex: 0x5a1616, css: "#e74c3c" }
 ];
 
 const playerColor = availableColors[0];
 const playerSpawn = getSafeSpawnPosition(0, -350, occupiedPositions);
 occupiedPositions.push(playerSpawn);
 
-const shipGroup = createWarshipByStyle(selectedShipStyle, playerColor.hex, playerName);
+const shipGroup = createDetailedFrigateModel(playerColor.hex, playerName);
 shipGroup.position.set(playerSpawn.x, 0, playerSpawn.z);
 scene.add(shipGroup);
 let shipPos = { x: playerSpawn.x, z: playerSpawn.z };
@@ -808,7 +736,6 @@ let isPlayerAlive = true;
 
 const healthBarFill = document.getElementById('healthBarFill');
 const healthBarLabel = document.getElementById('healthBarLabel');
-healthBarFill.style.backgroundColor = playerColor.css;
 
 const botNamesList = ["Capitão Robô 1", "Marujo IA", "Corsário Bot"];
 const botsData = [];
@@ -822,7 +749,6 @@ for (let i = 0; i < 3; i++) {
     name: botNamesList[i],
     colorHex: col.hex,
     colorCss: col.css,
-    colorName: col.name,
     x: safePos.x,
     z: safePos.z,
     heading: Math.random() * Math.PI,
@@ -830,13 +756,12 @@ for (let i = 0; i < 3; i++) {
     speed: 0.35,
     lastShot: 0,
     lastTorpedo: 0,
-    torpedos: 10,
-    smoke: []
+    torpedos: 10
   });
 }
 
 const botMeshes = botsData.map((b, idx) => {
-  const mesh = createWarshipByStyle('frigate', b.colorHex, b.name);
+  const mesh = createDetailedFrigateModel(b.colorHex, b.name);
   mesh.position.set(b.x, 0, b.z);
   scene.add(mesh);
   return mesh;
@@ -854,10 +779,10 @@ function buildTargetOptionsUI() {
     let humanTargets = [];
     if (isHost) {
       connectedPeers.forEach((p, idx) => {
-        humanTargets.push({ id: 'human_' + idx, name: p.peerName || "Jogador " + (idx+1), isBot: false });
+        humanTargets.push({ id: 'human_' + idx, name: p.peerName || "Jogador " + (idx+1) });
       });
     } else {
-      humanTargets.push({ id: 'host_player', name: "Host da Sala", isBot: false });
+      humanTargets.push({ id: 'host_player', name: "Host da Sala" });
     }
 
     humanTargets.forEach((target, index) => {
@@ -1004,6 +929,7 @@ function triggerActionOK() {
     controlsState.up = false; controlsState.down = false; controlsState.left = false; controlsState.right = false;
     isFreeCamera = true;
     freeCamPos.x = shipPos.x; freeCamPos.z = shipPos.z;
+    freeCamTarget.x = shipPos.x; freeCamTarget.z = shipPos.z;
     showToast("🗺️ Câmera Livre Ativada!");
   } else {
     isFreeCamera = false; isFirstPersonCamera = false;
@@ -1065,49 +991,50 @@ function showVictoryScreen(isPlayerWinner, winnerName) {
 document.getElementById('btnWatchMode').onclick = () => { document.getElementById('gameOverModal').classList.remove('show'); isFreeCamera = true; };
 document.getElementById('btnExitGame').onclick = () => location.reload();
 
-let gameTime = 0;
+let gameTime = 0; // Ciclo total de 600 segundos (10 minutos) para dia/noite completos
 function updateDayNightCycle(delta) {
-  gameTime = (gameTime + delta) % 1200;
+  gameTime = (gameTime + delta) % 600;
+  let progress = gameTime / 600; // 0.0 a 1.0 ao longo de 10 minutos
+  let angle = progress * Math.PI * 2;
+
   let timeStr = "";
-  
-  if (gameTime < 600) {
+  let skyColor = new THREE.Color();
+  let ambientInt = 0.7;
+  let sunInt = 1.0;
+
+  // Transição suave simulando dia, pôr do sol, noite e amanhecer
+  if (progress < 0.45) {
     timeStr = "☀️ Dia";
-    scene.background.setHex(0x87ceeb);
-    scene.fog.color.setHex(0x87ceeb);
-    ambientLight.intensity = 0.9;
-    sunLight.intensity = 0.6;
-  } else if (gameTime >= 600 && gameTime < 720) {
+    skyColor.setHex(0x87ceeb);
+    ambientInt = 0.7;
+    sunInt = 1.2;
+  } else if (progress >= 0.45 && progress < 0.5) {
     timeStr = "🌇 Pôr do Sol";
-    let progress = (gameTime - 600) / 120;
-    let r = Math.floor(135 * (1 - progress) + 30 * progress);
-    let g = Math.floor(206 * (1 - progress) + 10 * progress);
-    let b = Math.floor(235 * (1 - progress) + 40 * progress);
-    let colHex = (r << 16) | (g << 8) | b;
-    scene.background.setHex(colHex);
-    scene.fog.color.setHex(colHex);
-    ambientLight.intensity = 0.9 - (0.6 * progress);
-    sunLight.intensity = 0.6 - (0.4 * progress);
-  } else if (gameTime >= 720 && gameTime < 1080) {
+    let p = (progress - 0.45) / 0.05;
+    skyColor.lerpColors(new THREE.Color(0x87ceeb), new THREE.Color(0x311033), p);
+    ambientInt = THREE.MathUtils.lerp(0.7, 0.3, p);
+    sunInt = THREE.MathUtils.lerp(1.2, 0.3, p);
+  } else if (progress >= 0.5 && progress < 0.95) {
     timeStr = "🌙 Noite";
-    scene.background.setHex(0x050b14);
-    scene.fog.color.setHex(0x050b14);
-    ambientLight.intensity = 0.3;
-    sunLight.intensity = 0.1;
+    skyColor.setHex(0x02040a);
+    ambientInt = 0.25;
+    sunInt = 0.2;
   } else {
     timeStr = "🌅 Amanhecer";
-    let progress = (gameTime - 1080) / 120;
-    let r = Math.floor(30 * (1 - progress) + 135 * progress);
-    let g = Math.floor(10 * (1 - progress) + 206 * progress);
-    let b = Math.floor(40 * (1 - progress) + 235 * progress);
-    let colHex = (r << 16) | (g << 8) | b;
-    scene.background.setHex(colHex);
-    scene.fog.color.setHex(colHex);
-    ambientLight.intensity = 0.3 + (0.6 * progress);
-    sunLight.intensity = 0.1 + (0.5 * progress);
+    let p = (progress - 0.95) / 0.05;
+    skyColor.lerpColors(new THREE.Color(0x02040a), new THREE.Color(0x87ceeb), p);
+    ambientInt = THREE.MathUtils.lerp(0.25, 0.7, p);
+    sunInt = THREE.MathUtils.lerp(0.2, 1.2, p);
   }
 
-  let minutes = Math.floor(gameTime / 60);
-  let seconds = Math.floor(gameTime % 60);
+  scene.background.copy(skyColor);
+  scene.fog.color.copy(skyColor);
+  ambientLight.intensity = ambientInt;
+  dirLight.intensity = sunInt;
+
+  let totalSecs = Math.floor(gameTime);
+  let minutes = Math.floor(totalSecs / 60);
+  let seconds = totalSecs % 60;
   document.getElementById('timeBadge').textContent = `${timeStr} (${minutes < 10 ? '0':''}${minutes}:${seconds < 10 ? '0':''}${seconds})`;
 }
 
@@ -1122,6 +1049,17 @@ function animate() {
   const elapsedTime = clock.getElapsedTime();
 
   updateDayNightCycle(delta);
+
+  // Animate ocean waves
+  const pos = oceanGeometry.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const vx = pos.getX(i);
+    const vz = pos.getZ(i);
+    const waveY = Math.sin(vx * 0.12 + elapsedTime * 1.6) * Math.cos(vz * 0.12 + elapsedTime * 1.3) * 0.45
+                + Math.sin(vx * 0.04 + elapsedTime * 0.7) * 0.55;
+    pos.setY(i, waveY);
+  }
+  oceanGeometry.attributes.position.needsUpdate = true;
 
   if (gameStarted && !gameEnded) {
     checkWinConditions();
@@ -1143,17 +1081,26 @@ function animate() {
         } else {
           currentSpeed = -0.4;
         }
-        shipGroup.position.set(shipPos.x, 0, shipPos.z);
+        shipGroup.position.set(shipPos.x, Math.sin(elapsedTime * 1.4) * 0.28, shipPos.z);
         shipGroup.rotation.y = currentHeading;
+        shipGroup.rotation.z = Math.sin(elapsedTime * 0.9) * 0.018;
       }
 
+      // Câmera livre com suavização (Lerp) para navegação fluida
       if (isFreeCamera) {
-        if (controlsState.up) freeCamPos.z -= 6.0;
-        if (controlsState.down) freeCamPos.z += 6.0;
-        if (controlsState.left) freeCamPos.x -= 6.0;
-        if (controlsState.right) freeCamPos.x += 6.0;
+        let camMoveSpeed = 6.0;
+        if (controlsState.up) freeCamTarget.z -= camMoveSpeed;
+        if (controlsState.down) freeCamTarget.z += camMoveSpeed;
+        if (controlsState.left) freeCamTarget.x -= camMoveSpeed;
+        if (controlsState.right) freeCamTarget.x += camMoveSpeed;
+
+        freeCamPos.x += (freeCamTarget.x - freeCamPos.x) * 0.1;
+        freeCamPos.z += (freeCamTarget.z - freeCamPos.z) * 0.1;
       } else {
-        freeCamPos.x = shipPos.x; freeCamPos.z = shipPos.z;
+        freeCamTarget.x = shipPos.x;
+        freeCamTarget.z = shipPos.z;
+        freeCamPos.x = shipPos.x;
+        freeCamPos.z = shipPos.z;
       }
 
       if (elapsedTime - lastPlayerShotTime > 1.2 && botsData.length > 0) {
@@ -1177,7 +1124,7 @@ function animate() {
       netSyncTimer += delta;
       if (netSyncTimer > 0.1 && (conn || connectedPeers.length > 0)) {
         netSyncTimer = 0;
-        const syncData = { type: 'PLAYER_SYNC', peerId: peer.id, name: playerName, style: selectedShipStyle, x: shipPos.x, z: shipPos.z, heading: currentHeading, health: playerHealth };
+        const syncData = { type: 'PLAYER_SYNC', peerId: peer.id, name: playerName, x: shipPos.x, z: shipPos.z, heading: currentHeading, health: playerHealth };
         if (conn && conn.open) conn.send(syncData);
         if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(syncData); });
       }
@@ -1265,7 +1212,7 @@ function animate() {
         playerHealth = Math.max(0, playerHealth - 10);
         document.getElementById('playerHealthText').textContent = `${playerHealth}%`;
         healthBarFill.style.width = `${playerHealth}%`;
-        healthBarLabel.textContent = `BLINDAGEM DO NAVIO: ${playerHealth}%`;
+        healthBarLabel.textContent = `BLINDAGEM DA FRAGATA: ${playerHealth}%`;
         createExplosionEffect(p.x, p.z);
         if (playerHealth <= 0) { isPlayerAlive = false; shipGroup.visible = false; document.getElementById('gameOverModal').classList.add('show'); }
         scene.remove(p.mesh);
@@ -1277,9 +1224,10 @@ function animate() {
     }
   }
 
+  // Visão em primeira pessoa (FPP) elevada e limpa acima do canhão frontal
   if (isFirstPersonCamera && isPlayerAlive) {
-    camera.position.set(shipPos.x + Math.sin(currentHeading) * 8.0, 3.2, shipPos.z + Math.cos(currentHeading) * 8.0);
-    camera.lookAt(shipPos.x + Math.sin(currentHeading) * 80, 2.2, shipPos.z + Math.cos(currentHeading) * 80);
+    camera.position.set(shipPos.x + Math.sin(currentHeading) * 4.0, 7.8, shipPos.z + Math.cos(currentHeading) * 4.0);
+    camera.lookAt(shipPos.x + Math.sin(currentHeading) * 90, 6.5, shipPos.z + Math.cos(currentHeading) * 90);
   } else {
     camera.position.set(freeCamPos.x, cameraZoomDistance, freeCamPos.z + (isFreeCamera ? 0 : cameraZoomDistance * 0.8));
     camera.lookAt(freeCamPos.x, 0, freeCamPos.z);
