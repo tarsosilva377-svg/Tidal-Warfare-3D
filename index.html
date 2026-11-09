@@ -39,10 +39,15 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .res-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;background:rgba(10,20,35,0.75);backdrop-filter:blur(6px);padding:6px 12px;border-radius:20px;border:1px solid rgba(0,168,255,0.3);pointer-events:auto;box-shadow:0 4px 15px rgba(0,0,0,0.4)}
 .center-title{text-align:center;font-weight:900;font-size:13px;letter-spacing:1px;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 2px 10px rgba(0,0,0,0.8)}
 
-.hud-bottom-health{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:240px;background:rgba(10,20,35,0.85);border:1.5px solid rgba(0,168,255,0.4);padding:8px 12px;border-radius:14px;z-index:25;backdrop-filter:blur(6px);display:flex;flex-direction:column;gap:4px;box-shadow:0 4px 15px rgba(0,0,0,0.5)}
+.hud-bottom-health{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:260px;background:rgba(10,20,35,0.85);border:1.5px solid rgba(0,168,255,0.4);padding:8px 12px;border-radius:14px;z-index:25;backdrop-filter:blur(6px);display:flex;flex-direction:column;gap:4px;box-shadow:0 4px 15px rgba(0,0,0,0.5)}
 .health-bar-container{width:100%;height:10px;background:rgba(255,255,255,0.1);border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,0.2)}
 .health-bar-fill{width:100%;height:100%;transition:width 0.2s ease, background-color 0.3s ease}
-.health-text{font-size:10px;font-weight:800;color:#fff;text-align:center}
+.health-text{font-size:10px;font-weight:800;color:#fff;text-align:center;display:flex;justify-content:space-between;align-items:center}
+
+/* CONTROLES DE GIRO DO CANHÃO AO LADO DA BARRA DE SAÚDE */
+.turret-rotate-hud{display:flex;gap:4px;align-items:center}
+.turret-rot-btn{width:24px;height:24px;background:rgba(0,168,255,0.3);border:1px solid #00d2d3;color:#00d2d3;border-radius:4px;font-size:12px;font-weight:900;display:flex;justify-content:center;align-items:center;cursor:pointer}
+.turret-rot-btn:active{background:rgba(0,168,255,0.7);color:#fff}
 
 .game-container{flex:1;position:relative;width:100%;min-height:0;touch-action:none}
 #canvas3d{width:100%;height:100%;display:block}
@@ -56,16 +61,17 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .defense-btn{position:absolute;bottom:85px;left:25px;background:rgba(255,51,51,0.25);border:1.5px solid #ff3333;color:#ff6666;padding:12px 16px;border-radius:16px;font-size:12px;font-weight:900;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .defense-btn:active{transform:scale(0.92);background:rgba(255,51,51,0.5)}
 
-.target-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.95);border:1.5px solid #00d2d3;padding:20px 24px;border-radius:16px;z-index:40;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease}
+/* SELEÇÃO DE ALVOS EM GRADE 4x2 ESTILO CÔMODA */
+.target-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.96);border:1.5px solid #00d2d3;padding:20px 24px;border-radius:16px;z-index:40;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease;max-width:440px;width:95%}
 .target-modal.show{opacity:1;transform:translate(-50%, -50%) scale(1);pointer-events:auto}
 .modal-title{font-size:14px;font-weight:900;color:#00d2d3;margin-bottom:6px;letter-spacing:0.5px}
 .modal-desc{font-size:11px;color:#8899ac;margin-bottom:14px;font-weight:600}
 
-.target-options-bar{display:flex;justify-content:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.target-option-card{background:rgba(20,35,55,0.8);border:1.5px solid rgba(0,168,255,0.4);border-radius:10px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.15s;min-width:70px}
-.target-option-card:hover, .target-option-card.selected{border-color:#00d2d3;background:rgba(0,168,255,0.25);transform:scale(1.05)}
-.ship-color-icon{width:22px;height:22px;border-radius:50%;border:1px solid #fff}
-.target-option-card span{font-size:10px;font-weight:700;color:#fff}
+.target-options-bar{display:grid;grid-template-columns:repeat(4, 1fr);grid-template-rows:repeat(2, auto);gap:8px;margin-bottom:16px;justify-items:center}
+.target-option-card{background:rgba(20,35,55,0.85);border:1.5px solid rgba(0,168,255,0.4);border-radius:10px;padding:8px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all 0.15s;width:100%;min-height:55px;justify-content:center}
+.target-option-card:hover, .target-option-card.selected{border-color:#00d2d3;background:rgba(0,168,255,0.3);transform:scale(1.03)}
+.ship-color-icon{width:16px;height:16px;border-radius:50%;border:1px solid #fff}
+.target-option-card span{font-size:9px;font-weight:700;color:#fff;text-align:center;word-break:break-all}
 
 .modal-actions{display:flex;gap:10px;justify-content:center}
 .btn-action{background:rgba(0,168,255,0.2);border:1px solid #00d2d3;color:#fff;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
@@ -130,7 +136,8 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
     📶 <b>Como Jogar:</b><br>
     • Crie sua sala ou clique em buscar salas na rede.<br>
     • Selecione a sala na lista para entrar direto.<br>
-    • <b>Tecla 0</b> = Soltar Carga Explosiva na Popa
+    • <b>Tecla 0</b> = Soltar Carga Explosiva na Popa<br>
+    • <b>Teclas 1 e 3 (ou setas no HUD)</b> = Girar Canhão da Fragata
   </div>
 </div>
 
@@ -146,7 +153,13 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 </div>
 
 <div class="hud-bottom-health" id="hudBottomHealth">
-  <div class="health-text" id="healthBarLabel">BLINDAGEM DA FRAGATA: 100%</div>
+  <div class="health-text" id="healthBarLabel">
+    <span>BLINDAGEM: 100%</span>
+    <div class="turret-rotate-hud">
+      <button class="turret-rot-btn" id="btnTurretLeft" title="Girar Canhão Esquerda (1)">◀</button>
+      <button class="turret-rot-btn" id="btnTurretRight" title="Girar Canhão Direita (3)">▶</button>
+    </div>
+  </div>
   <div class="health-bar-container">
     <div class="health-bar-fill" id="healthBarFill" style="width: 100%; background-color: #38bdf8;"></div>
   </div>
@@ -276,17 +289,16 @@ document.getElementById('btnSaveProfile').onclick = () => {
 
 let peer = null;
 let conn = null;
-let connectedPeers = [];
-let remotePlayersMap = new Map();
+let connectedPeers = []; // Conexões caso eu seja o Host
+let remotePlayersMap = new Map(); // peerId -> { name, mesh, x, z, heading, health }
 let isHost = false;
-const maxPlayers = 4;
+const maxPlayers = 8; // Aumentado para 8 players por sala
 const lobbyScreen = document.getElementById('lobbyScreen');
 const lobbyInfoStatus = document.getElementById('lobbyInfoStatus');
 const roomsContainer = document.getElementById('roomsContainer');
 const btnStartGameManual = document.getElementById('btnStartGameManual');
 const roomsSidebar = document.getElementById('roomsSidebar');
 
-// LISTA FIXA DE 5 COMBINAÇÕES PREDEFINIDAS DE SALA PARA REDE LOCAL
 const predefinedRoomIDs = [
   "Tidal_warfare_153",
   "Tidal_warfare_241",
@@ -314,7 +326,6 @@ document.getElementById('btnCreateRoom').onclick = () => {
   initAudio();
   document.getElementById('hudPlayerName').textContent = `⚓ ${playerName}`;
   
-  // Escolhe uma combinação predefinida aleatória para a sala
   const selectedRoomId = predefinedRoomIDs[Math.floor(Math.random() * predefinedRoomIDs.length)];
   isHost = true;
   
@@ -336,19 +347,25 @@ document.getElementById('btnCreateRoom').onclick = () => {
       return;
     }
     connectedPeers.push(incomingConn);
-    lobbyInfoStatus.innerHTML = `<b style="color:#00d364;">JOGADOR CONECTADO!</b><br>Total no Lobby: ${connectedPeers.length + 1}/${maxPlayers}`;
-    updateHostButtonState();
-    showToast(`👥 Jogador conectado!`);
+    
+    incomingConn.on('open', () => {
+      // Enviar lista atualizada de jogadores para todos
+      broadcastPlayersList();
+    });
 
     incomingConn.on('data', (data) => { handleNetworkData(data, incomingConn); });
     incomingConn.on('close', () => { 
       connectedPeers = connectedPeers.filter(c => c !== incomingConn);
+      if (incomingConn.peerId && remotePlayersMap.has(incomingConn.peerId)) {
+        scene.remove(remotePlayersMap.get(incomingConn.peerId).mesh);
+        remotePlayersMap.delete(incomingConn.peerId);
+      }
       updateHostButtonState();
+      broadcastPlayersList();
     });
   });
 
   peer.on('error', (err) => {
-    // Se o código predefinido já estiver em uso, tenta o próximo automaticamente
     if (err.type === 'unavailable-id') {
       const nextRoomId = predefinedRoomIDs[(predefinedRoomIDs.indexOf(selectedRoomId) + 1) % predefinedRoomIDs.length];
       peer = new Peer(nextRoomId, { config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] } });
@@ -356,20 +373,17 @@ document.getElementById('btnCreateRoom').onclick = () => {
   });
 };
 
-// VARREDURA AUTOMÁTICA NAS COMBINAÇÕES PREDEFINIDAS
 function scanAvailableRoomsAutomatically() {
   roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo canais de sala na rede...</div>';
   
-  if (!peer || peer.destroyed) {
-    peer = new Peer({ config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] } });
-  }
+  let scanPeer = new Peer({ config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] } });
 
-  peer.on('open', () => {
+  scanPeer.on('open', () => {
     roomsContainer.innerHTML = '';
     let roomsFound = 0;
 
     predefinedRoomIDs.forEach((roomId) => {
-      let testConn = peer.connect(roomId, { serialization: 'json' });
+      let testConn = scanPeer.connect(roomId, { serialization: 'json' });
       
       let timer = setTimeout(() => {
         if (testConn && !testConn.open) {
@@ -382,23 +396,25 @@ function scanAvailableRoomsAutomatically() {
         roomsFound++;
         let parts = roomId.split('_');
         let roomTitle = "Sala " + parts[2] + " (Ativa)";
-        addRoomToList(testConn, roomTitle);
+        addRoomToList(testConn, roomTitle, scanPeer);
       });
     });
 
     setTimeout(() => {
       if (roomsFound === 0 && roomsContainer.children.length === 0) {
         roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Nenhuma sala encontrada.<br><br>Certifique-se de que o Host criou a sala na mesma rede!</div>';
+        scanPeer.destroy();
       }
     }, 2800);
   });
 }
 
-function addRoomToList(testConn, roomTitle) {
+function addRoomToList(testConn, roomTitle, scanPeer) {
   const item = document.createElement('div');
   item.className = 'room-item';
   item.innerHTML = `<span>⚓ ${roomTitle}</span> <span style="color:#00d2d3; font-weight:900;">ENTRAR ➔</span>`;
   item.onclick = () => {
+    peer = scanPeer; // Usa o peer ativo para a conexão do jogo
     conn = testConn;
     isHost = false;
     roomsSidebar.classList.remove('show');
@@ -412,10 +428,29 @@ function setupConnectionEvents() {
   conn.on('open', () => {
     roomsSidebar.classList.remove('show');
     showToast(`🌐 Conectado! Aguarde o Host iniciar.`);
-    conn.send({ type: 'JOIN', name: playerName });
+    conn.send({ type: 'JOIN', name: playerName, peerId: peer.id });
   });
   conn.on('data', (data) => { handleNetworkData(data, conn); });
+  conn.on('close', () => {
+    showToast("⚠️ Conexão com o Host perdida!");
+  });
 }
+
+function broadcastPlayersList() {
+  if (!isHost) return;
+  // Recolhe todos os players conectados + Host
+  let allPlayers = [{ peerId: peer.id, name: playerName, isHost: true }];
+  connectedPeers.forEach(p => {
+    if (p.peerName) allPlayers.push({ peerId: p.peerId, name: p.peerName, isHost: false });
+  });
+  
+  // Envia para todos os clientes
+  connectedPeers.forEach(p => {
+    if (p.open) p.send({ type: 'PLAYER_LIST', list: allPlayers });
+  });
+}
+
+let activeHumanPlayersList = [];
 
 function handleNetworkData(data, sourceConn) {
   if (data.type === 'FULL') {
@@ -423,9 +458,16 @@ function handleNetworkData(data, sourceConn) {
     location.reload();
   } else if (data.type === 'START') {
     startGameSession();
-  } else if (data.type === 'JOIN' && isHost) {
+  } else if (data.type === 'JOIN') {
     sourceConn.peerName = data.name;
+    sourceConn.peerId = data.peerId;
     showToast(`👤 ${data.name} entrou na sala!`);
+    if (isHost) {
+      updateHostButtonState();
+      broadcastPlayersList();
+    }
+  } else if (data.type === 'PLAYER_LIST') {
+    activeHumanPlayersList = data.list;
   } else if (data.type === 'PLAYER_SYNC') {
     if (!remotePlayersMap.has(data.peerId) && gameStarted) {
       const rMesh = createDetailedFrigateModel(0xe74c3c, data.name);
@@ -447,6 +489,23 @@ function handleNetworkData(data, sourceConn) {
       rp.targetHeading = data.heading;
       rp.health = data.health;
     }
+  } else if (data.type === 'TAKE_DAMAGE') {
+    if (data.targetPeerId === peer.id) {
+      playerHealth = Math.max(0, playerHealth - data.damage);
+      document.getElementById('playerHealthText').textContent = `${playerHealth}%`;
+      healthBarFill.style.width = `${playerHealth}%`;
+      healthBarLabel.querySelector('span').textContent = `BLINDAGEM: ${playerHealth}%`;
+      createExplosionEffect(shipPos.x, shipPos.z);
+      if (playerHealth <= 0 && isPlayerAlive) {
+        isPlayerAlive = false;
+        shipGroup.visible = false;
+        document.getElementById('gameOverModal').classList.add('show');
+      }
+    }
+  } else if (data.type === 'PROJECTILE_FIRED') {
+    // Replica tiro de outro jogador visualmente
+    let dummyShip = { x: data.x, z: data.z };
+    fireProjectileFromShip(dummyShip, data.heading, true, { x: data.muzzleX, z: data.muzzleZ });
   }
 }
 
@@ -475,6 +534,7 @@ function startGameSession() {
 
   const hasHumanPeers = connectedPeers.length > 0 || conn !== null;
   if (hasHumanPeers) {
+    // Remove bots se houver humanos para focar no multiplayer
     botsData.forEach((b, idx) => {
       if (botMeshes[idx]) scene.remove(botMeshes[idx]);
     });
@@ -589,6 +649,8 @@ function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
   return { x, z };
 }
 
+let turretHeadGroupRef = null; // Referência para girar o canhão visualmente
+
 function createDetailedFrigateModel(deckColorHex, nameText) {
   const group = new THREE.Group();
 
@@ -683,6 +745,11 @@ function createDetailedFrigateModel(deckColorHex, nameText) {
   turretHeadGroup.add(gunBarrel);
   group.add(turretHeadGroup);
 
+  // Guarda referência do canhão principal se for o player local
+  if (deckColorHex === availableColors[0].hex) {
+    turretHeadGroupRef = turretHeadGroup;
+  }
+
   const vlsGeo = new THREE.BoxGeometry(3.6, 0.4, 3.2);
   const vls = new THREE.Mesh(vlsGeo, metalDarkMat);
   vls.position.set(0, 4.7, 8.0);
@@ -758,13 +825,14 @@ scene.add(shipGroup);
 let shipPos = { x: playerSpawn.x, z: playerSpawn.z };
 let playerHealth = 100;
 let isPlayerAlive = true;
+let turretRotationOffset = 0; // Giro independente do canhão (controlado pelas teclas 1 e 3)
 
 const healthBarFill = document.getElementById('healthBarFill');
 const healthBarLabel = document.getElementById('healthBarLabel');
 
-const botNamesList = ["Capitão Robô 1", "Marujo IA", "Corsário Bot"];
 const botsData = [];
 for (let i = 0; i < 3; i++) {
+  const botNamesList = ["Capitão Robô 1", "Marujo IA", "Corsário Bot"];
   const col = availableColors[i + 1];
   const safePos = getSafeSpawnPosition((i % 2 === 0 ? 350 : -350), (i < 2 ? -350 : 350), occupiedPositions);
   occupiedPositions.push(safePos);
@@ -792,31 +860,52 @@ const botMeshes = botsData.map((b, idx) => {
   return mesh;
 });
 
-let selectedTargetId = 0;
+let selectedTargetId = null;
 
 function buildTargetOptionsUI() {
   const bar = document.getElementById('targetOptionsBar');
   bar.innerHTML = '';
   
-  const activeBots = botsData.filter(b => b.health > 0);
-  if (activeBots.length === 0) {
-    bar.innerHTML = '<div style="font-size:11px; color:#ff6666;">Nenhum alvo ativo!</div>';
+  let availableTargets = [];
+  
+  const hasHumanPeers = connectedPeers.length > 0 || conn !== null;
+  if (hasHumanPeers) {
+    // Modo Multiplayer: lista os outros jogadores humanos conectados (excluindo a si mesmo)
+    remotePlayersMap.forEach((rp, remotePeerId) => {
+      availableTargets.push({ id: remotePeerId, name: rp.name, isBot: false });
+    });
+    // Se houver lista de humanos informada via host
+    activeHumanPlayersList.forEach(hp => {
+      if (hp.peerId !== (peer ? peer.id : '') && !availableTargets.some(t => t.id === hp.peerId)) {
+        availableTargets.push({ id: hp.peerId, name: hp.name, isBot: false });
+      }
+    });
+  } else {
+    // Modo Solo / Bots
+    botsData.filter(b => b.health > 0).forEach(b => {
+      availableTargets.push({ id: b.id, name: b.name, isBot: true });
+    });
+  }
+
+  if (availableTargets.length === 0) {
+    bar.innerHTML = '<div style="grid-column: span 4; padding:15px; text-align:center; font-size:11px; color:#ff6666;">Nenhum alvo ativo na rede!</div>';
     return;
   }
 
-  if (!activeBots.some(b => b.id === selectedTargetId)) {
-    selectedTargetId = activeBots[0].id;
+  if (!availableTargets.some(t => t.id === selectedTargetId)) {
+    selectedTargetId = availableTargets[0].id;
   }
 
-  activeBots.forEach(bot => {
+  // Preenche a grade 4x2 estilo cômoda (máximo 8 alvos)
+  availableTargets.slice(0, 8).forEach(target => {
     const card = document.createElement('div');
-    card.className = `target-option-card ${bot.id === selectedTargetId ? 'selected' : ''}`;
+    card.className = `target-option-card ${target.id === selectedTargetId ? 'selected' : ''}`;
     card.onclick = () => {
-      selectedTargetId = bot.id;
+      selectedTargetId = target.id;
       document.querySelectorAll('.target-option-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
     };
-    card.innerHTML = `<div class="ship-color-icon" style="background:${bot.colorCss}"></div><span>${bot.name} (${bot.health}%)</span>`;
+    card.innerHTML = `<div class="ship-color-icon" style="background:#00d2d3"></div><span>${target.name}</span>`;
     bar.appendChild(card);
   });
 }
@@ -885,9 +974,9 @@ function launchGuidedTorpedo() {
     showToast("⚠️ Torpedos esgotados!");
     return;
   }
-  const targetBot = botsData.find(b => b.id === selectedTargetId && b.health > 0);
-  if (botsData.length > 0 && !targetBot) {
-    showToast("⚠️ Escolha um alvo válido!");
+  
+  if (!selectedTargetId) {
+    showToast("⚠️ Nenhum alvo ativo selecionado!");
     return;
   }
 
@@ -938,6 +1027,10 @@ bindPressEvent('btnDown', 'down');
 bindPressEvent('btnLeft', 'left');
 bindPressEvent('btnRight', 'right');
 
+// Controles manuais para girar o canhão (Teclas 1 e 3 / Botões no HUD)
+document.getElementById('btnTurretLeft').onclick = () => { initAudio(); turretRotationOffset += 0.2; showToast("🎯 Canhão girado à esquerda"); };
+document.getElementById('btnTurretRight').onclick = () => { initAudio(); turretRotationOffset -= 0.2; showToast("🎯 Canhão girado à direita"); };
+
 function triggerActionOK() {
   initAudio();
   if (targetModal.classList.contains('show')) {
@@ -969,6 +1062,8 @@ window.addEventListener('keydown', (e) => {
   if (key === '8' || key === 'ArrowDown') controlsState.down = true;
   if (key === '4' || key === 'ArrowLeft') controlsState.left = true;
   if (key === '6' || key === 'ArrowRight') controlsState.right = true;
+  if (key === '1') { turretRotationOffset += 0.2; showToast("🎯 Canhão girado à esquerda (Tecla 1)"); }
+  if (key === '3') { turretRotationOffset -= 0.2; showToast("🎯 Canhão girado à direita (Tecla 3)"); }
   if (key === '5' || key === 'Enter') triggerActionOK();
   if (key === '0' || key === '96') dropDefenseMine();
   if (key.toLowerCase() === 't' && isPlayerAlive) { buildTargetOptionsUI(); targetModal.classList.add('show'); }
@@ -1100,6 +1195,11 @@ function animate() {
         shipGroup.position.set(shipPos.x, Math.sin(elapsedTime * 1.4) * 0.28, shipPos.z);
         shipGroup.rotation.y = currentHeading;
         shipGroup.rotation.z = Math.sin(elapsedTime * 0.9) * 0.018;
+
+        // Atualiza o giro visual do canhão principal conforme o ajuste do jogador
+        if (turretHeadGroupRef) {
+          turretHeadGroupRef.rotation.y = turretRotationOffset;
+        }
       }
 
       if (isFreeCamera) {
@@ -1118,22 +1218,19 @@ function animate() {
         freeCamPos.z = shipPos.z;
       }
 
-      if (elapsedTime - lastPlayerShotTime > 1.2 && botsData.length > 0) {
-        let nearestBot = null;
-        let minDist = 350;
-        botsData.forEach(b => {
-          if (b.health > 0) {
-            let dist = Math.hypot(b.x - shipPos.x, b.z - shipPos.z);
-            if (dist < minDist) { minDist = dist; nearestBot = b; }
-          }
-        });
+      // Disparo automático frontal ajustado pela direção do canhão
+      if (elapsedTime - lastPlayerShotTime > 1.2) {
+        lastPlayerShotTime = elapsedTime;
+        let effectiveHeading = currentHeading + turretRotationOffset;
+        let muzzleX = shipPos.x + Math.sin(effectiveHeading) * 12.0;
+        let muzzleZ = shipPos.z + Math.cos(effectiveHeading) * 12.0;
+        
+        fireProjectileFromShip(shipPos, effectiveHeading, false, { x: muzzleX, z: muzzleZ });
 
-        if (nearestBot && minDist < 300) {
-          lastPlayerShotTime = elapsedTime;
-          let muzzleX = shipPos.x + Math.sin(currentHeading) * 12.0;
-          let muzzleZ = shipPos.z + Math.cos(currentHeading) * 12.0;
-          fireProjectileFromShip(shipPos, currentHeading, false, { x: muzzleX, z: muzzleZ });
-        }
+        // Envia tiro pela rede se estiver em multiplayer
+        const shotSync = { type: 'PROJECTILE_FIRED', x: shipPos.x, z: shipPos.z, heading: effectiveHeading, muzzleX: muzzleX, muzzleZ: muzzleZ };
+        if (conn && conn.open) conn.send(shotSync);
+        if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(shotSync); });
       }
 
       netSyncTimer += delta;
@@ -1145,6 +1242,7 @@ function animate() {
       }
     }
 
+    // Atualiza posições de outros jogadores humanos na rede
     remotePlayersMap.forEach((rp, id) => {
       rp.x += (rp.targetX - rp.x) * 0.2;
       rp.z += (rp.targetZ - rp.z) * 0.2;
@@ -1198,23 +1296,19 @@ function animate() {
       let t = activeTorpedos[i];
       t.life--;
 
-      let target = botsData.find(b => b.id === t.targetId && b.health > 0);
-      if (!target) {
-        let aliveBots = botsData.filter(b => b.health > 0);
-        if (aliveBots.length > 0) {
-          let closest = aliveBots.reduce((prev, curr) => {
-            let distPrev = Math.hypot(prev.x - t.x, prev.z - t.z);
-            let distCurr = Math.hypot(curr.x - t.x, curr.z - t.z);
-            return distCurr < distPrev ? curr : prev;
-          });
-          t.targetId = closest.id;
-          target = closest;
-        }
+      let targetX = 0, targetZ = 0, hasTarget = false;
+      let targetBot = botsData.find(b => b.id === t.targetId && b.health > 0);
+      let targetRemote = remotePlayersMap.get(t.targetId);
+
+      if (targetBot) {
+        targetX = targetBot.x; targetZ = targetBot.z; hasTarget = true;
+      } else if (targetRemote) {
+        targetX = targetRemote.x; targetZ = targetRemote.z; hasTarget = true;
       }
 
-      if (target) {
-        let dx = target.x - t.x;
-        let dz = target.z - t.z;
+      if (hasTarget) {
+        let dx = targetX - t.x;
+        let dz = targetZ - t.z;
         let targetAngle = Math.atan2(dx, dz);
         
         let angleDiff = targetAngle - t.mesh.rotation.y;
@@ -1229,10 +1323,17 @@ function animate() {
       t.mesh.position.set(t.x, 0.15, t.z);
 
       let hit = false;
-      if (target && Math.hypot(target.x - t.x, target.z - t.z) < 5.0) {
-        target.health = Math.max(0, target.health - 50);
+      if (targetBot && Math.hypot(targetBot.x - t.x, targetBot.z - t.z) < 5.0) {
+        targetBot.health = Math.max(0, targetBot.health - 50);
         createExplosionEffect(t.x, t.z);
         hit = true;
+      } else if (targetRemote && Math.hypot(targetRemote.x - t.x, targetRemote.z - t.z) < 5.0) {
+        createExplosionEffect(t.x, t.z);
+        hit = true;
+        // Avisar o player remoto que tomou dano via rede
+        let hitMsg = { type: 'TAKE_DAMAGE', targetPeerId: t.targetId, damage: 50 };
+        if (conn && conn.open) conn.send(hitMsg);
+        if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(hitMsg); });
       }
 
       if (hit || t.life <= 0 || checkIslandCollision(t.x, t.z, 2.0)) {
@@ -1249,11 +1350,23 @@ function animate() {
       p.life--;
 
       let hit = false;
+      // Dano em bots (modo solo)
       botsData.forEach(b => {
         if (b.health > 0 && Math.hypot(b.x - p.x, b.z - p.z) < 6.0) {
           b.health = Math.max(0, b.health - 15);
           createExplosionEffect(p.x, p.z);
           hit = true;
+        }
+      });
+
+      // Dano em jogadores humanos remotos (multiplayer)
+      remotePlayersMap.forEach((rp, remotePeerId) => {
+        if (Math.hypot(rp.x - p.x, rp.z - p.z) < 6.0) {
+          createExplosionEffect(p.x, p.z);
+          hit = true;
+          let hitMsg = { type: 'TAKE_DAMAGE', targetPeerId: remotePeerId, damage: 15 };
+          if (conn && conn.open) conn.send(hitMsg);
+          if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(hitMsg); });
         }
       });
 
@@ -1274,7 +1387,7 @@ function animate() {
         playerHealth = Math.max(0, playerHealth - 10);
         document.getElementById('playerHealthText').textContent = `${playerHealth}%`;
         healthBarFill.style.width = `${playerHealth}%`;
-        healthBarLabel.textContent = `BLINDAGEM DA FRAGATA: ${playerHealth}%`;
+        healthBarLabel.querySelector('span').textContent = `BLINDAGEM: ${playerHealth}%`;
         createExplosionEffect(p.x, p.z);
         if (playerHealth <= 0) { isPlayerAlive = false; shipGroup.visible = false; document.getElementById('gameOverModal').classList.add('show'); }
         scene.remove(p.mesh);
