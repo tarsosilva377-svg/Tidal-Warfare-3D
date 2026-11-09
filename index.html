@@ -286,7 +286,14 @@ const roomsContainer = document.getElementById('roomsContainer');
 const btnStartGameManual = document.getElementById('btnStartGameManual');
 const roomsSidebar = document.getElementById('roomsSidebar');
 
-const roomPrefix = "tidal_vanguard_room_";
+// LISTA FIXA DE 5 COMBINAÇÕES PREDEFINIDAS DE SALA PARA REDE LOCAL
+const predefinedRoomIDs = [
+  "Tidal_warfare_153",
+  "Tidal_warfare_241",
+  "Tidal_warfare_388",
+  "Tidal_warfare_405",
+  "Tidal_warfare_512"
+];
 
 document.getElementById('btnOpenRoomsSidebar').onclick = () => {
   initAudio();
@@ -307,18 +314,18 @@ document.getElementById('btnCreateRoom').onclick = () => {
   initAudio();
   document.getElementById('hudPlayerName').textContent = `⚓ ${playerName}`;
   
-  const cleanName = playerName.replace(/[^a-zA-Z0-9]/g, '_');
-  const fullRoomId = roomPrefix + cleanName + "_" + Math.floor(Math.random()*1000);
+  // Escolhe uma combinação predefinida aleatória para a sala
+  const selectedRoomId = predefinedRoomIDs[Math.floor(Math.random() * predefinedRoomIDs.length)];
   isHost = true;
   
   if (peer && !peer.destroyed) peer.destroy();
-  peer = new Peer(fullRoomId, {
+  peer = new Peer(selectedRoomId, {
     config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
   });
 
   peer.on('open', (id) => {
     localStorage.setItem('tidal_my_room_id', id);
-    lobbyInfoStatus.innerHTML = `<b style="color:#00d2d3;">SALA CRIADA NA REDE!</b><br>Outros aparelhos já podem buscar sua sala na barra lateral.`;
+    lobbyInfoStatus.innerHTML = `<b style="color:#00d2d3;">SALA CRIADA NA REDE (${id})!</b><br>Outros aparelhos já podem buscar sua sala na barra lateral.`;
     updateHostButtonState();
     showToast(`📡 Sala ativa: ${playerName}`);
   });
@@ -339,40 +346,51 @@ document.getElementById('btnCreateRoom').onclick = () => {
       updateHostButtonState();
     });
   });
+
+  peer.on('error', (err) => {
+    // Se o código predefinido já estiver em uso, tenta o próximo automaticamente
+    if (err.type === 'unavailable-id') {
+      const nextRoomId = predefinedRoomIDs[(predefinedRoomIDs.indexOf(selectedRoomId) + 1) % predefinedRoomIDs.length];
+      peer = new Peer(nextRoomId, { config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] } });
+    }
+  });
 };
 
+// VARREDURA AUTOMÁTICA NAS COMBINAÇÕES PREDEFINIDAS
 function scanAvailableRoomsAutomatically() {
-  roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo salas na rede local...</div>';
+  roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo canais de sala na rede...</div>';
   
   if (!peer || peer.destroyed) {
     peer = new Peer({ config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] } });
   }
 
   peer.on('open', () => {
-    fetch('https://0.peerjs.com/peers')
-      .then(res => res.json())
-      .then(ids => {
-        roomsContainer.innerHTML = '';
-        let found = false;
-        
-        ids.forEach(id => {
-          if (id.startsWith(roomPrefix)) {
-            found = true;
-            let parts = id.replace(roomPrefix, '').split('_');
-            let roomTitle = "Sala de " + parts[0];
-            
-            let testConn = peer.connect(id, { serialization: 'json' });
-            addRoomToList(testConn, roomTitle);
-          }
-        });
+    roomsContainer.innerHTML = '';
+    let roomsFound = 0;
 
-        if (!found) {
-          roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Nenhuma sala encontrada.<br><br>Certifique-se de que o Host criou a sala na mesma rede!</div>';
+    predefinedRoomIDs.forEach((roomId) => {
+      let testConn = peer.connect(roomId, { serialization: 'json' });
+      
+      let timer = setTimeout(() => {
+        if (testConn && !testConn.open) {
+          testConn.close();
         }
-      })
-      .catch(err => {
-        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Erro ao varrer salas. Verifique sua conexão.</div>';
+      }, 2500);
+
+      testConn.on('open', () => {
+        clearTimeout(timer);
+        roomsFound++;
+        let parts = roomId.split('_');
+        let roomTitle = "Sala " + parts[2] + " (Ativa)";
+        addRoomToList(testConn, roomTitle);
       });
+    });
+
+    setTimeout(() => {
+      if (roomsFound === 0 && roomsContainer.children.length === 0) {
+        roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#ff6666;">Nenhuma sala encontrada.<br><br>Certifique-se de que o Host criou a sala na mesma rede!</div>';
+      }
+    }, 2800);
   });
 }
 
@@ -816,7 +834,7 @@ const projectileMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
 const botProjectileMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
 
 const torpedoGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.0, 8);
-torpedoGeo.rotateX(Math.PI / 2); // Corrigido para avançar perfeitamente de frente para o alvo
+torpedoGeo.rotateX(Math.PI / 2);
 const torpedoMat = new THREE.MeshStandardMaterial({ color: 0x444d56, metalness: 0.9, roughness: 0.2 });
 
 function fireProjectileFromShip(shipObj, heading, isBot = false, customWorldPos = null) {
@@ -1127,7 +1145,6 @@ function animate() {
       }
     }
 
-    // Movimentação fluida dos convidados via LERP (sem teletransporte)
     remotePlayersMap.forEach((rp, id) => {
       rp.x += (rp.targetX - rp.x) * 0.2;
       rp.z += (rp.targetZ - rp.z) * 0.2;
@@ -1177,7 +1194,6 @@ function animate() {
       }
     });
 
-    // Torpedo inteligente com rotação alinhada perfeitamente de frente para o alvo
     for (let i = activeTorpedos.length - 1; i >= 0; i--) {
       let t = activeTorpedos[i];
       t.life--;
