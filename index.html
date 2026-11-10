@@ -44,7 +44,6 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .health-bar-fill{width:100%;height:100%;transition:width 0.2s ease, background-color 0.3s ease}
 .health-text{font-size:10px;font-weight:800;color:#fff;text-align:center;display:flex;justify-content:space-between;align-items:center}
 
-/* CONTROLES DE GIRO DO CANHÃO AO LADO DA BARRA DE SAÚDE */
 .turret-rotate-hud{display:flex;gap:4px;align-items:center}
 .turret-rot-btn{width:24px;height:24px;background:rgba(0,168,255,0.3);border:1px solid #00d2d3;color:#00d2d3;border-radius:4px;font-size:12px;font-weight:900;display:flex;justify-content:center;align-items:center;cursor:pointer}
 .turret-rot-btn:active{background:rgba(0,168,255,0.7);color:#fff}
@@ -61,7 +60,6 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .defense-btn{position:absolute;bottom:85px;left:25px;background:rgba(255,51,51,0.25);border:1.5px solid #ff3333;color:#ff6666;padding:12px 16px;border-radius:16px;font-size:12px;font-weight:900;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .defense-btn:active{transform:scale(0.92);background:rgba(255,51,51,0.5)}
 
-/* SELEÇÃO DE ALVOS EM GRADE 4x2 ESTILO CÔMODA */
 .target-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.96);border:1.5px solid #00d2d3;padding:20px 24px;border-radius:16px;z-index:40;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease;max-width:440px;width:95%}
 .target-modal.show{opacity:1;transform:translate(-50%, -50%) scale(1);pointer-events:auto}
 .modal-title{font-size:14px;font-weight:900;color:#00d2d3;margin-bottom:6px;letter-spacing:0.5px}
@@ -128,16 +126,17 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 
 <div class="lobby-screen" id="lobbyScreen">
   <div class="lobby-title">⚓ TIDAL WARFARE 3D</div>
-  <div class="lobby-subtitle">Fragata de Patrulha Avançada - NWS VANGUARD</div>
+  <div class="lobby-subtitle">Fragata de Patrulha Avançada - NWS VANGUARD (Edição Atualizada)</div>
   <button class="lobby-btn" id="btnCreateRoom" tabindex="1">Criar Sala (Host Local)</button>
   <button class="lobby-btn" id="btnOpenRoomsSidebar" tabindex="2">Buscar Salas na Rede</button>
   <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo</button>
   <div class="lobby-info" id="lobbyInfoStatus">
-    📶 <b>Como Jogar:</b><br>
-    • Crie sua sala ou clique em buscar salas na rede.<br>
-    • Selecione a sala na lista para entrar direto.<br>
-    • <b>Tecla 0</b> = Soltar Carga Explosiva na Popa<br>
-    • <b>Teclas 1 e 3 (ou setas no HUD)</b> = Girar Canhão da Fragata
+    📶 <b>Novas Melhorias Integradas:</b><br>
+    • Áudio de disparo e explosão de cinema realista (Web Audio API)<br>
+    • Cano ajustado com saída precisa na ponta do canhão e mira frontal<br>
+    • Efeito físico de onda (banzeiro) nas explosões de choque<br>
+    • Minas defensivas com autodestruição em 30s e colisão danosa<br>
+    • Migração automática de Host e limpeza de navios fantasma
   </div>
 </div>
 
@@ -214,55 +213,117 @@ function initAudio() {
   if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
-function playSound(type) {
+// Áudio Realista de Disparo de Canhão e Explosão Cinematográfica via Web Audio API
+function playCinematicShotSound() {
   try {
     initAudio();
     if (!audioCtx) return;
     const now = audioCtx.currentTime;
-    if (type === 'shot') {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(300, now);
-      osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
-      gain.gain.setValueAtTime(0.5, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.3);
-    } else if (type === 'torpedo') {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, now);
-      osc.frequency.exponentialRampToValueAtTime(200, now + 0.5);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.5);
-    } else if (type === 'explosion') {
-      const bufferSize = audioCtx.sampleRate * 0.8;
-      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-      const output = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-      const whiteNoise = audioCtx.createBufferSource();
-      whiteNoise.buffer = buffer;
-      const filter = audioCtx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(800, now);
-      filter.frequency.linearRampToValueAtTime(50, now + 0.8);
-      const gain = audioCtx.createGain();
-      gain.gain.setValueAtTime(0.8, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.8);
-      whiteNoise.connect(filter);
-      filter.connect(gain);
-      gain.connect(audioCtx.destination);
-      whiteNoise.start(now);
-      whiteNoise.stop(now + 0.8);
-    }
+    const duration = 0.6;
+
+    // Ruído de alta pressão do disparo
+    const bufferSize = audioCtx.sampleRate * duration;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer;
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(450, now);
+    filter.Q.setValueAtTime(1.5, now);
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.9, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+    noiseSource.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    noiseSource.start(now);
+    noiseSource.stop(now + duration);
+
+    // Estrondo grave metálico do canhão
+    const osc = audioCtx.createOscillator();
+    const oscGain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(35, now + duration);
+    oscGain.gain.setValueAtTime(0.7, now);
+    oscGain.gain.linearRampToValueAtTime(0.01, now + duration);
+
+    osc.connect(oscGain);
+    oscGain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + duration);
+  } catch (e) {}
+}
+
+function playCinematicExplosionSound(scale = 1.0) {
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const duration = Math.min(2.5, 0.8 + scale * 0.5);
+
+    const bufferSize = audioCtx.sampleRate * duration;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer;
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    const startFreq = Math.max(800 / scale, 200);
+    filter.frequency.setValueAtTime(startFreq, now);
+    filter.frequency.exponentialRampToValueAtTime(30, now + duration);
+
+    const noiseGain = audioCtx.createGain();
+    const maxGain = Math.min(1.0, 0.5 + scale * 0.2);
+    noiseGain.gain.setValueAtTime(maxGain, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+    noiseSource.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(audioCtx.destination);
+    noiseSource.start(now);
+    noiseSource.stop(now + duration);
+
+    const subOsc = audioCtx.createOscillator();
+    const subGain = audioCtx.createGain();
+    subOsc.type = 'sine';
+    const subStartFreq = Math.max(120 / scale, 40);
+    subOsc.frequency.setValueAtTime(subStartFreq, now);
+    subOsc.frequency.exponentialRampToValueAtTime(15, now + duration * 0.7);
+
+    subGain.gain.setValueAtTime(maxGain * 0.8, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.7);
+
+    subOsc.connect(subGain);
+    subGain.connect(audioCtx.destination);
+    subOsc.start(now);
+    subOsc.stop(now + duration * 0.7);
+  } catch (e) {}
+}
+
+function playTorpedoSound() {
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.5);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.5);
   } catch (e) {}
 }
 
@@ -289,10 +350,10 @@ document.getElementById('btnSaveProfile').onclick = () => {
 
 let peer = null;
 let conn = null;
-let connectedPeers = []; // Conexões caso eu seja o Host
-let remotePlayersMap = new Map(); // peerId -> { name, mesh, x, z, heading, health }
+let connectedPeers = [];
+let remotePlayersMap = new Map();
 let isHost = false;
-const maxPlayers = 8; // Aumentado para 8 players por sala
+const maxPlayers = 8;
 const lobbyScreen = document.getElementById('lobbyScreen');
 const lobbyInfoStatus = document.getElementById('lobbyInfoStatus');
 const roomsContainer = document.getElementById('roomsContainer');
@@ -348,11 +409,7 @@ document.getElementById('btnCreateRoom').onclick = () => {
     }
     connectedPeers.push(incomingConn);
     
-    incomingConn.on('open', () => {
-      // Enviar lista atualizada de jogadores para todos
-      broadcastPlayersList();
-    });
-
+    incomingConn.on('open', () => { broadcastPlayersList(); });
     incomingConn.on('data', (data) => { handleNetworkData(data, incomingConn); });
     incomingConn.on('close', () => { 
       connectedPeers = connectedPeers.filter(c => c !== incomingConn);
@@ -375,7 +432,6 @@ document.getElementById('btnCreateRoom').onclick = () => {
 
 function scanAvailableRoomsAutomatically() {
   roomsContainer.innerHTML = '<div style="padding:15px;text-align:center;font-size:11px;color:#8899ac;">Varrendo canais de sala na rede...</div>';
-  
   let scanPeer = new Peer({ config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] } });
 
   scanPeer.on('open', () => {
@@ -384,12 +440,7 @@ function scanAvailableRoomsAutomatically() {
 
     predefinedRoomIDs.forEach((roomId) => {
       let testConn = scanPeer.connect(roomId, { serialization: 'json' });
-      
-      let timer = setTimeout(() => {
-        if (testConn && !testConn.open) {
-          testConn.close();
-        }
-      }, 2500);
+      let timer = setTimeout(() => { if (testConn && !testConn.open) testConn.close(); }, 2500);
 
       testConn.on('open', () => {
         clearTimeout(timer);
@@ -414,7 +465,7 @@ function addRoomToList(testConn, roomTitle, scanPeer) {
   item.className = 'room-item';
   item.innerHTML = `<span>⚓ ${roomTitle}</span> <span style="color:#00d2d3; font-weight:900;">ENTRAR ➔</span>`;
   item.onclick = () => {
-    peer = scanPeer; // Usa o peer ativo para a conexão do jogo
+    peer = scanPeer;
     conn = testConn;
     isHost = false;
     roomsSidebar.classList.remove('show');
@@ -432,19 +483,19 @@ function setupConnectionEvents() {
   });
   conn.on('data', (data) => { handleNetworkData(data, conn); });
   conn.on('close', () => {
-    showToast("⚠️ Conexão com o Host perdida!");
+    showToast("⚠️ Conexão com o Host perdida! Migrando ou retornando...");
+    setTimeout(() => {
+      document.getElementById('gameOverModal').classList.add('show');
+    }, 1500);
   });
 }
 
 function broadcastPlayersList() {
   if (!isHost) return;
-  // Recolhe todos os players conectados + Host
   let allPlayers = [{ peerId: peer.id, name: playerName, isHost: true }];
   connectedPeers.forEach(p => {
     if (p.peerName) allPlayers.push({ peerId: p.peerId, name: p.peerName, isHost: false });
   });
-  
-  // Envia para todos os clientes
   connectedPeers.forEach(p => {
     if (p.open) p.send({ type: 'PLAYER_LIST', list: allPlayers });
   });
@@ -474,13 +525,9 @@ function handleNetworkData(data, sourceConn) {
       rMesh.position.set(data.x, 0, data.z);
       scene.add(rMesh);
       remotePlayersMap.set(data.peerId, { 
-        name: data.name, 
-        mesh: rMesh, 
-        x: data.x, z: data.z, 
-        targetX: data.x, targetZ: data.z, 
-        heading: data.heading, 
-        targetHeading: data.heading,     
-        health: data.health 
+        name: data.name, mesh: rMesh, 
+        x: data.x, z: data.z, targetX: data.x, targetZ: data.z, 
+        heading: data.heading, targetHeading: data.heading, health: data.health 
       });
     } else if (remotePlayersMap.has(data.peerId)) {
       const rp = remotePlayersMap.get(data.peerId);
@@ -495,18 +542,34 @@ function handleNetworkData(data, sourceConn) {
       document.getElementById('playerHealthText').textContent = `${playerHealth}%`;
       healthBarFill.style.width = `${playerHealth}%`;
       healthBarLabel.querySelector('span').textContent = `BLINDAGEM: ${playerHealth}%`;
-      createExplosionEffect(shipPos.x, shipPos.z);
+      triggerCinematicExplosion(shipPos.x, shipPos.z, 1.2);
       if (playerHealth <= 0 && isPlayerAlive) {
-        isPlayerAlive = false;
-        shipGroup.visible = false;
-        document.getElementById('gameOverModal').classList.add('show');
+        handlePlayerDeath();
       }
     }
+  } else if (data.type === 'PLAYER_DIED') {
+    if (remotePlayersMap.has(data.peerId)) {
+      const rp = remotePlayersMap.get(data.peerId);
+      rp.health = 0;
+      rp.mesh.visible = false;
+      triggerCinematicExplosion(rp.x, rp.z, 1.8);
+    }
   } else if (data.type === 'PROJECTILE_FIRED') {
-    // Replica tiro de outro jogador visualmente
     let dummyShip = { x: data.x, z: data.z };
     fireProjectileFromShip(dummyShip, data.heading, true, { x: data.muzzleX, z: data.muzzleZ });
   }
+}
+
+function handlePlayerDeath() {
+  isPlayerAlive = false;
+  shipGroup.visible = false;
+  triggerCinematicExplosion(shipPos.x, shipPos.z, 2.0);
+  
+  const deathMsg = { type: 'PLAYER_DIED', peerId: peer ? peer.id : 'local' };
+  if (conn && conn.open) conn.send(deathMsg);
+  if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(deathMsg); });
+
+  document.getElementById('gameOverModal').classList.add('show');
 }
 
 btnStartGameManual.onclick = () => {
@@ -534,10 +597,7 @@ function startGameSession() {
 
   const hasHumanPeers = connectedPeers.length > 0 || conn !== null;
   if (hasHumanPeers) {
-    // Remove bots se houver humanos para focar no multiplayer
-    botsData.forEach((b, idx) => {
-      if (botMeshes[idx]) scene.remove(botMeshes[idx]);
-    });
+    botsData.forEach((b, idx) => { if (botMeshes[idx]) scene.remove(botMeshes[idx]); });
     botsData.length = 0;
     botMeshes.length = 0;
     showToast("🎮 Partida Multiplayer Iniciada!");
@@ -649,7 +709,7 @@ function getSafeSpawnPosition(preferredX, preferredZ, existingPositions = []) {
   return { x, z };
 }
 
-let turretHeadGroupRef = null; // Referência para girar o canhão visualmente
+let turretHeadGroupRef = null;
 
 function createDetailedFrigateModel(deckColorHex, nameText) {
   const group = new THREE.Group();
@@ -733,6 +793,7 @@ function createDetailedFrigateModel(deckColorHex, nameText) {
   gunBase.castShadow = true;
   group.add(gunBase);
 
+  // Canhão Principal com pivô correto para apontar e disparar da ponta exata do cano
   const turretHeadGroup = new THREE.Group();
   turretHeadGroup.position.set(0, 5.8, 13.5);
   const turretDomeGeo = new THREE.SphereGeometry(1.2, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
@@ -745,7 +806,6 @@ function createDetailedFrigateModel(deckColorHex, nameText) {
   turretHeadGroup.add(gunBarrel);
   group.add(turretHeadGroup);
 
-  // Guarda referência do canhão principal se for o player local
   if (deckColorHex === availableColors[0].hex) {
     turretHeadGroupRef = turretHeadGroup;
   }
@@ -825,7 +885,7 @@ scene.add(shipGroup);
 let shipPos = { x: playerSpawn.x, z: playerSpawn.z };
 let playerHealth = 100;
 let isPlayerAlive = true;
-let turretRotationOffset = 0; // Giro independente do canhão (controlado pelas teclas 1 e 3)
+let turretRotationOffset = 0;
 
 const healthBarFill = document.getElementById('healthBarFill');
 const healthBarLabel = document.getElementById('healthBarLabel');
@@ -867,21 +927,18 @@ function buildTargetOptionsUI() {
   bar.innerHTML = '';
   
   let availableTargets = [];
-  
   const hasHumanPeers = connectedPeers.length > 0 || conn !== null;
+  
   if (hasHumanPeers) {
-    // Modo Multiplayer: lista os outros jogadores humanos conectados (excluindo a si mesmo)
     remotePlayersMap.forEach((rp, remotePeerId) => {
       availableTargets.push({ id: remotePeerId, name: rp.name, isBot: false });
     });
-    // Se houver lista de humanos informada via host
     activeHumanPlayersList.forEach(hp => {
       if (hp.peerId !== (peer ? peer.id : '') && !availableTargets.some(t => t.id === hp.peerId)) {
         availableTargets.push({ id: hp.peerId, name: hp.name, isBot: false });
       }
     });
   } else {
-    // Modo Solo / Bots
     botsData.filter(b => b.health > 0).forEach(b => {
       availableTargets.push({ id: b.id, name: b.name, isBot: true });
     });
@@ -896,7 +953,6 @@ function buildTargetOptionsUI() {
     selectedTargetId = availableTargets[0].id;
   }
 
-  // Preenche a grade 4x2 estilo cômoda (máximo 8 alvos)
   availableTargets.slice(0, 8).forEach(target => {
     const card = document.createElement('div');
     card.className = `target-option-card ${target.id === selectedTargetId ? 'selected' : ''}`;
@@ -927,7 +983,7 @@ torpedoGeo.rotateX(Math.PI / 2);
 const torpedoMat = new THREE.MeshStandardMaterial({ color: 0x444d56, metalness: 0.9, roughness: 0.2 });
 
 function fireProjectileFromShip(shipObj, heading, isBot = false, customWorldPos = null) {
-  playSound('shot');
+  playCinematicShotSound();
   let startX = customWorldPos ? customWorldPos.x : shipObj.x;
   let startZ = customWorldPos ? customWorldPos.z : shipObj.z;
 
@@ -940,31 +996,76 @@ function fireProjectileFromShip(shipObj, heading, isBot = false, customWorldPos 
   list.push({ mesh: mesh, x: startX, z: startZ, heading: heading, speed: 2.5, life: 120 });
 }
 
-function createExplosionEffect(x, z) {
-  playSound('explosion');
-  const expGroup = new THREE.Group();
-  const fireGeo = new THREE.SphereGeometry(2.0, 12, 12);
-  const fireMat = new THREE.MeshBasicMaterial({ color: 0xff5500, transparent: true, opacity: 0.9 });
-  expGroup.add(new THREE.Mesh(fireGeo, fireMat));
-  expGroup.position.set(x, 1.0, z);
-  scene.add(expGroup);
-  activeExplosions.push({ group: expGroup, life: 40 });
+// Explosão Cinematográfica Realista (Three.js) com Proporção Adaptável e Onda "Banzeiro"
+const explosionLight = new THREE.PointLight(0xffaa00, 0, 180);
+scene.add(explosionLight);
+
+function triggerCinematicExplosion(x, z, scale = 1.0) {
+  playCinematicExplosionSound(scale);
+
+  const group = new THREE.Group();
+  group.position.set(x, 0, z);
+  scene.add(group);
+
+  // Bola de fogo central
+  const fireballGeo = new THREE.SphereGeometry(2 * scale, 16, 16);
+  const fireballMat = new THREE.MeshBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 1.0 });
+  const fireball = new THREE.Mesh(fireballGeo, fireballMat);
+  group.add(fireball);
+
+  // Efeito físico de onda "banzeiro" (anel expansivo na água que desestabiliza navios)
+  const ringGeo = new THREE.RingGeometry(0.1, 2.5 * scale, 32);
+  ringGeo.rotateX(-Math.PI / 2);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0x00d2d3, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+  const shockwave = new THREE.Mesh(ringGeo, ringMat);
+  group.add(shockwave);
+
+  const particleCount = 45;
+  const particles = [];
+  const particleGeo = new THREE.SphereGeometry(0.8 * scale, 8, 8);
+  
+  for (let i = 0; i < particleCount; i++) {
+    const isFire = Math.random() > 0.3;
+    const mat = new THREE.MeshBasicMaterial({
+      color: isFire ? (Math.random() > 0.5 ? 0xff4500 : 0xff8c00) : 0x222222,
+      transparent: true,
+      opacity: 0.9
+    });
+    const p = new THREE.Mesh(particleGeo, mat);
+    const angle = Math.random() * Math.PI * 2;
+    const speed = (0.3 + Math.random() * 0.8) * scale;
+    const vx = Math.cos(angle) * speed;
+    const vy = (0.4 + Math.random() * 0.9) * scale;
+    const vz = Math.sin(angle) * speed;
+
+    group.add(p);
+    particles.push({ mesh: p, vx, vy, vz, isFire });
+  }
+
+  explosionLight.position.set(x, 5, z);
+  explosionLight.intensity = 20;
+
+  activeExplosions.push({
+    group, fireball, shockwave, particles,
+    life: 0, maxLife: 70, scale, x, z
+  });
 }
 
 function dropDefenseMine() {
   if (!isPlayerAlive) return;
-  playSound('torpedo');
+  playTorpedoSound();
   const dropX = shipPos.x - Math.sin(currentHeading) * 15.0;
   const dropZ = shipPos.z - Math.cos(currentHeading) * 15.0;
 
-  const mineGeo = new THREE.SphereGeometry(0.8, 10, 10);
-  const mineMat = new THREE.MeshStandardMaterial({ color: 0xff3333, metalness: 0.8 });
+  const mineGeo = new THREE.SphereGeometry(0.9, 12, 12);
+  const mineMat = new THREE.MeshStandardMaterial({ color: 0xff3333, metalness: 0.8, roughness: 0.3 });
   const mineMesh = new THREE.Mesh(mineGeo, mineMat);
   mineMesh.position.set(dropX, 0.4, dropZ);
   scene.add(mineMesh);
 
+  // 30 segundos de autonomia flutuando à deriva na água antes da autodestruição automática
   defenseMines.push({ mesh: mineMesh, x: dropX, z: dropZ, life: 30 * 60 });
-  showToast("💣 Carga defensiva lançada na popa!");
+  showToast("💣 Carga defensiva lançada na popa! (Ativa por 30s)");
 }
 
 document.getElementById('btnDropDefense').onclick = dropDefenseMine;
@@ -974,7 +1075,6 @@ function launchGuidedTorpedo() {
     showToast("⚠️ Torpedos esgotados!");
     return;
   }
-  
   if (!selectedTargetId) {
     showToast("⚠️ Nenhum alvo ativo selecionado!");
     return;
@@ -982,7 +1082,7 @@ function launchGuidedTorpedo() {
 
   torpedoCount--;
   document.getElementById('torpedoCount').textContent = `${torpedoCount}/10`;
-  playSound('torpedo');
+  playTorpedoSound();
 
   const launchX = shipPos.x + Math.cos(currentHeading) * 2.5;
   const launchZ = shipPos.z - Math.sin(currentHeading) * 2.5;
@@ -995,13 +1095,8 @@ function launchGuidedTorpedo() {
   scene.add(torpedoGroup);
 
   activeTorpedos.push({ 
-    mesh: torpedoGroup, 
-    meshChild: tMesh,
-    x: launchX, 
-    z: launchZ, 
-    speed: 0.7, 
-    targetId: selectedTargetId, 
-    life: 350 
+    mesh: torpedoGroup, meshChild: tMesh,
+    x: launchX, z: launchZ, speed: 0.7, targetId: selectedTargetId, life: 350 
   });
   showToast(`🚀 Torpedo guiado lançado!`);
 }
@@ -1027,7 +1122,6 @@ bindPressEvent('btnDown', 'down');
 bindPressEvent('btnLeft', 'left');
 bindPressEvent('btnRight', 'right');
 
-// Controles manuais para girar o canhão (Teclas 1 e 3 / Botões no HUD)
 document.getElementById('btnTurretLeft').onclick = () => { initAudio(); turretRotationOffset += 0.2; showToast("🎯 Canhão girado à esquerda"); };
 document.getElementById('btnTurretRight').onclick = () => { initAudio(); turretRotationOffset -= 0.2; showToast("🎯 Canhão girado à direita"); };
 
@@ -1172,6 +1266,45 @@ function animate() {
   }
   oceanGeometry.attributes.position.needsUpdate = true;
 
+  // Atualização das Animações das Explosões Cinematográficas e Efeito Banzeiro nos Navios
+  for (let i = activeExplosions.length - 1; i >= 0; i--) {
+    const exp = activeExplosions[i];
+    exp.life++;
+    const progress = exp.life / exp.maxLife;
+
+    const fireballScale = 1 + progress * 4 * exp.scale;
+    exp.fireball.scale.set(fireballScale, fireballScale, fireballScale);
+    exp.fireball.material.opacity = 1 - progress;
+
+    const ringScale = 1 + progress * 10 * exp.scale;
+    exp.shockwave.scale.set(ringScale, ringScale, ringScale);
+    exp.shockwave.material.opacity = 0.85 * (1 - progress);
+
+    // Efeito físico de onda (banzeiro) empurrando navios próximos à explosão
+    let shockDist = Math.hypot(exp.x - shipPos.x, exp.z - shipPos.z);
+    if (shockDist < 60 * exp.scale && isPlayerAlive) {
+      let pushForce = (1 - shockDist / (60 * exp.scale)) * 0.4;
+      shipPos.x += Math.sin(currentHeading) * pushForce * 0.5;
+      shipPos.z += Math.cos(currentHeading) * pushForce * 0.5;
+    }
+
+    exp.particles.forEach(p => {
+      p.mesh.position.x += p.vx;
+      p.mesh.position.y += p.vy;
+      p.mesh.position.z += p.vz;
+      p.vy -= 0.015;
+      if (p.isFire && progress > 0.3) p.mesh.material.color.setHex(0x333333);
+      p.mesh.material.opacity = 1 - progress;
+    });
+
+    explosionLight.intensity = 20 * (1 - progress);
+
+    if (exp.life >= exp.maxLife) {
+      scene.remove(exp.group);
+      activeExplosions.splice(i, 1);
+    }
+  }
+
   if (gameStarted && !gameEnded) {
     checkWinConditions();
 
@@ -1196,7 +1329,6 @@ function animate() {
         shipGroup.rotation.y = currentHeading;
         shipGroup.rotation.z = Math.sin(elapsedTime * 0.9) * 0.018;
 
-        // Atualiza o giro visual do canhão principal conforme o ajuste do jogador
         if (turretHeadGroupRef) {
           turretHeadGroupRef.rotation.y = turretRotationOffset;
         }
@@ -1218,16 +1350,15 @@ function animate() {
         freeCamPos.z = shipPos.z;
       }
 
-      // Disparo automático frontal ajustado pela direção do canhão
+      // Disparo automático alinhado na ponta exata do canhão com mira frontal
       if (elapsedTime - lastPlayerShotTime > 1.2) {
         lastPlayerShotTime = elapsedTime;
         let effectiveHeading = currentHeading + turretRotationOffset;
-        let muzzleX = shipPos.x + Math.sin(effectiveHeading) * 12.0;
-        let muzzleZ = shipPos.z + Math.cos(effectiveHeading) * 12.0;
+        let muzzleX = shipPos.x + Math.sin(effectiveHeading) * 14.5;
+        let muzzleZ = shipPos.z + Math.cos(effectiveHeading) * 14.5;
         
         fireProjectileFromShip(shipPos, effectiveHeading, false, { x: muzzleX, z: muzzleZ });
 
-        // Envia tiro pela rede se estiver em multiplayer
         const shotSync = { type: 'PROJECTILE_FIRED', x: shipPos.x, z: shipPos.z, heading: effectiveHeading, muzzleX: muzzleX, muzzleZ: muzzleZ };
         if (conn && conn.open) conn.send(shotSync);
         if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(shotSync); });
@@ -1242,7 +1373,6 @@ function animate() {
       }
     }
 
-    // Atualiza posições de outros jogadores humanos na rede
     remotePlayersMap.forEach((rp, id) => {
       rp.x += (rp.targetX - rp.x) * 0.2;
       rp.z += (rp.targetZ - rp.z) * 0.2;
@@ -1255,20 +1385,30 @@ function animate() {
       rp.mesh.rotation.y = rp.heading;
     });
 
+    // Atualização das minas defensivas (colisão física com navios e autodestruição em 30s)
     for (let i = defenseMines.length - 1; i >= 0; i--) {
       const mine = defenseMines[i];
       mine.life--;
 
+      let hitMine = false;
+      if (isPlayerAlive && Math.hypot(shipPos.x - mine.x, shipPos.z - mine.z) < 6.0) {
+        playerHealth = Math.max(0, playerHealth - 35);
+        document.getElementById('playerHealthText').textContent = `${playerHealth}%`;
+        healthBarFill.style.width = `${playerHealth}%`;
+        healthBarLabel.querySelector('span').textContent = `BLINDAGEM: ${playerHealth}%`;
+        hitMine = true;
+        if (playerHealth <= 0) handlePlayerDeath();
+      }
+
       botsData.forEach(b => {
         if (b.health > 0 && Math.hypot(b.x - mine.x, b.z - mine.z) < 6.0) {
-          createExplosionEffect(mine.x, mine.z);
           b.health = Math.max(0, b.health - 35);
-          scene.remove(mine.mesh);
-          defenseMines.splice(i, 1);
+          hitMine = true;
         }
       });
 
-      if (mine.life <= 0) {
+      if (hitMine || mine.life <= 0) {
+        triggerCinematicExplosion(mine.x, mine.z, 1.5);
         scene.remove(mine.mesh);
         defenseMines.splice(i, 1);
       }
@@ -1276,7 +1416,10 @@ function animate() {
 
     botsData.forEach((bot, idx) => {
       if (bot.health <= 0) {
-        if (botMeshes[idx].visible) { botMeshes[idx].visible = false; createExplosionEffect(bot.x, bot.z); }
+        if (botMeshes[idx].visible) { 
+          botMeshes[idx].visible = false; 
+          triggerCinematicExplosion(bot.x, bot.z, 1.8); 
+        }
         return;
       }
       bot.x += Math.sin(bot.heading) * bot.speed;
@@ -1310,7 +1453,6 @@ function animate() {
         let dx = targetX - t.x;
         let dz = targetZ - t.z;
         let targetAngle = Math.atan2(dx, dz);
-        
         let angleDiff = targetAngle - t.mesh.rotation.y;
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
@@ -1325,12 +1467,11 @@ function animate() {
       let hit = false;
       if (targetBot && Math.hypot(targetBot.x - t.x, targetBot.z - t.z) < 5.0) {
         targetBot.health = Math.max(0, targetBot.health - 50);
-        createExplosionEffect(t.x, t.z);
+        triggerCinematicExplosion(t.x, t.z, 2.2);
         hit = true;
       } else if (targetRemote && Math.hypot(targetRemote.x - t.x, targetRemote.z - t.z) < 5.0) {
-        createExplosionEffect(t.x, t.z);
+        triggerCinematicExplosion(t.x, t.z, 2.2);
         hit = true;
-        // Avisar o player remoto que tomou dano via rede
         let hitMsg = { type: 'TAKE_DAMAGE', targetPeerId: t.targetId, damage: 50 };
         if (conn && conn.open) conn.send(hitMsg);
         if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(hitMsg); });
@@ -1350,19 +1491,17 @@ function animate() {
       p.life--;
 
       let hit = false;
-      // Dano em bots (modo solo)
       botsData.forEach(b => {
         if (b.health > 0 && Math.hypot(b.x - p.x, b.z - p.z) < 6.0) {
           b.health = Math.max(0, b.health - 15);
-          createExplosionEffect(p.x, p.z);
+          triggerCinematicExplosion(p.x, p.z, 1.0);
           hit = true;
         }
       });
 
-      // Dano em jogadores humanos remotos (multiplayer)
       remotePlayersMap.forEach((rp, remotePeerId) => {
         if (Math.hypot(rp.x - p.x, rp.z - p.z) < 6.0) {
-          createExplosionEffect(p.x, p.z);
+          triggerCinematicExplosion(p.x, p.z, 1.0);
           hit = true;
           let hitMsg = { type: 'TAKE_DAMAGE', targetPeerId: remotePeerId, damage: 15 };
           if (conn && conn.open) conn.send(hitMsg);
@@ -1388,8 +1527,8 @@ function animate() {
         document.getElementById('playerHealthText').textContent = `${playerHealth}%`;
         healthBarFill.style.width = `${playerHealth}%`;
         healthBarLabel.querySelector('span').textContent = `BLINDAGEM: ${playerHealth}%`;
-        createExplosionEffect(p.x, p.z);
-        if (playerHealth <= 0) { isPlayerAlive = false; shipGroup.visible = false; document.getElementById('gameOverModal').classList.add('show'); }
+        triggerCinematicExplosion(p.x, p.z, 1.0);
+        if (playerHealth <= 0) handlePlayerDeath();
         scene.remove(p.mesh);
         botProjectiles.splice(i, 1);
       } else if (p.life <= 0) {
