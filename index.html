@@ -51,6 +51,9 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .game-container{flex:1;position:relative;width:100%;min-height:0;touch-action:none}
 #canvas3d{width:100%;height:100%;display:block}
 
+.fire-cannon-btn{position:absolute;top:15px;right:20px;background:rgba(255,165,0,0.25);border:1.5px solid #ffa500;color:#ffcc00;padding:10px 16px;border-radius:14px;font-size:12px;font-weight:900;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
+.fire-cannon-btn:active{transform:scale(0.92);background:rgba(255,165,0,0.5)}
+
 .torpedo-btn{position:absolute;top:65px;right:20px;background:rgba(10,20,35,0.85);border:1.5px solid #00d2d3;color:#00d2d3;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:800;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .torpedo-btn:active{transform:scale(0.95);background:rgba(0,168,255,.3)}
 
@@ -60,7 +63,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .defense-btn{position:absolute;bottom:85px;left:25px;background:rgba(255,51,51,0.25);border:1.5px solid #ff3333;color:#ff6666;padding:12px 16px;border-radius:16px;font-size:12px;font-weight:900;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .defense-btn:active{transform:scale(0.92);background:rgba(255,51,51,0.5)}
 
-/* ESTILO DO MINI-RADAR TÁTICO NO HUD */
+/* MINI-RADAR TÁTICO NO HUD */
 .radar-container{position:absolute;bottom:20px;left:25px;width:130px;height:130px;background:rgba(5, 20, 35, 0.85);border:2px solid #00d2d3;border-radius:50%;box-shadow:0 0 15px rgba(0,210,211,0.35), inset 0 0 10px rgba(0,210,211,0.2);overflow:hidden;backdrop-filter:blur(6px);z-index:25;pointer-events:none}
 .radar-ring{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);border:1px dashed rgba(0, 210, 211, 0.3);border-radius:50%}
 .radar-ring-1{width:45px;height:45px}
@@ -114,6 +117,10 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 </head>
 <body oncontextmenu="return false;">
 
+<!-- ELEMENTOS DE ÁUDIO (Substituídos e com Loop na Trilha Sonora) -->
+<audio id="cannonSound" src="Disparo de CaÃ±Ã³n 2 - efecto de sonido para videos(M4A_128K).m4a" preload="auto"></audio>
+<audio id="bgMusic" src="MÃšSICA Ã‰PICA TRILHA SONORA DE GUERRA SEM DIREITOS AUTORAIS(M4A_128K).m4a" preload="auto" loop></audio>
+
 <button class="profile-btn" id="btnOpenProfile">👤 <span id="profileNameDisplay">Comandante</span></button>
 
 <div class="rooms-sidebar" id="roomsSidebar">
@@ -144,9 +151,9 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 <button class="lobby-btn" id="btnStartGameManual" tabindex="3" style="display:none; background:rgba(0,211,100,0.3); border-color:#00d364;">Iniciar Jogo</button>
 <div class="lobby-info" id="lobbyInfoStatus">
 📶 <b>Novas Melhorias Integradas:</b><br>
-• Áudio de disparo e explosão realista (Web Audio API)<br>
+• Efeito sonoro real e loop de trilha sonora de guerra<br>
+• Disparo manual por botão dedicado ou Tecla 9 (Smart TV)<br>
 • Canhão na proa com saída precisa de projétil na ponta exata do cano<br>
-• Efeito físico de onda (banzeiro) nas explosões de choque<br>
 • Minas defensivas na popa com colisão e autodestruição em 30s<br>
 • Mini-Radar Tático integrado no HUD para navegação em mar aberto<br>
 • Migração automática de Host e limpeza de navios fantasma
@@ -180,9 +187,10 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 <div class="game-container" id="gameContainer">
 <canvas id="canvas3d"></canvas>
 
+<button class="fire-cannon-btn" id="btnFireCannon">💥 Disparar Canhão (9)</button>
 <button class="torpedo-btn" id="btnTorpedo">🎯 Selecionar Alvo</button>
 <button class="fpp-btn" id="btnFPP">👁️ Câmera 1ª Pessoa</button>
-<button class="defense-btn" id="btnDropDefense">💣 Soltar Explosivo (Tecla 0)</button>
+<button class="defense-btn" id="btnDropDefense">💣 Soltar Explosivo (0)</button>
 
 <!-- MINI-RADAR TÁTICO NO HUD -->
 <div class="radar-container" id="radarContainer">
@@ -230,54 +238,31 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 </div>
 
 <script>
+// Gerenciamento de Áudio com sobreposição (múltiplos disparos simultâneos) e Trilha Sonora em Loop
+const cannonSoundEl = document.getElementById('cannonSound');
+const bgMusicEl = document.getElementById('bgMusic');
+
+function playAudioWithOverlap(audioElement) {
+if (!audioElement) return;
+try {
+const clone = audioElement.cloneNode(true);
+clone.volume = 0.8;
+clone.play().catch(() => {});
+} catch (e) {}
+}
+
+function startBackgroundMusic() {
+if (bgMusicEl) {
+bgMusicEl.volume = 0.5;
+bgMusicEl.play().catch(() => {});
+}
+}
+
 let audioCtx = null;
 function initAudio() {
 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-
-function playCinematicShotSound() {
-try {
-initAudio();
-if (!audioCtx) return;
-const now = audioCtx.currentTime;
-const duration = 0.6;
-
-const bufferSize = audioCtx.sampleRate * duration;
-const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-const output = buffer.getChannelData(0);
-for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-const noiseSource = audioCtx.createBufferSource();
-noiseSource.buffer = buffer;
-
-const filter = audioCtx.createBiquadFilter();
-filter.type = 'bandpass';
-filter.frequency.setValueAtTime(450, now);
-filter.Q.setValueAtTime(1.5, now);
-
-const gain = audioCtx.createGain();
-gain.gain.setValueAtTime(0.9, now);
-gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-noiseSource.connect(filter);
-filter.connect(gain);
-gain.connect(audioCtx.destination);
-noiseSource.start(now);
-noiseSource.stop(now + duration);
-
-const osc = audioCtx.createOscillator();
-const oscGain = audioCtx.createGain();
-osc.type = 'triangle';
-osc.frequency.setValueAtTime(160, now);
-osc.frequency.exponentialRampToValueAtTime(35, now + duration);
-oscGain.gain.setValueAtTime(0.7, now);
-oscGain.gain.linearRampToValueAtTime(0.01, now + duration);
-
-osc.connect(oscGain);
-oscGain.connect(audioCtx.destination);
-osc.start(now);
-osc.stop(now + duration);
-} catch (e) {}
+startBackgroundMusic();
 }
 
 function playCinematicExplosionSound(scale = 1.0) {
@@ -310,21 +295,6 @@ filter.connect(noiseGain);
 noiseGain.connect(audioCtx.destination);
 noiseSource.start(now);
 noiseSource.stop(now + duration);
-
-const subOsc = audioCtx.createOscillator();
-const subGain = audioCtx.createGain();
-subOsc.type = 'sine';
-const subStartFreq = Math.max(120 / scale, 40);
-subOsc.frequency.setValueAtTime(subStartFreq, now);
-subOsc.frequency.exponentialRampToValueAtTime(15, now + duration * 0.7);
-
-subGain.gain.setValueAtTime(maxGain * 0.8, now);
-subGain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.7);
-
-subOsc.connect(subGain);
-subGain.connect(audioCtx.destination);
-subOsc.start(now);
-subOsc.stop(now + duration * 0.7);
 } catch (e) {}
 }
 
@@ -503,7 +473,7 @@ conn.send({ type: 'JOIN', name: playerName, peerId: peer.id });
 });
 conn.on('data', (data) => { handleNetworkData(data, conn); });
 conn.on('close', () => {
-showToast("⚠️ Conexão com o Host perdida! Migrando ou retornando...");
+showToast("⚠️ Conexão com o Host perdida!");
 setTimeout(() => {
 document.getElementById('gameOverModal').classList.add('show');
 }, 1500);
@@ -606,6 +576,7 @@ function startGameSession() {
 lobbyScreen.classList.add('hidden');
 roomsSidebar.classList.remove('show');
 gameStarted = true;
+startBackgroundMusic();
 
 setTimeout(() => {
 if (renderer && container) {
@@ -813,7 +784,6 @@ gunBase.position.set(0, 5.2, 13.5);
 gunBase.castShadow = true;
 group.add(gunBase);
 
-// Canhão Principal na proa com cano estendido e pivô correto
 const turretHeadGroup = new THREE.Group();
 turretHeadGroup.position.set(0, 5.8, 13.5);
 const turretDomeGeo = new THREE.SphereGeometry(1.2, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
@@ -1002,8 +972,31 @@ const torpedoGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.0, 8);
 torpedoGeo.rotateX(Math.PI / 2);
 const torpedoMat = new THREE.MeshStandardMaterial({ color: 0x444d56, metalness: 0.9, roughness: 0.2 });
 
+// DISPARO MANUAL DO CANHÃO (Usa o novo som e suporta sobreposição)
+function firePlayerCannon() {
+if (!isPlayerAlive) return;
+initAudio();
+playAudioWithOverlap(cannonSoundEl);
+
+let effectiveHeading = currentHeading + turretRotationOffset;
+let muzzleDist = 16.5;
+let muzzleX = shipPos.x + Math.sin(effectiveHeading) * muzzleDist;
+let muzzleZ = shipPos.z + Math.cos(effectiveHeading) * muzzleDist;
+
+fireProjectileFromShip(shipPos, effectiveHeading, false, { x: muzzleX, z: muzzleZ });
+
+const shotSync = { type: 'PROJECTILE_FIRED', x: shipPos.x, z: shipPos.z, heading: effectiveHeading, muzzleX: muzzleX, muzzleZ: muzzleZ };
+if (conn && conn.open) conn.send(shotSync);
+if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(shotSync); });
+showToast("💥 Canhão disparado!");
+}
+
+document.getElementById('btnFireCannon').onclick = firePlayerCannon;
+
 function fireProjectileFromShip(shipObj, heading, isBot = false, customWorldPos = null) {
-playCinematicShotSound();
+if (!isBot) {
+playAudioWithOverlap(cannonSoundEl);
+}
 let startX = customWorldPos ? customWorldPos.x : shipObj.x;
 let startZ = customWorldPos ? customWorldPos.z : shipObj.z;
 
@@ -1016,7 +1009,6 @@ const list = isBot ? botProjectiles : activeProjectiles;
 list.push({ mesh: mesh, x: startX, z: startZ, heading: heading, speed: 2.5, life: 120 });
 }
 
-// Explosão Cinematográfica Realista (Three.js) com Proporção Adaptável e Onda "Banzeiro"
 const explosionLight = new THREE.PointLight(0xffaa00, 0, 180);
 scene.add(explosionLight);
 
@@ -1165,6 +1157,7 @@ document.getElementById('btnFPP').onclick = () => { initAudio(); if (!isPlayerAl
 document.getElementById('btnZoomIn').onclick = () => { cameraZoomDistance = Math.max(25, cameraZoomDistance - 15); };
 document.getElementById('btnZoomOut').onclick = () => { cameraZoomDistance = Math.min(600, cameraZoomDistance + 15); };
 
+// CONTROLES DE TECLADO E SMART TV (Tecla 9 para Disparo Manual)
 window.addEventListener('keydown', (e) => {
 if (!gameStarted) return;
 initAudio();
@@ -1173,8 +1166,9 @@ if (key === '2' || key === 'ArrowUp') controlsState.up = true;
 if (key === '8' || key === 'ArrowDown') controlsState.down = true;
 if (key === '4' || key === 'ArrowLeft') controlsState.left = true;
 if (key === '6' || key === 'ArrowRight') controlsState.right = true;
-if (key === '1') { turretRotationOffset += 0.2; showToast("🎯 Canhão girado à esquerda (Tecla 1)"); }
-if (key === '3') { turretRotationOffset -= 0.2; showToast("🎯 Canhão girado à direita (Tecla 3)"); }
+if (key === '1') { turretRotationOffset += 0.2; showToast("🎯 Canhão girado à esquerda (1)"); }
+if (key === '3') { turretRotationOffset -= 0.2; showToast("🎯 Canhão girado à direita (3)"); }
+if (key === '9') { firePlayerCannon(); } // ATRIBUIÇÃO DA TECLA 9 PARA DISPARO MANUAL NA TV
 if (key === '5' || key === 'Enter') triggerActionOK();
 if (key === '0' || key === '96') dropDefenseMine();
 if (key.toLowerCase() === 't' && isPlayerAlive) { buildTargetOptionsUI(); targetModal.classList.add('show'); }
@@ -1264,22 +1258,18 @@ document.getElementById('timeBadge').textContent = `${timeStr} (${minutes < 10 ?
 const halfMap = mapSize / 2 - 40;
 const clock = new THREE.Clock();
 let netSyncTimer = 0;
-let lastPlayerShotTime = 0;
 
-// Gerenciamento visual dos pontos do mini-radar em tempo real
 const radarContainerElem = document.getElementById('radarContainer');
 const radarDynamicDots = [];
 
 function updateTacticalRadar() {
-// Remove pontos antigos do radar
 radarDynamicDots.forEach(dot => dot.remove());
 radarDynamicDots.length = 0;
 
-const radarRadiusPx = 65; // Raio em pixels do radar
-const worldRange = 300;   // Alcance máximo visível no radar (unidades do mundo 3D)
-
-// Coleta todos os alvos (bots e jogadores remotos)
+const radarRadiusPx = 65;
+const worldRange = 300;
 const targetsToRender = [];
+
 botsData.filter(b => b.health > 0).forEach(b => {
 targetsToRender.push({ x: b.x, z: b.z, isBot: true });
 });
@@ -1295,7 +1285,6 @@ let dz = t.z - shipPos.z;
 let dist = Math.hypot(dx, dz);
 
 if (dist <= worldRange) {
-// Rotação baseada na orientação (heading) do jogador
 let angleToTarget = Math.atan2(dx, dz) - currentHeading;
 let radarDistRatio = dist / worldRange;
 
@@ -1414,21 +1403,6 @@ freeCamPos.x = shipPos.x;
 freeCamPos.z = shipPos.z;
 }
 
-// DISPARO NA PONTA EXATA DO CANO DA PROA (Ajustado milimetricamente)
-if (elapsedTime - lastPlayerShotTime > 1.2) {
-lastPlayerShotTime = elapsedTime;
-let effectiveHeading = currentHeading + turretRotationOffset;
-let muzzleDist = 16.5; // Distância exata da ponta do cano na proa
-let muzzleX = shipPos.x + Math.sin(effectiveHeading) * muzzleDist;
-let muzzleZ = shipPos.z + Math.cos(effectiveHeading) * muzzleDist;
-
-fireProjectileFromShip(shipPos, effectiveHeading, false, { x: muzzleX, z: muzzleZ });
-
-const shotSync = { type: 'PROJECTILE_FIRED', x: shipPos.x, z: shipPos.z, heading: effectiveHeading, muzzleX: muzzleX, muzzleZ: muzzleZ };
-if (conn && conn.open) conn.send(shotSync);
-if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(shotSync); });
-}
-
 netSyncTimer += delta;
 if (netSyncTimer > 0.1 && (conn || connectedPeers.length > 0)) {
 netSyncTimer = 0;
@@ -1437,7 +1411,6 @@ if (conn && conn.open) conn.send(syncData);
 if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(syncData); });
 }
 
-// Atualiza o mini-radar tático em tempo real
 updateTacticalRadar();
 }
 
@@ -1597,7 +1570,7 @@ healthBarLabel.querySelector('span').textContent = `BLINDAGEM: ${playerHealth}%`
 triggerCinematicExplosion(p.x, p.z, 1.0);
 if (playerHealth <= 0) handlePlayerDeath();
 scene.remove(p.mesh);
-botProjectiles.splice(p, 1); // fixed splice index bug
+botProjectiles.splice(i, 1);
 } else if (p.life <= 0) {
 scene.remove(p.mesh);
 botProjectiles.splice(i, 1);
