@@ -35,7 +35,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .profile-modal{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%) scale(0.9);background:rgba(10,20,35,0.96);border:1.5px solid #00d2d3;padding:20px;border-radius:16px;z-index:120;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.8);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:all 0.2s ease;max-width:340px;width:90%}
 .profile-modal.show{opacity:1;transform:translate(-50%, -50%) scale(1);pointer-events:auto}
 
-/* LAYOUT SUPERIOR REORGANIZADO (Radar no canto esquerdo, cronômetro e nome fixo ocultados) */
+/* NOME DA SALA NO TOPO CENTRAL E BOTÃO DE PAUSE AO LADO DO MINI-RADAR */
 .hud-top{position:absolute;top:15px;left:145px;display:flex;align-items:center;z-index:20;pointer-events:none}
 .center-title{text-align:center;font-weight:900;font-size:13px;letter-spacing:1px;background:linear-gradient(90deg,#00a8ff,#00d2d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 2px 10px rgba(0,0,0,0.8);position:absolute;left:50%;transform:translateX(-50%)}
 
@@ -60,10 +60,10 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 .fpp-btn{position:absolute;top:115px;right:20px;background:rgba(10,20,35,0.85);border:1.5px solid #ffd700;color:#ffd700;padding:8px 14px;border-radius:12px;font-size:12px;font-weight:800;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
 .fpp-btn:active{transform:scale(0.95);background:rgba(255,215,0,.3)}
 
-.defense-btn{position:absolute;bottom:85px;left:25px;background:rgba(255,51,51,0.25);border:1.5px solid #ff3333;color:#ff6666;padding:12px 16px;border-radius:16px;font-size:12px;font-weight:900;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px}
+.defense-btn{position:absolute;bottom:85px;left:25px;background:rgba(255,51,51,0.25);border:1.5px solid #ff3333;color:#ff6666;padding:12px 16px;border-radius:16px;font-size:12px;font-weight:900;z-index:25;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 4px 15px rgba(0,0,0,.5);display:flex;align-items:center;gap:6px;touch-action:manipulation}
 .defense-btn:active{transform:scale(0.92);background:rgba(255,51,51,0.5)}
 
-/* MINI-RADAR REPOSICIONADO NO CANTO SUPERIOR ESQUERDO */
+/* MINI-RADAR E BOTÃO DE PAUSE AO LADO */
 .radar-container{position:absolute;top:15px;left:15px;width:115px;height:115px;background:rgba(5, 20, 35, 0.85);border:2px solid #00d2d3;border-radius:50%;box-shadow:0 0 15px rgba(0,210,211,0.35), inset 0 0 10px rgba(0,210,211,0.2);overflow:hidden;backdrop-filter:blur(6px);z-index:25;pointer-events:none}
 .radar-ring{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);border:1px dashed rgba(0, 210, 211, 0.3);border-radius:50%}
 .radar-ring-1{width:40px;height:40px}
@@ -74,6 +74,9 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 @keyframes sweepRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .radar-player-dot{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);width:6px;height:6px;background:#38bdf8;border-radius:50%;box-shadow:0 0 6px #38bdf8;z-index:5}
 .radar-target-dot{position:absolute;width:5px;height:5px;background:#ff3333;border-radius:50%;box-shadow:0 0 5px #ff3333;transform:translate(-50%, -50%);z-index:4}
+
+.pause-btn{position:absolute;top:138px;left:52px;background:rgba(10,20,35,0.9);border:1.5px solid #00d2d3;color:#00d2d3;width:40px;height:40px;border-radius:50%;font-size:16px;z-index:26;cursor:pointer;backdrop-filter:blur(6px);display:flex;justify-content:center;align-items:center;box-shadow:0 4px 15px rgba(0,0,0,0.5)}
+.pause-btn:active{transform:scale(0.92);background:rgba(0,168,255,0.4)}
 
 /* CHAT ESTILO LIVE NO CANTO INFERIOR ESQUERDO */
 .live-chat-container{position:absolute;bottom:20px;left:25px;width:240px;height:170px;z-index:30;display:flex;flex-direction:column;justify-content:flex-end;pointer-events:none}
@@ -129,7 +132,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 </head>
 <body oncontextmenu="return false;">
 
-<!-- ELEMENTOS DE ÁUDIO -->
+<!-- ÁUDIOS EXATOS DO REPOSITÓRIO -->
 <audio id="cannonSound" src="Disparo.m4a" preload="auto"></audio>
 <audio id="bgMusic" src="Trilha.m4a" preload="auto" loop></audio>
 
@@ -147,7 +150,7 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 
 <div class="profile-modal" id="profileModal">
 <div class="modal-title">PERFIL DO COMANDANTE</div>
-<div class="modal-desc" style="margin-bottom:8px;">Seu nome personalizado:</div>
+<div class="modal-desc" style="margin-bottom:8px;">Seu nome personalizado (Aparece no lobby, mastro e alvos):</div>
 <input type="text" id="profileNameInput" class="lobby-input" placeholder="Seu nome..." maxlength="15">
 <div class="modal-actions" style="margin-top:12px;">
 <button class="btn-action" id="btnCancelProfile">Cancelar</button>
@@ -164,8 +167,9 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 <div class="lobby-info" id="lobbyInfoStatus"></div>
 </div>
 
+<!-- NOME DO DONO DA SALA NO TOPO CENTRAL -->
 <div class="hud-top">
-<div class="center-title" id="hudPlayerName">⚓ NWS VANGUARD</div>
+<div class="center-title" id="hudRoomTitle">⚓ SALA DE COMBATE</div>
 </div>
 
 <div class="hud-bottom-health" id="hudBottomHealth">
@@ -199,6 +203,9 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 <div class="radar-player-dot"></div>
 </div>
 
+<!-- BOTÃO DE PAUSE AO LADO DO MINI-RADAR -->
+<button class="pause-btn" id="btnOpenPause" title="Pausar / Menu">⏸️</button>
+
 <!-- CHAT ESTILO LIVE NO CANTO INFERIOR ESQUERDO -->
 <div class="live-chat-container">
 <div class="chat-messages-box" id="chatMessagesBox"></div>
@@ -229,6 +236,17 @@ html,body{background:#050b14;width:100vw;height:100vh;height:100dvh;display:flex
 <div class="modal-actions" id="gameOverActions">
 <button class="btn-action btn-confirm" id="btnWatchMode">Assistir Partida</button>
 <button class="btn-action" style="border-color:#ff3333; color:#ff3333;" id="btnExitGame">Sair para o Menu</button>
+</div>
+</div>
+
+<!-- MODAL DE PAUSE (APP ANDROID) -->
+<div class="target-modal" id="pauseModal">
+<button class="modal-close" id="btnClosePause">✕</button>
+<div class="modal-title">JOGO PAUSADO</div>
+<div class="modal-desc">O que deseja fazer?</div>
+<div class="modal-actions" style="flex-direction:column; gap:10px;">
+<button class="btn-action btn-confirm" id="btnResumeGame">Retornar à Partida</button>
+<button class="btn-action" style="border-color:#ff3333; color:#ff3333;" id="btnPauseExitGame">Sair para o Menu</button>
 </div>
 </div>
 
@@ -375,7 +393,7 @@ btnStartGameManual.style.display = "block";
 
 document.getElementById('btnCreateRoom').onclick = () => {
 initAudio();
-document.getElementById('hudPlayerName').textContent = `⚓ ${playerName}`;
+document.getElementById('hudRoomTitle').textContent = `⚓ ${playerName}`;
 const selectedRoomId = predefinedRoomIDs[Math.floor(Math.random() * predefinedRoomIDs.length)];
 isHost = true;
 
@@ -400,8 +418,10 @@ incomingConn.on('data', (data) => { handleNetworkData(data, incomingConn); });
 incomingConn.on('close', () => {
 connectedPeers = connectedPeers.filter(c => c !== incomingConn);
 if (incomingConn.peerId && remotePlayersMap.has(incomingConn.peerId)) {
+let pName = remotePlayersMap.get(incomingConn.peerId).name;
 scene.remove(remotePlayersMap.get(incomingConn.peerId).mesh);
 remotePlayersMap.delete(incomingConn.peerId);
+appendChatBubble("Sistema", `O jogador ${pName} saiu`);
 }
 updateHostButtonState();
 broadcastPlayersList();
@@ -468,7 +488,8 @@ conn.send({ type: 'JOIN', name: playerName, peerId: peer.id });
 });
 conn.on('data', (data) => { handleNetworkData(data, conn); });
 conn.on('close', () => {
-showToast("⚠️ Conexão com o Host perdida!");
+showToast("⚠️ Conexão com o Host encerrada!");
+appendChatBubble("Sistema", "O Host encerrou a sessão.");
 setTimeout(() => { document.getElementById('gameOverModal').classList.add('show'); }, 1500);
 });
 }
@@ -495,13 +516,19 @@ startGameSession();
 } else if (data.type === 'JOIN') {
 sourceConn.peerName = data.name;
 sourceConn.peerId = data.peerId;
+document.getElementById('hudRoomTitle').textContent = `⚓ ${data.hostName || data.name} (Sala)`;
 showToast(`👤 ${data.name} entrou na sala!`);
+appendChatBubble("Sistema", `O jogador ${data.name} entrou`);
 if (isHost) {
 updateHostButtonState();
 broadcastPlayersList();
 }
 } else if (data.type === 'PLAYER_LIST') {
 activeHumanPlayersList = data.list;
+let hostObj = data.list.find(p => p.isHost);
+if (hostObj) {
+document.getElementById('hudRoomTitle').textContent = `⚓ ${hostObj.name}`;
+}
 } else if (data.type === 'PLAYER_SYNC') {
 if (!remotePlayersMap.has(data.peerId) && gameStarted) {
 const rMesh = createDetailedFrigateModel(0xe74c3c, data.name);
@@ -536,6 +563,7 @@ const rp = remotePlayersMap.get(data.peerId);
 rp.health = 0;
 rp.mesh.visible = false;
 triggerCinematicExplosion(rp.x, rp.z, 1.8);
+appendChatBubble("Sistema", `O jogador ${rp.name} foi derrotado!`);
 }
 } else if (data.type === 'PROJECTILE_FIRED') {
 let dummyShip = { x: data.x, z: data.z };
@@ -554,7 +582,7 @@ const deathMsg = { type: 'PLAYER_DIED', peerId: peer ? peer.id : 'local' };
 if (conn && conn.open) conn.send(deathMsg);
 if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(deathMsg); });
 
-document.getElementById('gameOverModal').classList.add('show');
+showVictoryScreen(false, "Derrota");
 }
 
 btnStartGameManual.onclick = () => {
@@ -571,7 +599,7 @@ function startGameSession() {
 lobbyScreen.classList.add('hidden');
 roomsSidebar.classList.remove('show');
 gameStarted = true;
-startBackgroundMusic(); // A música é disparada e sincronizada ao clicar em Iniciar Jogo
+startBackgroundMusic();
 
 setTimeout(() => {
 if (renderer && container) {
@@ -592,8 +620,8 @@ showToast("🎮 Partida Solo contra IA Iniciada!");
 }
 }
 
-// SISTEMA DE CHAT ESTILO LIVE COM VOZ E FILTRO DE PROFANIDADE
-const badWordsList = ["palavrao1", "palavrao2", "droga", "idiota", "merda", "bosta", "caramba"]; // Exemplo de lista de profanidade
+// CHAT E FILTRO DE PROFANIDADE
+const badWordsList = ["palavrao1", "palavrao2", "droga", "idiota", "merda", "bosta", "caramba"];
 function filterProfanity(text) {
 let filtered = text;
 badWordsList.forEach(word => {
@@ -611,7 +639,6 @@ bubble.innerHTML = `<b>${sender}:</b> ${filterProfanity(text)}`;
 box.appendChild(bubble);
 box.scrollTop = box.scrollHeight;
 
-// Sumir automaticamente após 8 segundos (estilo live)
 setTimeout(() => {
 bubble.style.transition = 'opacity 0.5s ease';
 bubble.style.opacity = '0';
@@ -629,7 +656,7 @@ if (conn && conn.open) conn.send(chatPacket);
 if (isHost) connectedPeers.forEach(p => { if (p.open) p.send(chatPacket); });
 }
 
-// INTEGRAÇÃO DO MICROFONE (WEB SPEECH API) - MÁXIMO 15 SEGUNDOS
+// INTEGRAÇÃO DE VOZ COM PERMISSÃO NATIVA TRATADA PARA ANDROID (WEBVIEW/CREATOR 24)
 const btnVoiceMic = document.getElementById('btnVoiceMic');
 const voiceStatusPill = document.getElementById('voiceStatusPill');
 let recognition = null;
@@ -654,7 +681,7 @@ sendChatMessage(speechResult);
 };
 
 recognition.onerror = () => {
-voiceStatusPill.textContent = "Erro no áudio. Tente de novo.";
+voiceStatusPill.textContent = "Permissão negada ou erro de áudio.";
 stopVoiceRecognition();
 };
 
@@ -677,10 +704,24 @@ showToast("⚠️ Reconhecimento de voz não suportado neste navegador.");
 return;
 }
 
+// Tratamento explícito de permissão RECORD_AUDIO em WebView / Android
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+stream.getTracks().forEach(track => track.stop()); // Libera o stream após consentimento
+startRecognitionProcess();
+}).catch((err) => {
+showToast("⚠️ Permissão de microfone negada nas configurações do app.");
+voiceStatusPill.textContent = "Permissão de microfone necessária";
+});
+} else {
+startRecognitionProcess();
+}
+};
+
+function startRecognitionProcess() {
 if (!isRecordingVoice) {
 try {
 recognition.start();
-// Forçar fechamento automático em no máximo 15 segundos
 voiceTimeout = setTimeout(() => {
 if (isRecordingVoice) {
 recognition.stop();
@@ -694,7 +735,7 @@ clearTimeout(voiceTimeout);
 recognition.stop();
 stopVoiceRecognition();
 }
-};
+}
 
 const container = document.getElementById('gameContainer');
 const canvas = document.getElementById('canvas3d');
@@ -1156,8 +1197,10 @@ life: 0, maxLife: 70, scale, x, z
 });
 }
 
-function dropDefenseMine() {
+function dropDefenseMine(e) {
+if (e) { e.preventDefault(); e.stopPropagation(); }
 if (!isPlayerAlive) return;
+initAudio();
 playTorpedoSound();
 const dropX = shipPos.x - Math.sin(currentHeading) * 15.0;
 const dropZ = shipPos.z - Math.cos(currentHeading) * 15.0;
@@ -1169,10 +1212,12 @@ mineMesh.position.set(dropX, 0.4, dropZ);
 scene.add(mineMesh);
 
 defenseMines.push({ mesh: mineMesh, x: dropX, z: dropZ, life: 30 * 60 });
-showToast("💣 Carga defensiva lançada na popa! (Ativa por 30s)");
+showToast("💣 Carga defensiva lançada na popa!");
 }
 
-document.getElementById('btnDropDefense').onclick = dropDefenseMine;
+const defenseBtnEl = document.getElementById('btnDropDefense');
+defenseBtnEl.addEventListener('pointerdown', dropDefenseMine);
+defenseBtnEl.addEventListener('click', dropDefenseMine);
 
 function launchGuidedTorpedo() {
 if (torpedoCount <= 0) {
@@ -1185,7 +1230,6 @@ return;
 }
 
 torpedoCount--;
-document.getElementById('torpedoCount').textContent = `${torpedoCount}/10`;
 playTorpedoSound();
 
 const launchX = shipPos.x + Math.cos(currentHeading) * 2.5;
@@ -1252,6 +1296,13 @@ document.getElementById('btnFPP').onclick = () => { initAudio(); if (!isPlayerAl
 document.getElementById('btnZoomIn').onclick = () => { cameraZoomDistance = Math.max(25, cameraZoomDistance - 15); };
 document.getElementById('btnZoomOut').onclick = () => { cameraZoomDistance = Math.min(600, cameraZoomDistance + 15); };
 
+// CONTROLE DE PAUSE E SAÍDA (APP ANDROID)
+const pauseModal = document.getElementById('pauseModal');
+document.getElementById('btnOpenPause').onclick = () => { initAudio(); pauseModal.classList.add('show'); };
+document.getElementById('btnClosePause').onclick = () => pauseModal.classList.remove('show');
+document.getElementById('btnResumeGame').onclick = () => pauseModal.classList.remove('show');
+document.getElementById('btnPauseExitGame').onclick = () => location.reload();
+
 window.addEventListener('keydown', (e) => {
 if (!gameStarted) return;
 initAudio();
@@ -1264,7 +1315,7 @@ if (key === '1') { turretRotationOffset += 0.2; showToast("🎯 Canhão girado �
 if (key === '3') { turretRotationOffset -= 0.2; showToast("🎯 Canhão girado à direita (3)"); }
 if (key === '9') { firePlayerCannon(); }
 if (key === '5' || key === 'Enter') triggerActionOK();
-if (key === '0' || key === '96') dropDefenseMine();
+if (key === '0' || key === '96') dropDefenseMine(null);
 if (key.toLowerCase() === 't' && isPlayerAlive) { buildTargetOptionsUI(); targetModal.classList.add('show'); }
 });
 
@@ -1297,7 +1348,8 @@ showVictoryScreen(false, aliveBots.length === 1 ? aliveBots[0].name : "Empate");
 
 function showVictoryScreen(isPlayerWinner, winnerName) {
 const modal = document.getElementById('gameOverModal');
-document.getElementById('gameOverTitle').textContent = isPlayerWinner ? "🏆 VOCÊ VENCEU!" : `⚓ ${winnerName.toUpperCase()} VENCEU!`;
+document.getElementById('gameOverTitle').textContent = isPlayerWinner ? "🏆 PARABÉNS! VOCÊ VENCEU!" : `⚓ ${winnerName.toUpperCase()} VENCEU!`;
+document.getElementById('gameOverDesc').textContent = isPlayerWinner ? "Todos os inimigos foram neutralizados!" : "A batalha chegou ao fim.";
 modal.classList.add('show');
 }
 
@@ -1351,7 +1403,7 @@ radarDynamicDots.forEach(dot => dot.remove());
 radarDynamicDots.length = 0;
 
 const radarRadiusPx = 52;
-const worldRange = 300; // Raio expandido para a verdadeira visão do horizonte
+const worldRange = 300;
 const targetsToRender = [];
 
 botsData.filter(b => b.health > 0).forEach(b => {
@@ -1683,3 +1735,4 @@ setTimeout(() => t.classList.remove('show'), 2500);
 </script>
 </body>
 </html>
+
